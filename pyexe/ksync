@@ -7,8 +7,6 @@
 2010年10月28日
 '''
 
-#TODO
-
 from path import path, sha1path
 from my_class import Config
 import kuaipan
@@ -17,7 +15,7 @@ from time import sleep
 # 用户数据
 user_config = Config({
     'username': 'lilydjwg@gmail.com',
-    'cookieFile': str(path('~/scripts/pydata/kuaipan.cookie').expand()),
+    'cookieFile': str(path('~/scripts/python/pydata/kuaipan.cookie').expand()),
     'dest': sha1path('~/workspace/jshan/shares').expand(),
   })
 
