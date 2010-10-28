@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+'''
+定时收取邮件
+
+2010年10月28日
+'''
+
+import sys
+# cron 里一些环境变量没有被设置
+sys.path.extend('/home/lilydjwg/scripts/python/pylib:/home/lilydjwg/scripts/py/lib3:/home/lilydjwg/scripts/py/lib'.split(':'))
+
+import os
+from pickleddata import PData
+from path import path
+from my_class import Config
+from datetime import datetime, timedelta
+
+priority = Config({
+  #配置文件名 时间间隔（分）
+  '163rc': 15,
+  'gmailrc': 5,
+  'sinarc': 7200,
+  'heliorc': 7200,   # 5d
+  'qqmail2rc': 7200, # 5d
+  'qqmailrc': 1440,  # 1d
+  'whurc': 10080,    # 1 week
+  })
+defaultTime = 30
+
+configPath = path('~/.getmail').expand().glob('*rc')
+datafile = os.path.expanduser('~/scripts/python/pydata/getmymail')
+
+def getmail(config):
+  '''config 为 path 对象，指向配置文件'''
+  os.system('getmail -n -r%s'%config.expand())
+
+def main():
+  pd = PData(datafile)
+  old = pd.data
+  if old is None:
+    pd.data = Config()
+  for p in configPath:
+    name = p.basename
+    time = priority[name] or defaultTime
+    time = timedelta(minutes=time)
+    old_time = old[name] or datetime(2010, 6, 15) # 写作此程序的这天
+    if datetime.today() - old_time >= time:
+      getmail(p)
+      old[name] = datetime.today()
+
+if __name__ == '__main__':
+  main()

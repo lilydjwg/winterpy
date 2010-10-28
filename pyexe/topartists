@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+'''
+收集歌曲数最多的歌手排行
+
+2010年9月4日
+'''
+
+import sys
+argv = sys.argv
+from path import path
+
+def main(num):
+  artists = list(filter(lambda x: not x.basename.startswith('_'),
+    path('~/音乐').expand().dirs()))
+  for a in artists:
+    a.songs = len(a.files())
+  artists.sort(key=lambda x: x.songs, reverse=True)
+  for i in artists[:num]:
+    print(i.songs, i.basename, sep='\t')
+
+if __name__ == '__main__':
+  if len(argv) == 1:
+    main(10)
+  elif len(argv) == 2:
+    main(int(argv[1]))
+  else:
+    print('Usage: %s [NUM]', path(argv[0]).basename)
+    sys.exit(1)

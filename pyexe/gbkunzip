@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+# fileencoding=utf-8
+
+'''
+解压 zip 文件，其中的文件名是 GB18030 编码，但系统是 Unicode 编码
+
+2010年8月14日
+'''
+
+import sys
+import os
+from gbzip import ZipFile
+
+if __name__ == '__main__':
+  try:
+    ZipFile(sys.argv[1]).extractall()
+    print('Everything is ok.')
+  except IndexError:
+    print('请给出一个并且仅一个 zip 文件。', file=sys.stderr)
+    sys.exit(1)
+

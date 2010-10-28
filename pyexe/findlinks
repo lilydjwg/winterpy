@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+# fileencoding=utf-8
+
+'''
+找出文件系统中所有链接数大于1的文件
+
+2010年8月6日
+'''
+
+import os, sys, subprocess
+
+def getfilelist(path):
+  '''使用 find 命令找出所有链接数大于1的文件，返回此列表'''
+  cmd = "find '%s' -type f -links +1 2> /dev/null" % path
+  return subprocess.getoutput(cmd).split('\n')
+
+def findsamefile(l):
+  '''找出 l 中的文件中，哪些是同一文件'''
+  ret = []
+  while l:
+    curfile = l[0]
+    ret.append([curfile])
+    for i in l[1:]:
+      if os.path.samefile(curfile, i):
+        ret[-1].append(i)
+        l.remove(i)
+    del l[0]
+
+  return ret
+
+def print2file(l, file=sys.stdout):
+  '''把 findsamefile 的结果格式化输出'''
+  sys.stdout = file
+  for i in l:
+    for j in i:
+      print(j)
+    print()
+  sys.stdout = sys.__stdout__
+
+if __name__ == '__main__':
+  if len(sys.argv) not in (2, 3):
+    print('用法：%s 路径 [输出目标]' % os.path.basename(sys.argv[0]),
+        file=sys.stderr)
+    sys.exit(1)
+
+  if len(sys.argv) == 3:
+    f = open(sys.argv[2], 'w')
+  else:
+    f = None
+
+  l = getfilelist(sys.argv[1])
+  result = findsamefile(l)
+  if f:
+    print2file(result, f)
+  else:
+    print2file(result)
+
