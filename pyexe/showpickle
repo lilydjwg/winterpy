@@ -4,14 +4,14 @@
 '''
 显示 pickled 文件的内容
 
-2010年7月26日
+2010年10月31日
 '''
 
 import sys
 import pickle
 
 def show(file):
-  print(repr(pickle.loads(open(file, 'rb').read())))
+  print(repr(pickle.loads(open(file, 'rb').read(), encoding='utf-8')))
 
 if __name__ == '__main__':
   if len(sys.argv) == 1:
