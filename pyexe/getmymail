@@ -4,7 +4,7 @@
 '''
 定时收取邮件
 
-2010年10月28日
+2010年11月8日
 '''
 
 import sys
@@ -23,8 +23,8 @@ priority = Config({
   'gmailrc': 5,
   'sinarc': 7200,
   'heliorc': 7200,   # 5d
-  'qqmail2rc': 7200, # 5d
-  'qqmailrc': 1440,  # 1d
+  'qqmail2rc': 1000,
+  'qqmailrc': 20,
   'whurc': 10080,    # 1 week
   })
 defaultTime = 30
