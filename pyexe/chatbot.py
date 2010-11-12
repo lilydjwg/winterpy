@@ -24,8 +24,8 @@ import chatterous
 import threading
 from path import path as Path
 
-# groups = ['themw', 'scu_ubuntu']
-groups = ['qingdao']
+groups = ['scu_ubuntu']
+# groups = ['qingdao']
 
 def thread_run(func, *args):
   t = threading.Thread(target=func, args=args)
