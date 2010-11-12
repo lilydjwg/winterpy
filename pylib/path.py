@@ -96,8 +96,14 @@ class path:
     return self.stat().st_size
 
   @property
+  def atime(self):
+    return datetime.fromtimestamp(self.stat().st_atime)
+  @property
   def mtime(self):
     return datetime.fromtimestamp(self.stat().st_mtime)
+  @property
+  def ctime(self):
+    return datetime.fromtimestamp(self.stat().st_ctime)
   def stat(self):
     return os.stat(self.value)
   def access(self, mode):
