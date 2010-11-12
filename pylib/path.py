@@ -6,7 +6,7 @@
 
 lilydjwg <lilydjwg@gmail.com>
 
-2010年10月28日
+2010年11月13日
 '''
 
 # 模仿 URL:http://www.jorendorff.com/articles/python/path ver 3.0b1
@@ -100,6 +100,8 @@ class path:
     return datetime.fromtimestamp(self.stat().st_mtime)
   def stat(self):
     return os.stat(self.value)
+  def access(self, mode):
+    return os.access(self.value, mode)
   def olderthan(self, another):
     '''比较文件的最后修改时间'''
     if not isinstance(another, path):
