@@ -4,7 +4,7 @@
 '''
 金山快盘 之 python 版
 
-2010年10月28日
+2010年11月17日
 
 file 包含的属性
   type:       file, folder
@@ -151,7 +151,8 @@ class KSession(Session, Operation):
     将文件下载到指定目录，会在终端显示下载状态
     file 是快盘的 dict，而 dir 是 path 对象
     '''
-    url = self.getdownloadurl(file['fileId'])
+    # url = self.getdownloadurl(file['fileId'])
+    url = self.mainurl+ 'download/?fileId=%s&uname=%s' % (file['fileId'], URIescape(file['name']))
     res = self.request(url)
     size = int(file['size'])
     oldpercent = percent = 0
