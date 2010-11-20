@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+'''
+下载 腾讯网-阅读频道 的图书
+
+2010年11月20日
+'''
+
+import sys
+import urllib.request
+import lxml.html
+import re
+
+charset = 'gb18030' # book.qq.com 的编码
+divtag = re.compile(r'</?div[^>]*>')
+
+def getBookInfo(str):
+  html = lxml.html.fromstring(str)
+  book = {}
+  book['title'] = html.cssselect('h1')[0].text
+  bookinfo = html.cssselect('.bookinfo')[0]
+  for el in bookinfo:
+    if el.text == '作 者：':
+      t = el.cssselect('script')[0].text
+      t = t[t.find("'")+1:t.rfind("'")]
+      book['author'] = t
+    elif el.text == '出 版：':
+      t = el.cssselect('a')[0].text
+      book['press'] = t
+  print("书名:", book['title'])
+  print("作者:", book['author'])
+  print("出版社:", book['press'])
+
+  def getlink(a):
+    link = a.get('href')
+    return link[link.find("'")+1:link.rfind("'")]
+  book['links'] = list(map(getlink,
+    html.cssselect('a[href^="javascript:opennew("]')))
+  print("共 %d 页" % len(book['links']))
+  return book
+
+def geturl(url):
+  response = urllib.request.urlopen(url)
+  return response.read().decode(charset)
+
+def getpage(url, f, count):
+  html = geturl(url)
+  html = lxml.html.fromstring(html)
+  title = html.cssselect('h1')[0].text
+  print('第 %d 页（%s）已下载' % (count, title))
+  f.write(title+'\n\n')
+  content = html.cssselect('#content')[0]
+  content = lxml.html.tostring(content, encoding=str).strip()
+  content = divtag.sub('', content)
+  content = content.replace('<br>', '\n')
+  content = content.replace('\r', '').replace('&#13;', '')
+  f.write(content)
+
+def dl(url):
+  print('获取图书信息...')
+  book = getBookInfo(geturl(url))
+  fname = book['title'].replace('/', '_').replace('\x00', '')
+  fname += '.txt'
+  with open(fname, 'w') as f:
+    print(book['title'], file=f)
+    print("作者:", book['author'], file=f)
+    print("出版社:", book['press'], file=f)
+    f.write('\n')
+    for i, l in enumerate(book['links']):
+      getpage(l, f, i+1)
+  print('下载完成！')
+
+if __name__ == '__main__':
+  if len(sys.argv) == 2:
+    url = sys.argv[1]
+    dl(url)
+  else:
+    print("请给出 URL", file=sys.stderr)
+    sys.exit(1)
