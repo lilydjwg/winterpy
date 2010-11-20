@@ -4,7 +4,7 @@
 '''
 金山快盘 之 python 版
 
-2010年11月17日
+2010年11月21日
 
 file 包含的属性
   type:       file, folder
@@ -132,19 +132,17 @@ class KSession(Session, Operation):
       'size': str(file.size),
       'parentId': parentId,
       'name': file.basename})
-    uploadurl = '{r[url]}stub={r[stub]}&uploadSha1=&uploadSize=&' \
-        'uploadType=encrypted_compressed'.format(r=result)
 
     fields = (
           ('Filename', file.basename),
-          ('url', uploadurl),
           ('size', str(file.size)),
+          ('fileId', result['fileId']),
           ('flashId', '2ee86160c6f9496cb6238ee9161f4755-178684278'),
           ('Upload', 'Submit Query'),
         )
     contenttype, data = encode_multipart_formdata(fields,
         [('Filedata', file.basename, file.open(encoding='latin1').read())])
-    self.post('uploaddata', data, headers={'Content-Type': contenttype})
+    return self.post('upload', data, headers={'Content-Type': contenttype}, check=False)
 
   def download(self, file, dir):
     '''
@@ -173,7 +171,7 @@ class KSession(Session, Operation):
 
   def createdir(self, dirName, parentId=''):
     '''parentId 为 '' 则为 root'''
-    self.post('createdir', {'dirName': dirName, 'parentId': parentId})
+    return self.post('createdir', {'dirName': dirName, 'parentId': parentId})
 
   def getdownloadurl(self, fileId):
     result = self.post('requestdownload', {'fileId': fileId })
@@ -183,7 +181,7 @@ class KSession(Session, Operation):
   def post(self, loc, arg, check=True, headers={}):
     res = self.request(self.mainurl+loc+'/', arg, headers=headers)
     result = json.loads(res.read().decode('utf-8'))
-    if 'value' in result['result'] and result['result']['value'] == 'ok':
+    if check and 'value' in result['result'] and result['result']['value'] == 'ok':
       pass
     elif result['result'] == 'ok':
       pass
