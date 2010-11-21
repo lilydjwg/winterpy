@@ -4,7 +4,7 @@
 '''
 金山快盘 之 python 版
 
-2010年10月28日
+2010年11月21日
 '''
 
 from path import path, sha1path
@@ -22,7 +22,6 @@ user_config = Config({
 def filtered(file):
   '''不要同步的项，file 为快盘文件字典'''
   if file['name'].endswith('~'):
-    print('忽略', file['name'])
     return True
 
 def syncShare():
@@ -35,13 +34,14 @@ def syncShare():
     for f, p in kuaipan.traverse(d, root):
       if not p.exists():
         p.mkdir()
-      if filtered(f):
-        continue
       dst = p + f['name']
+      if filtered(f):
+        print('忽略', str(dst)[len(str(user_config['dest']))+1:])
+        continue
       if dst.exists():
         pf = kuaipan.kpath(f, ids)
         if pf == dst:
-          print('跳过', f['name'])
+          print('跳过', str(dst)[len(str(user_config['dest']))+1:])
           continue
       try:
         s.download(f, p)
