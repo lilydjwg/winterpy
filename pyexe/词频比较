@@ -4,7 +4,7 @@
 '''
 比较两个词频记录文件
 
-2010年8月14日
+2010年11月21日
 '''
 
 import os
@@ -70,7 +70,7 @@ def compare(file1, file2):
     print(i[:i.find(' ')].ljust(5), i[i.find(' ')+1:].ljust(10, '　').replace('　', '  '), delete[i][0].rjust(5), delete[i][1].rjust(5))
   print('\n[相同]')
   for i in same:
-    print(i[:i.find(' ')].ljust(5), i[i.find(' ')+1:].ljust(10, '　').replace('　', '  '), same[i][0].rjust(5), same[i][1].rjust(5))
+    print(i[:i.find(' ')].ljust(5), i[i.find(' ')+1:].ljust(10, '　').replace('　', '  '), same[i][0].rjust(5), same[i][1].rjust(6))
 
   print()
   print(time2 - time1)
