@@ -4,9 +4,10 @@
 '''
 提供网络信息获取服务
 
-2010年7月17日
+2010年11月28日
 '''
 from url import *
+import os
 
 def getTitle(url, headers={}, defaultCharset='utf-8', timeout=5):
   '''
@@ -61,10 +62,13 @@ def getTitle(url, headers={}, defaultCharset='utf-8', timeout=5):
       response, conn = urlopen(url, headers, proxy=proxy, timeout=timeout)
     return response, conn
 
-  try:
-    response, conn = getit(url)
-  except socket.error:
-    response, conn = getit(url, proxy='http://localhost:8000')
+  if 'http_proxy' in os.environ:
+    response, conn = getit(url, proxy=os.environ['http_proxy'])
+  else:
+    try:
+      response, conn = getit(url)
+    except socket.error:
+      response, conn = getit(url, proxy='http://localhost:8000')
 
   contentType = response.getheader('Content-Type',
       default='text/html; charset=%s' % defaultCharset)
