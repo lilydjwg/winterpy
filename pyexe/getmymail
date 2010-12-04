@@ -24,7 +24,7 @@ priority = Config({
   'sinarc': 7200,
   'heliorc': 7200,   # 5d
   'qqmail2rc': 1000,
-  'qqmailrc': 20,
+  'qqmailrc': 60,    # 经常超时
   'whurc': 10080,    # 1 week
   })
 defaultTime = 30
