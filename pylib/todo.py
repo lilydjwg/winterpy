@@ -46,17 +46,51 @@ class TODO:
     for cmd in allcmd:
       print('\t%s\t%s' % cmd)
 
-  def do_edit(self):
-    '''使用文本编辑器编辑新事务'''
+  def edit(self, init=None):
     fname = '/tmp/todo_list'
     editor = os.environ['EDITOR'] or 'vim'
     try:
+      if init:
+        open(fname, 'w').write(init)
       os.system('%s %s' % (editor, fname))
       what = open(fname).read().rstrip()
       os.unlink(fname)
     except IOError:
       print('未找到编辑过的文件，中断。', file=sys.stderr)
-    self.do_add(what)
+      return
+    return what
+
+  def getlast(self):
+    sql = '''select value from info where name = 'last_id' '''
+    self.cursor.execute(sql)
+    for c in self.cursor:
+      id = int(c[0])
+
+    sql = '''select what from item where id = %d''' % id
+    self.cursor.execute(sql)
+    what = ''
+    for c in self.cursor:
+      what = c[0]
+
+    return id, what
+
+  def update(self, id, what):
+    '''添加新事务'''
+    sql = '''update item set what=? where id=%d''' % id
+    self.cursor.execute(sql, (what,))
+
+  def do_vi(self):
+    '''使用文本编辑器编辑新事务'''
+    what = self.edit()
+    if what:
+      self.do_add(what)
+
+  def do_edit(self):
+    '''使用文本编辑器编辑最后的事务'''
+    id, last = self.getlast()
+    what = self.edit(last)
+    if what:
+      self.update(id, what)
 
   def do_add(self, what):
     '''添加新事务'''
@@ -65,11 +99,7 @@ class TODO:
 
   def do_last(self):
     '''显示最后被选择的项'''
-    sql = '''select what from item where id in (
-      select value from info where name = 'last_id')'''
-    self.cursor.execute(sql)
-    for c in self.cursor:
-      what = c[0]
+    what = self.getlast()[1]
     print(what)
 
   def do_count(self):
