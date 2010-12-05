@@ -41,7 +41,7 @@ class TODO:
   def showUsage(self):
     allcmd = sorted(((x[3:], getattr(self, x).__doc__)
         for x in dir(self) if x.startswith('do_')),
-        key=lambda x: x[1])
+        key=lambda x: x[0])
     print('用法：')
     for cmd in allcmd:
       print('\t%s\t%s' % cmd)
