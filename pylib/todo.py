@@ -11,6 +11,23 @@ class TODO:
     self.cursor = self.conn.cursor()
     self.setup()
 
+  def __del__(self):
+    self.cursor.close()
+    self.conn.commit()
+    self.conn.close()
+
+  def __call__(self, argv):
+    if not argv:
+      self.do_get()
+    else:
+      cmd = 'do_%s' % argv[0]
+      try:
+        getattr(self, cmd)(*argv[1:])
+      except AttributeError:
+        raise NoSuchCommand('命令 %s 没有定义。' % argv[0])
+      except TypeError:
+        raise CommandError('命令 %s 的参数不正确。' % argv[0])
+
   def setup(self):
     sql = '''create table if not exists item (
       id integer primary key autoincrement,
@@ -20,23 +37,6 @@ class TODO:
       name text primary key not null,
       value text not null)'''
     self.cursor.execute(sql)
-
-  def __del__(self):
-    self.cursor.close()
-    self.conn.commit()
-    self.conn.close()
-
-  def __call__(self, argv):
-    if not argv:
-      self.showUsage()
-    else:
-      cmd = 'do_%s' % argv[0]
-      try:
-        getattr(self, cmd)(*argv[1:])
-      except AttributeError:
-        raise NoSuchCommand('命令 %s 没有定义。' % argv[0])
-      except TypeError:
-        raise CommandError('命令 %s 的参数不正确。' % argv[0])
 
   def showUsage(self):
     allcmd = sorted(((x[3:], getattr(self, x).__doc__)
