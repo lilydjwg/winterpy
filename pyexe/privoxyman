@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8
 
 import os
-from bottle import route, run, request
+from bottle import route, run, request, redirect
 
 '''
 通过浏览器向 privoxy 的 action 文件中添加项目
@@ -17,11 +17,12 @@ def privoxy_add():
   form_data = request.POST
   url = form_data['url']
   proxy = form_data['proxy']
+  dest = form_data['dest']
   cmd = '''sed -i -e '/^{%s}$/a\\\n%s' ''' % (proxy, url.replace('\\', r'\\'))
   cmd += actionfile
   st = os.system(cmd)
   if st == 0:
-    return 'OK'
+    redirect(dest)
   else:
     return 'Err: %d' % st
 
