@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+from netservice import ubuntuPaste as post
+from path import path
+
+from optparse import OptionParser
+try:
+  import readline
+except ImportError:
+  pass
+
+def main():
+  parser = OptionParser(version="%prog 0.1")
+  parser.add_option("-n", "--name",
+                    dest="poster", metavar="NICK", default='Anonymous',
+                    help="昵称")
+  parser.add_option("-i", "--image", dest="screenshot", default='',
+                    help="图片文件", metavar="FILE")
+  parser.add_option("-f", "--filename",
+                    dest="filename", metavar="NAME", default=None,
+                    help="指定文件名")
+  parser.add_option("-c",
+                    action="store_true", dest='comment',
+                    help="附带文本(从 stdin 读入)")
+  parser.add_option("-t", "--type",
+                    dest="klass", metavar="TYPE", default='bash',
+                    help="代码语种")
+
+  (options, args) = parser.parse_args()
+  if args:
+    parser.error('错误的参数: '+' '.join(args))
+  if options.filename and not options.screenshot:
+    parser.error('只有当给出图片时才能使用“文件名”选项')
+  c = []
+  if options.comment or not options.screenshot:
+    while True:
+      try:
+        c.append(input(''))
+      except EOFError:
+        break
+  if options.screenshot:
+    post(poster=options.poster,
+        code2='\n'.join(c),
+        screenshot=path(options.screenshot),
+        klass=options.klass,
+        filename=options.filename,
+      )
+  else:
+    post(poster=options.poster,
+        code2='\n'.join(c),
+        klass=options.klass,
+      )
+    
+if __name__ == '__main__':
+  main()

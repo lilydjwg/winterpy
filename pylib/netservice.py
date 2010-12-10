@@ -113,3 +113,32 @@ def translate(q, langpair='|zh', hl='zh'):
     raise Exception(ans)
 
   return ans['responseData']['translatedText']
+def ubuntuPaste(poster='', screenshot='', code2='',
+    klass='bash', filename=None):
+  '''
+  paste 到 http://paste.ubuntu.org.cn/
+  screenshot 是 path 对象
+  '''
+  from httpsession import Session
+  paste_url = 'http://paste.ubuntu.org.cn/'
+  fields = [
+      ('paste', 'send'),
+      ('poster', poster),
+      ('code2', code2),
+      ('class', klass),
+    ]
+  if screenshot:
+    files = (
+        ('screenshot', filename or screenshot.basename, screenshot.open('rb').read()),
+      )
+  else:
+    files = ()
+
+  data = encode_multipart_formdata(fields, files)
+  s = Session()
+  r = s.request(paste_url, data[1], headers={
+      'Content-Type': data[0],
+      'Expect': '100-continue',
+    })
+  return r
+
