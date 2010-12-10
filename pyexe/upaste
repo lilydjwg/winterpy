@@ -4,6 +4,7 @@
 from netservice import ubuntuPaste as post
 from path import path
 
+import os
 from optparse import OptionParser
 try:
   import readline
@@ -11,9 +12,9 @@ except ImportError:
   pass
 
 def main():
-  parser = OptionParser(version="%prog 0.1")
+  parser = OptionParser(usage='%prog [options] [image]', version="%prog 0.1")
   parser.add_option("-n", "--name",
-                    dest="poster", metavar="NICK", default='Anonymous',
+                    dest="poster", metavar="NICK", default='',
                     help="昵称")
   parser.add_option("-i", "--image", dest="screenshot", default='',
                     help="图片文件", metavar="FILE")
@@ -23,15 +24,21 @@ def main():
   parser.add_option("-c",
                     action="store_true", dest='comment',
                     help="附带文本(从 stdin 读入)")
-  parser.add_option("-t", "--type",
-                    dest="klass", metavar="TYPE", default='bash',
+  parser.add_option("-l", "--lang",
+                    dest="klass", metavar="LANG", default='bash',
                     help="代码语种")
 
   (options, args) = parser.parse_args()
   if args:
-    parser.error('错误的参数: '+' '.join(args))
+    if len(args) == 1:
+      options.screenshot = args[0]
+    else:
+      parser.error('错误的参数: '+' '.join(args))
+
   if options.filename and not options.screenshot:
     parser.error('只有当给出图片时才能使用“文件名”选项')
+  if not options.poster and os.environ.get('USER', '') == 'lilydjwg':
+    options.poster = '百合仙子'
   c = []
   if options.comment or not options.screenshot:
     while True:
