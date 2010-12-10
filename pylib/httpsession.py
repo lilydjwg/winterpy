@@ -46,7 +46,11 @@ class Session:
     return response
 
   def __del__(self):
-    self.cookie.save()
+    try:
+      self.cookie.save()
+    except IOError as e:
+      if e.errno != 2:
+        raise
 
 class Operation:
   '''与 Session 配合使用，说明一个会话中可能的操作'''
