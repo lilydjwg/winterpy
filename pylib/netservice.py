@@ -116,6 +116,8 @@ def ubuntuPaste(poster='', screenshot='', code2='',
   '''
   paste 到 http://paste.ubuntu.org.cn/
   screenshot 是 path 对象
+
+  返回查看此帖子的 URL （字符串）
   '''
   from httpsession import Session
   paste_url = 'http://paste.ubuntu.org.cn/'
@@ -138,5 +140,5 @@ def ubuntuPaste(poster='', screenshot='', code2='',
       'Content-Type': data[0],
       'Expect': '100-continue',
     })
-  return r
+  return r.geturl()
 

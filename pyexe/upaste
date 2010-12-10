@@ -47,17 +47,18 @@ def main():
       except EOFError:
         break
   if options.screenshot:
-    post(poster=options.poster,
+    url = post(poster=options.poster,
         code2='\n'.join(c),
         screenshot=path(options.screenshot),
         klass=options.klass,
         filename=options.filename,
       )
   else:
-    post(poster=options.poster,
+    url = post(poster=options.poster,
         code2='\n'.join(c),
         klass=options.klass,
       )
+  print(url)
     
 if __name__ == '__main__':
   try:
