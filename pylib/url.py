@@ -189,13 +189,17 @@ def entityunescape(string):
 def encode_multipart_formdata(fields, files, boundary=None):
   """
   fields is a sequence of (name, value) elements for regular form fields.
-  files is a sequence of (name, filename, value) elements for data to be uploaded as files
-  Return (content_type, body) ready for httplib.HTTP instance
+  files is a sequence of (name, filename, value) elements for data to be
+    uploaded as files
+  All items can be either str or bytes
+
+  Return (content_type, body) ready for httplib.HTTP instance, body will be
+  bytes
 
   from: http://code.activestate.com/recipes/146306-http-client-to-post-using-multipartform-data/
   """
   BOUNDARY = boundary or '----------ThIs_Is_tHe_bouNdaRY_$'
-  CRLF = '\r\n'
+  CRLF = b'\r\n'
   L = []
   for (key, value) in fields:
     L.append('--' + BOUNDARY)
@@ -210,6 +214,7 @@ def encode_multipart_formdata(fields, files, boundary=None):
     L.append(value)
   L.append('--' + BOUNDARY + '--')
   L.append('')
+  L = map(lambda x: x.encode('utf-8') if isinstance(x, str) else x, L)
   body = CRLF.join(L)
   content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
   return content_type, body
