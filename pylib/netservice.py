@@ -3,8 +3,6 @@
 
 '''
 提供网络信息获取服务
-
-2010年11月28日
 '''
 from url import *
 import os
