@@ -15,14 +15,22 @@ import os
 class Session:
   '''通过 cookie 保持一个 HTTP 会话'''
   UserAgent = None
-  def __init__(self, cookiefile=None, UserAgent=None):
+  def __init__(self, cookiefile='', UserAgent=None, environProxy=True):
     self.cookie = http.cookiejar.MozillaCookieJar(cookiefile)
     if os.path.exists(cookiefile):
       self.cookie.load()
     if UserAgent is not None:
       self.UserAgent = UserAgent
-    self.urlopener = urllib.request.build_opener(
-        urllib.request.HTTPCookieProcessor(self.cookie))
+
+    if environProxy:
+      self.urlopener = urllib.request.build_opener(
+          urllib.request.HTTPCookieProcessor(self.cookie),
+          urllib.request.ProxyHandler(),
+        )
+    else:
+      self.urlopener = urllib.request.build_opener(
+          urllib.request.HTTPCookieProcessor(self.cookie),
+        )
 
   def request(self, url, data=None, timeout=None, headers={}):
     '''
