@@ -74,7 +74,7 @@ def primes(start, stop):
     start += 1
 
   while start <= stop:
-    for i in range(3, int(start**0.5)+1, 2):
+    for i in range(3, int(start**0.5), 2):
       if start % i == 0:
         break
     else:
