@@ -120,7 +120,7 @@ class KSession(Session, Operation):
     return self.post('listallshare', {'type': 'out'})['file']
 
   def delete(self, file):
-    self.post('delete', {'fileId[]': file['fileId']})
+    return self.post('delete', {'fileId[]': file['fileId']})
 
   def upload(self, file, parentId='root'):
     '''
@@ -142,7 +142,7 @@ class KSession(Session, Operation):
         )
     contenttype, data = encode_multipart_formdata(fields,
         [('Filedata', file.basename, file.open(encoding='latin1').read())])
-    return self.post('upload', data, headers={'Content-Type': contenttype}, check=False)
+    return self.post('upload', data, headers={'Content-Type': contenttype})
 
   def download(self, file, dir):
     '''
@@ -178,15 +178,9 @@ class KSession(Session, Operation):
     result['fileName'] = URIescape(result['fileName'])
     return '{r[url]}stub={r[stub]}&uname={r[fileName]}'.format(r=result)
 
-  def post(self, loc, arg, check=True, headers={}):
+  def post(self, loc, arg, headers={}):
     res = self.request(self.mainurl+loc+'/', arg, headers=headers)
     result = json.loads(res.read().decode('utf-8'))
-    if check and 'value' in result['result'] and result['result']['value'] == 'ok':
-      pass
-    elif result['result'] == 'ok':
-      pass
-    else:
-      raise KuaipanException(str(result['result']))
     return result
 
 class KuaipanException(Exception):
