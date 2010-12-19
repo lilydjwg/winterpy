@@ -27,6 +27,7 @@ for i in f:
   if i.endswith('~') and f.parent().access(os.W_OK):
     if filter(f):
       try:
+        print("删除", str(f))
         f.unlink()
         log.write(i+'\n')
         # print(i)
