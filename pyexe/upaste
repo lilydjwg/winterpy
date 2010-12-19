@@ -37,8 +37,11 @@ def main():
 
   if options.filename and not options.screenshot:
     parser.error('只有当给出图片时才能使用“文件名”选项')
-  if not options.poster and os.environ.get('USER', '') == 'lilydjwg':
+  user = os.environ.get('USER')
+  if not options.poster and user == 'lilydjwg':
     options.poster = '百合仙子'
+  elif user:
+    options.poster = user
   c = []
   if options.comment or not options.screenshot:
     while True:
