@@ -11,11 +11,7 @@ import netservice, sys, socket
 
 if __name__ == '__main__':
   try:
-    title = netservice.getTitle(sys.argv[1], defaultCharset='gb18030')
+    title = netservice.getTitle(sys.argv[1])
+    print(title)
   except socket.timeout:
     print('timed out')
-  else:
-    if isinstance(title, bytes):
-      import chardet
-      title = title.decode(chardet.detect(title)['encoding'])
-    print(title)

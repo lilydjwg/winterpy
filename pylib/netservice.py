@@ -7,7 +7,7 @@
 from url import *
 import os
 
-def getTitle(url, headers={}, defaultCharset='utf-8', timeout=5):
+def getTitle(url, headers={}, timeout=5):
   '''
   获取网页标题，url 要指定协议的
 
@@ -69,7 +69,7 @@ def getTitle(url, headers={}, defaultCharset='utf-8', timeout=5):
       response, conn = getit(url, proxy='http://localhost:8000')
 
   contentType = response.getheader('Content-Type',
-      default='text/html; charset=%s' % defaultCharset)
+      default='text/html')
   type = contentType.split(';', 1)[0]
   if type.find('html') == -1 and type.find('xml') == -1:
     return None
@@ -77,7 +77,7 @@ def getTitle(url, headers={}, defaultCharset='utf-8', timeout=5):
   try:
     charset = contentType.rsplit('=', 1)[1]
   except IndexError:
-    charset = defaultCharset
+    charset = None
   # 1024 对于 Twitter 来说太小了
   content = response.read(10240)
   conn.close()
@@ -86,12 +86,13 @@ def getTitle(url, headers={}, defaultCharset='utf-8', timeout=5):
   m = re.search(b'<title[^>]*>([^<]*)', content, re.IGNORECASE)
   if m:
     title = m.group(1)
-  try:
-    title = title.decode(charset)
-  except UnicodeDecodeError:
-    return title
 
-  title = entityunescape(title.replace('\n', ''))
+  if charset is None:
+    import chardet
+    title = title.decode(chardet.detect(title)['encoding'])
+  else:
+    title = title.decode(charset)
+  title = entityunescape(title.replace('\n', '')).strip()
 
   return title or None
 
