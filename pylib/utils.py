@@ -28,3 +28,44 @@ def filesize(size):
     return '%dB' % size
   else:
     return '%.1f%siB' % (left, units[unit])
+def input_t(timeout, prompt=''):
+  '''带有超时的输入，使用 select() 实现
+
+  超时返回 None'''
+  from select import select
+
+  # 也可以用多进程/signal 实现
+  # 但 signal 不能在非主线程中调用
+  sys.stdout.write(prompt)
+  sys.stdout.flush()
+  if select([sys.stdin.fileno()], [], [], timeout)[0]:
+    return input()
+
+def getchar(prompt, hidden=False, end='\n'):
+  '''读取一个字符'''
+  import termios
+  sys.stdout.write(prompt)
+  sys.stdout.flush()
+  fd = sys.stdin.fileno()
+
+  if os.isatty(fd):
+    old = termios.tcgetattr(fd)
+    new = termios.tcgetattr(fd)
+    if hidden:
+      new[3] = new[3] & ~termios.ICANON & ~termios.ECHO
+    else:
+      new[3] = new[3] & ~termios.ICANON
+    new[6][termios.VMIN] = 1
+    new[6][termios.VTIME] = 0
+    try:
+      termios.tcsetattr(fd, termios.TCSANOW, new)
+      termios.tcsendbreak(fd, 0)
+      ch = os.read(fd, 7)
+    finally:
+      termios.tcsetattr(fd, termios.TCSAFLUSH, old)
+  else:
+    ch = os.read(fd, 7)
+
+  sys.stdout.write(end)
+  return(ch.decode())
+
