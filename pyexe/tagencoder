@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+'''
+交互式更改 mp3 文件标签编码
+'''
+
+import sys
+import stagger
+from utils import getchar
+
+def encode(song):
+  print(song)
+  try:
+    tag = stagger.read_tag(song)
+  except stagger.errors.NoTagError:
+    return
+
+  modified = False
+  for k, v in tag.items():
+    if k in ('APIC', 'PRIV', 'UFID', 'WXXX', 'TXXX', 'GEOB'):
+      continue
+    if isinstance(v, list):
+      print(k, 'is a list')
+      for i in v:
+        ch = getchar(i.text+' (y/N)')
+        if ch == 'y':
+          modified = True
+          i.encoding = 3
+          i.text = i.text.encode('latin1').decode('gb18030')
+          print(i.text)
+    else:
+      print(k)
+      i = v
+      ch = getchar(i.text[0]+' (y/N)')
+      if ch == 'y':
+        modified = True
+        i.text[0] = i.text[0].encode('latin1').decode('gb18030')
+        print(i.text[0])
+
+  if modified:
+    ch = getchar('保存对 %s 的更改？ (Y/n)' % song)
+    if ch != 'n':
+      tag.write()
+
+if __name__ == '__main__':
+  for i in sys.argv[1:]:
+    encode(i)
+
