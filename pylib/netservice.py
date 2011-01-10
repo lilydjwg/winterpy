@@ -25,7 +25,7 @@ def getTitle(url, headers={}, timeout=5):
 
   defaultheaders = {}
   defaultheaders['User-Agent'] = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.6) Gecko/20100628 Ubuntu/10.04 (lucid) Firefox/3.6.6'
-  defaultheaders['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9'
+  defaultheaders['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.7'
   defaultheaders['Accept-Language'] = 'zh-cn,zh;q=0.5'
   defaultheaders['Accept-Charset'] = 'utf-8,gb18030;q=0.7,*;q=0.7'
   defaultheaders.update(headers)
