@@ -11,8 +11,10 @@ http://www.vim.org/scripts/script.php?script_id=2778
 import os, sys, re
 import distutils.file_util
 import colorsys
+import math
 
-termcolor = { 16: '#000000',
+termcolor = { 
+    16: '#000000',
     17: '#00005f',
     18: '#000087',
     19: '#0000af',
@@ -62,7 +64,7 @@ termcolor = { 16: '#000000',
     63: '#5f5fff',
     64: '#5f8700',
     65: '#5f875f',
-    66: '#5f8787',
+66: '#5f8787',
     67: '#5f87af',
     68: '#5f87d7',
     69: '#5f87ff',
@@ -266,12 +268,29 @@ if os.path.isfile('rgb.txt'):
 elif os.path.isfile(os.path.join(wd, 'rgb.txt')):
   rgbfile = os.path.join(wd, 'rgb.txt')
 else:
-  rgbfile = '/usr/share/vim/vim72/rgb.txt'
+  rgbfile = '/usr/share/X11/rgb.txt'
 name2hex = {}
 groups = {}
 re_hexcolor = re.compile('^#[0-9a-fA-F]{6}$')
 re_hiline = re.compile('^\s*hi\w*\s+[A-Z]\w+')
 re_name = re.compile('(?<=\s)[A-Z]\w+(?=\s+gui)')
+
+def x2f (s):
+  return int(s, 16)/255.0
+
+def color_norm (c):
+  return x2f(c[1:3]), x2f(c[3:5]), x2f(c[5:])
+
+def dis (h1, s1, v1, h2, s2, v2):
+  _2pi = math.pi*2
+  x1 = s1*v1*math.cos(h1*_2pi)
+  y1 = s1*v1*math.sin(h1*_2pi)
+  z1 = v1
+  x2 = s2*v2*math.cos(h2*_2pi)
+  y2 = s2*v2*math.sin(h2*_2pi)
+  z2 = v2
+  return (x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2
+
 class color:
   def __init__(self, r=0, g=0, b=0):
     self.r = r
@@ -284,11 +303,12 @@ class color:
     # TODO 更好的计算法
     best_match= 0
     smallest_distance = 10000000
-    for c in range(16,255):
-      # d = (int(termcolor[c][1:3], 16) - self.r) ** 2 + (int(termcolor[c][3:5], 16) - self.g) ** 2 + (int(termcolor[c][5:], 16) - self.b) ** 2
-      a = colorsys.rgb_to_hsv(float(int(termcolor[c][1:3], 16)), float(int(termcolor[c][3:5], 16)), float(int(termcolor[c][5:], 16)))
-      b = colorsys.rgb_to_hsv(float(self.r), float(self.g), float(self.b))
-      d = (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + ((a[2] - b[2]) / 255.0) ** 2
+    for c in range(16,256):
+
+      a = colorsys.rgb_to_hsv(* color_norm(termcolor[c]))
+      b = colorsys.rgb_to_hsv(self.r/255.0, self.g/255.0, self.b/255.0)
+      d = dis(* (a+b))
+
       if d < smallest_distance:
         smallest_distance = d
         best_match = c
