@@ -69,3 +69,11 @@ def getchar(prompt, hidden=False, end='\n'):
   sys.stdout.write(end)
   return(ch.decode())
 
+def loadso(fname):
+  from ctypes import CDLL
+
+  for d in sys.path:
+    p = os.path.join(d, fname)
+    if os.path.exists(p):
+      return CDLL(p)
+  raise ImportError('%s not found' % fname)
