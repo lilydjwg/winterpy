@@ -61,17 +61,20 @@ def readsh(sh, f):
 
 def readfile(file):
   print('\x1b[1;33m', file+':', '\x1b[m\n', sep='')
-  f = open(file)
-  l = f.readline()
-  if not l.startswith('#!'):
-    print('No shebang found.\n')
-    return
-  if l.find('python') != -1:
-    readpy(file, f)
-  elif l.find('bash') or l.find('/sh') or l.find('zsh'):
-    readsh(file, f)
-  else:
-    print('Unrecognized file type.\n')
+  try:
+    f = open(file)
+    l = f.readline()
+    if not l.startswith('#!'):
+      print('No shebang found.\n')
+      return
+    if l.find('python') != -1:
+      readpy(file, f)
+    elif l.find('bash') or l.find('/sh') or l.find('zsh'):
+      readsh(file, f)
+    else:
+      print('Unrecognized file type.\n')
+  except UnicodeDecodeError:
+    print('Binary file?\n')
 
 if __name__ == '__main__':
   if len(argv) == 1:
