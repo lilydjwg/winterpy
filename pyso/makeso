@@ -1,0 +1,17 @@
+#!/bin/zsh
+
+cd $(dirname $0)
+PS4=
+
+makeaso () {
+  infile=$1
+  outfile=../pylib/_${infile%.*}.so
+  if [[ $outfile -nt $infile ]]; then
+    return
+  fi
+  shift
+  setopt -x
+  gcc $@ -shared "$infile" -o "$outfile"
+}
+
+makeaso ard.c
