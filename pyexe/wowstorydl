@@ -5,55 +5,15 @@ import sys
 import os
 import time
 import re
-import socket
-import signal
 import lxml.html
 from urllib.parse import unquote as URIunescape
+from ard import ard
 
 baseurl         = 'http://www.wowstory.com'
 ark_re          = re.compile(r'ard\("([^"]+)", "([^"]+)"')
 ark_var_re      = re.compile(r'unescape\("([^"]+)"')
 ark_var_real_re = re.compile(r'var (ark\d)="([^"]+)"')
 script_re       = re.compile(r'arw\("([^"]+)", ([^)]+)')
-sock_wfile      = None
-sock_rfile      = None
-pid             = None
-
-def ard_setup(address=('localhost', 8124)):
-  global sock_wfile, sock_rfile, pid
-  s = socket.socket()
-  try:
-    s.connect(address)
-  except socket.error as e:
-    if e.errno == 111:
-      pid = os.fork()
-      if not pid:
-        try:
-          os.execlp("ard.js", "ard.js")
-        except OSError:
-          print("执行 ard 解码器失败！", file=sys.stderr)
-          os.kill(os.getppid(), 15)
-          sys.exit(3)
-      else:
-        def terminated(signum, frame):
-          sys.exit(3)
-        signal.signal(15, terminated)
-    time.sleep(1)
-    print()
-    s.connect(address)
-  sock_rfile = s.makefile(mode='r', buffering=1, encoding='utf-8')
-  sock_wfile = s.makefile(mode='w', buffering=1, encoding='utf-8')
-
-def ard_finalize():
-  sock_wfile.close()
-  sock_rfile.close()
-  if pid is not None:
-    os.kill(pid, 15)
-
-def ard(x, y):
-  print(x, y, file=sock_wfile)
-  sock_wfile.flush()
-  return sock_rfile.readline().strip()
 
 def downloadpage(pageurl, file):
   doc = lxml.html.parse(pageurl)
@@ -98,7 +58,6 @@ def downloadbook(bookurl):
       except (AttributeError, KeyError):
         time.sleep(1)
         print('retry')
-        ard_setup()
 
 def test(url):
   f = open('test.txt', 'w')
@@ -119,10 +78,7 @@ def main():
   print('下载全部完成')
 
 if __name__ == '__main__':
-  ard_setup()
   try:
     main()
   except KeyboardInterrupt:
     print('放弃下载')
-  finally:
-    ard_finalize()
