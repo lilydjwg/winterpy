@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # vim:fileencoding=utf-8
 
-import sys
+import sys, os
 from getpass import getpass
 from httpsession import Session, Operation
-from path import path
 import lxml.html
 import re
 
@@ -13,7 +12,7 @@ re_booktitle = re.compile(r'<span id="book_title">(.+)</span>')
 
 user_config = {
   'username': 'lilyfille',
-  'cookiefile': str(path('~/scripts/python/pydata/shucang.cookie').expand()),
+  'cookiefile': os.path.expanduser('~/scripts/python/pydata/shucang.cookie'),
 }
 
 class Shucang(Session, Operation):
