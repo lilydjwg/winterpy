@@ -283,16 +283,6 @@ def getRgbtxt(): # {{{2
 def color_norm(c): # {{{2
   return tuple(int(x, 16)/255.0 for x in (c[1:3], c[3:5], c[5:7]))
 
-def dis(h1, s1, v1, h2, s2, v2): # {{{2
-  _2pi = math.pi*2
-  x1 = s1*v1*math.cos(h1*_2pi)
-  y1 = s1*v1*math.sin(h1*_2pi)
-  z1 = v1
-  x2 = s2*v2*math.cos(h2*_2pi)
-  y2 = s2*v2*math.sin(h2*_2pi)
-  z2 = v2
-  return (x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2
-
 def loadRgb(): # {{{2
   rgbfile = getRgbtxt()
   rgbtxt = re.compile('^(\d+)\s+(\d+)\s+(\d+)\s+([\w\s]+)$')
@@ -347,7 +337,7 @@ class color: # {{{2
     for c in range(16, 256):
       a = colorsys.rgb_to_hsv(*color_norm(termcolor[c]))
       b = colorsys.rgb_to_hsv(*self.value)
-      d = dis(*(a+b))
+      d = ((a[0] - b[0])) ** 2 + ((a[1] - b[1]) * 2) ** 2 + ((a[2] - b[2]) * 4) ** 2
 
       if d < smallest_distance:
         smallest_distance = d
@@ -381,6 +371,8 @@ class Group: # {{{2
         pass
       if attrs:
         self.attr['cterm'] = ','.join(attrs)
+    elif self.name.lower() == 'cursorline':
+      self.attr['cterm'] = 'none'
 
     guifg = self.attr.get('guifg')
     if guifg:
