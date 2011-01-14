@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+import sys
+from getpass import getpass
+from httpsession import Session, Operation
+from path import path
+import lxml.html
+import re
+
+re_bookinfo  = re.compile(r"var SHUCANG_COM_READER_CONTENTS = '([^']+)'")
+re_booktitle = re.compile(r'<span id="book_title">(.+)</span>')
+
+user_config = {
+  'username': 'lilyfille',
+  'cookiefile': str(path('~/scripts/python/pydata/shucang.cookie').expand()),
+}
+
+class Shucang(Session, Operation):
+  indexurl     = 'http://www.shucang.com/index.php'
+  loginurl     = 'http://www.shucang.com/loginAction.php'
+  chapterurl   = 'http://www.shucang.com/loadChapter.php'
+  bookurl      = 'http://www.shucang.com/reader.php?sub=1&vk=%s&chap=&pos=&prefix='
+  bookindexurl = 'http://www.shucang.com/book.php?sub=view_doc&viewkey=%s'
+  UserAgent    = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.13) Gecko/20101206 Ubuntu/10.10 (maverick) Firefox/3.6.13'
+
+  def __init__(self, username, cookiefile):
+    Session.__init__(self, cookiefile)
+    self.username = username
+    res = self.request(self.indexurl)
+    checklogin = lambda response: response.read().decode('utf-8').find('http://www.shucang.com/logout.php') != -1
+    if not checklogin(res):
+      loggedin = False
+      while not loggedin:
+        password = getpass('请输入 %s 的密码: ' % self.username)
+        if not password:
+          print('放弃登录')
+          return
+        logindata = {
+          'username': self.username,
+          'password': password,
+          'remember_me': '1',
+          'x': '31',
+          'y': '13',
+        }
+        loggedin = self.login(self.loginurl, logindata, checklogin)
+
+  def download(self, viewkey):
+    self.vk = viewkey
+    res = self.request(self.bookurl % viewkey).read().decode('utf-8')
+    doc = lxml.html.fromstring(res)
+    m = re_booktitle.search(res)
+    title = m.group(1)
+    m = re_bookinfo.search(res)
+    # 命名空间 ext 未定义，不能作为 XML
+    doc = lxml.html.fromstring(m.group(1))
+    chapters = doc.cssselect('a')
+    print('下载《%s》，共 %d 页' % (title, len(chapters)))
+    self.file = open(title + '.txt', 'w')
+    print(title, self.bookindexurl % viewkey,
+        sep='\n', end='\n\n', file=self.file)
+    for i, chap in enumerate(chapters):
+      if chap.text in ('声明', '书仓介绍'):
+        print('跳过第 %d 章：%s' % (i, chap.text))
+      else:
+        print('下载第 %d 章：%s' % (i, chap.text))
+        print(chap.text, file=self.file, end='\n\n')
+        self.downloadchap(i)
+    self.file.close()
+
+  def downloadchap(self, n):
+    res = self.request(self.chapterurl, {
+      'chap': str(n),
+      'vk':   self.vk,
+    })
+    doc = lxml.html.parse(res).getroot()
+    for i in doc.cssselect('p'):
+      text = i.xpath('string()').strip()
+      if text:
+        print(text, file=self.file, end='\n\n')
+
+def test():
+  sc = Shucang(**user_config)
+  sc.download('ef2587824f7aaf8d3964')
+
+def main():
+  if len(sys.argv) == 1:
+    print('请给出一些 viewkey')
+    sys.exit(1)
+  vks = sys.argv[1:]
+  sc = Shucang(**user_config)
+  for vk in vks:
+    sc.download(vk)
+  print('下载全部完成')
+
+if __name__ == '__main__':
+  try:
+    main()
+  except KeyboardInterrupt:
+    print('放弃下载')
