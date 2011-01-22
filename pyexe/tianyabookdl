@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+import sys, re
+import lxml.html
+
+'''
+天涯在线书库
+
+注意：原文源码较乱（似是 Word 转换的），因为针对不同的书需要进行一些调整
+'''
+
+baseurl = 'http://www.tianyabook.com/'
+whitespace = re.compile(r' +')
+br = re.compile(r'<br\s*/?>')
+tag = re.compile(r'<[^>]+>')
+strip = re.compile(r'^\s+|\s+$', re.MULTILINE)
+
+def downloadpage(pageurl, file):
+  doc = lxml.html.parse(pageurl).getroot()
+  para = doc.cssselect('td.l15 > *')
+  for p in para:
+    l = lxml.html.tostring(p, encoding=str)
+    l = l.replace('&#13;', '')
+    l = br.sub('\n', l)
+    l = tag.sub('', l)
+    l = whitespace.sub(' ', l)
+    l = strip.sub('', l)
+    l = l.replace('\n', '\n\n')
+    print(l, end='\n\n', file=file)
+
+def downloadbook(bookurl):
+  doc = lxml.html.parse(bookurl).getroot()
+  info, chapters = doc.cssselect('.tt2 > table > tbody > tr > td > table')[:2]
+  try:
+    b = info.cssselect('b')[0]
+    title = b.text.strip()
+    moreinfo = b.getnext().xpath('string()').strip()
+  except IndexError:
+    b = info.cssselect('.xt')[0]
+    title = b.text.strip()
+    moreinfo = b[0].xpath('string()').strip()
+  f = open(title + '.txt', 'w')
+  print(title, moreinfo, bookurl, sep='\n', end='\n\n', file=f)
+  links = chapters.cssselect('a')
+  print('下载《%s》，共 %d 页' % (title, len(links)))
+
+  for i in links:
+    print('下载：%s' % i.text)
+    pos = bookurl.rfind('/')
+    url = bookurl[:pos+1] + i.get('href')
+    downloadpage(url, f)
+
+  print('下载完成。请预览以确定下载内容的正确性。')
+
+def main():
+  if len(sys.argv) == 1:
+    print('请给出一些 URL 地址')
+    sys.exit(1)
+  urls = sys.argv[1:]
+  for u in urls:
+    if not u.startswith(baseurl):
+      print('参数 %s 不是正确的 URL.' % u)
+      sys.exit(2)
+  for u in urls:
+    downloadbook(u)
+  print('下载全部完成')
+
+def test():
+  downloadpage('http://www.tianyabook.com/xiandai/huobizhanzheng/1.htm', sys.stdout)
+
+if __name__ == '__main__':
+  try:
+    main()
+    # test()
+  except KeyboardInterrupt:
+    print('放弃下载')
