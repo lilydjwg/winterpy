@@ -52,7 +52,7 @@ def downloadbook(bookurl):
     f.write('\n\n')
     while True:
       try:
-        print('下载《%s》' % a.text)
+        print('下载：%s' % a.text)
         downloadpage(baseurl + a.get('href'), f)
         break
       except (AttributeError, KeyError):
