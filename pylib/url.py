@@ -143,32 +143,6 @@ def parseQuery(query):
     ret[x[0]] = URIunescape(x[1])
   return ret
 
-def urlopen(url, headers={}, proxy=None, timeout=5):
-  '''打开 URL，返回 HTTPResponse 对象和新建的连接
-  只支持 HTTP 和 HTTPS'''
-
-  if not isinstance(url, URL):
-    raise TypeError('URL object expected')
-
-  import http.client
-  host = proxy and URL(proxy).netloc or url.netloc
-  if url.scheme == 'http':
-    conn = http.client.HTTPConnection(host, timeout=timeout)
-  elif url.scheme == 'https':
-    conn = http.client.HTTPSConnection(host, timeout=timeout)
-  else:
-    raise http.client.UnknownProtocol('不支持的协议类型：%s' % url.scheme)
-
-  if proxy:
-    conn.putrequest('GET', url.geturl().split('#')[0])
-  else:
-    conn.putrequest('GET', url.getpath().split('#')[0])
-  for k, v in headers.items():
-    conn.putheader(k, v)
-  conn.endheaders()
-
-  return conn.getresponse(), conn
-
 def entityunescape(string):
   '''HTML 实体反转义'''
   from html.entities import entitydefs

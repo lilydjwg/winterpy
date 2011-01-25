@@ -5,7 +5,6 @@
 提供网络信息获取服务
 '''
 from url import *
-import os
 
 def getTitle(url, headers={}, timeout=5):
   '''
@@ -21,7 +20,7 @@ def getTitle(url, headers={}, timeout=5):
   # TODO 对 meta 刷新的处理
   import re
   import socket
-  import http.client
+  from httpsession import Session
 
   defaultheaders = {}
   defaultheaders['User-Agent'] = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.6) Gecko/20100628 Ubuntu/10.04 (lucid) Firefox/3.6.6'
@@ -31,45 +30,16 @@ def getTitle(url, headers={}, timeout=5):
   defaultheaders.update(headers)
   headers = defaultheaders
 
-  if not isinstance(url, URL):
-    url = URL(url)
+  s = Session()
+  try:
+    response = s.request(url, headers=headers)
+  except socket.error:
+    response = s.request(url, headers=headers, proxy={
+      'http': 'http://localhost:8000',
+      'https': 'http://localhost:8000',
+    })
 
-  def getit(url, proxy=None):
-    response, conn = urlopen(url, headers, proxy=proxy, timeout=timeout)
-    # 重定向
-    count = 0
-    while response.status in (301, 302):
-      count += 1
-      if count > 10:
-        raise http.client.HTTPException('过多的重定向')
-      conn.close()
-      newurl = URL(response.getheader('Location'))
-      if not newurl.scheme:
-        newurl.scheme = url.scheme
-        newurl.netloc = url.netloc
-        newurl.port = url.port
-        newurl.username = url.username
-        newurl.password = url.password
-        newurl.hostname = url.hostname
-        if not newurl.path.startswith('/'):
-          if url.path.endswith('/'):
-            newurl.path = url.path + newurl.path
-          else:
-            newurl.path = url.path.rsplit('/', 1)[0] + '/' + newurl.path
-      url = newurl
-      response, conn = urlopen(url, headers, proxy=proxy, timeout=timeout)
-    return response, conn
-
-  if 'http_proxy' in os.environ:
-    response, conn = getit(url, proxy=os.environ['http_proxy'])
-  else:
-    try:
-      response, conn = getit(url)
-    except socket.error:
-      response, conn = getit(url, proxy='http://localhost:8000')
-
-  contentType = response.getheader('Content-Type',
-      default='text/html')
+  contentType = response.getheader('Content-Type', default='text/html')
   type = contentType.split(';', 1)[0]
   if type.find('html') == -1 and type.find('xml') == -1:
     return None
@@ -80,7 +50,6 @@ def getTitle(url, headers={}, timeout=5):
     charset = None
   # 1024 对于 Twitter 来说太小了
   content = response.read(10240)
-  conn.close()
 
   title = b''
   m = re.search(b'<title[^>]*>([^<]*)', content, re.IGNORECASE)
@@ -112,6 +81,7 @@ def translate(q, langpair='|zh', hl='zh'):
     raise Exception(ans)
 
   return ans['responseData']['translatedText']
+
 def ubuntuPaste(poster='', screenshot='', code2='',
     klass='bash', filename=None):
   '''
