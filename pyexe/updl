@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+import os
+import time
+from utils import filesize
+
+import bottle
+bottle.debug(True)
+from bottle import route, run, request, redirect, static_file, template
+
+ROOT_DIR   = os.path.expanduser('~/scripts/python/pydata/updl')
+STATIC_DIR = os.path.join(ROOT_DIR, 'static')
+UPLOAD_DIR = os.path.expanduser('~/tmpfs/upload')
+DOWNLD_DIR = os.path.expanduser('~/.nginx/www/dl')
+TEMPLATE_PATH = os.path.join(ROOT_DIR, 'view')
+if not os.path.exists(UPLOAD_DIR):
+  os.mkdir(UPLOAD_DIR)
+bottle.TEMPLATE_PATH = [TEMPLATE_PATH]
+
+class DotDict: pass
+
+@route('/updl/upload', method='GET')
+def uploader():
+  return static_file('upload.html', root=ROOT_DIR)
+
+@route('/updl/success', method='GET')
+def uploader():
+  return static_file('success.html', root=ROOT_DIR)
+
+@route('/updl/upload', method='POST')
+def do_upload():
+  files = request.files.getall('file')
+  for f in files:
+    name = f.filename
+    data = f.file.read(4096)
+    out = open(os.path.join(UPLOAD_DIR, name), 'w', encoding='ISO-8859-1')
+    while data:
+      out.write(data)
+      data = f.file.read(4096)
+  redirect('/updl/success', 302)
+
+@route('/static/:path#.+#')
+def server_static(path):
+  return static_file(path, root=STATIC_DIR)
+
+@route('/updl/dl')
+def dir_redirect():
+  redirect('/updl/dl/', 301)
+
+@route('/updl/dl/:path#.*#')
+def download(path):
+  realpath = os.path.join(DOWNLD_DIR, path)
+  if os.path.isdir(realpath):
+    files = []
+    dirs = []
+    for i in os.listdir(realpath):
+      f = DotDict()
+      f.name = i
+      ri = os.path.join(realpath, i)
+      try:
+        st = os.stat(ri)
+      except OSError:
+        continue
+      f.size = filesize(st.st_size)
+      f.time = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(st.st_mtime))
+      if os.path.isdir(ri):
+        f.name += '/'
+        dirs.append(f)
+      else:
+        files.append(f)
+    dirs.sort(key=lambda x: x.name)
+    files.sort(key=lambda x: x.name)
+    return template('listdir', files=dirs+files, path=path)
+  else:
+    return static_file(path, DOWNLD_DIR)
+
+run(port='4323', reloader=True)
+
