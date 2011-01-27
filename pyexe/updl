@@ -34,7 +34,10 @@ def do_upload():
   for f in files:
     name = f.filename
     data = f.file.read(4096)
-    out = open(os.path.join(UPLOAD_DIR, name), 'w', encoding='ISO-8859-1')
+    outfile = os.path.join(UPLOAD_DIR, name)
+    if os.path.exists(outfile):
+      outfile += '.1'
+    out = open(outfile, 'w', encoding='ISO-8859-1')
     while data:
       out.write(data)
       data = f.file.read(4096)
