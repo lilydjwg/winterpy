@@ -9,7 +9,7 @@ import bottle
 bottle.debug(True)
 from bottle import route, run, request, redirect, static_file, template
 
-ROOT_DIR   = os.path.expanduser('~/scripts/python/pydata/updl')
+ROOT_DIR   = os.path.expanduser('~/scripts/python/pyother/updl')
 STATIC_DIR = os.path.join(ROOT_DIR, 'static')
 UPLOAD_DIR = os.path.expanduser('~/tmpfs/upload')
 DOWNLD_DIR = os.path.expanduser('~/.nginx/www/dl')
