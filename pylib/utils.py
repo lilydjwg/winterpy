@@ -10,6 +10,7 @@
 import os, sys
 
 def path_import(path):
+  '''指定路径来 import'''
   d, f = os.path.split(path)
   if d not in sys.path:
     sys.path[0:0] = [d]
@@ -18,6 +19,7 @@ def path_import(path):
     return ret
 
 def filesize(size):
+  '''将 数字 转化为 xxKiB 的形式'''
   units = 'KMGT'
   left = size
   unit = -1
@@ -70,6 +72,7 @@ def getchar(prompt, hidden=False, end='\n'):
   return(ch.decode())
 
 def loadso(fname):
+  '''ctypes.CDLL 的 wrapper，从 sys.path 中搜索文件'''
   from ctypes import CDLL
 
   for d in sys.path:
