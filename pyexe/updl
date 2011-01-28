@@ -6,7 +6,7 @@ import time
 from utils import filesize
 
 import bottle
-bottle.debug(True)
+# bottle.debug(True)
 from bottle import route, run, request, redirect, static_file, template
 
 ROOT_DIR   = os.path.expanduser('~/scripts/python/pyother/updl')
@@ -55,6 +55,8 @@ def dir_redirect():
 def download(path):
   realpath = os.path.join(DOWNLD_DIR, path)
   if os.path.isdir(realpath):
+    if os.path.exists(os.path.join(realpath, 'index.html')):
+      return static_file('index.html', root=realpath)
     files = []
     dirs = []
     for i in os.listdir(realpath):
@@ -78,5 +80,6 @@ def download(path):
   else:
     return static_file(path, DOWNLD_DIR)
 
-run(port='4323', reloader=True)
+run(port='4323')
+# run(port='4323', reloader=True)
 
