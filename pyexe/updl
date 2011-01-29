@@ -4,6 +4,12 @@
 import os
 import time
 from utils import filesize
+try:
+  from notify import notify
+except ImportError:
+  pass
+n = notify('updl server 开始运行')
+n.show()
 
 import bottle
 # bottle.debug(True)
@@ -45,6 +51,7 @@ def do_upload():
     while data:
       out.write(data)
       data = f.file.read(4096)
+    n.update('%s 已上传。' % name)
   redirect('/updl/success', 302)
 
 @route('/static/:path#.+#')
