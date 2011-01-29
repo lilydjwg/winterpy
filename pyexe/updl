@@ -20,6 +20,10 @@ bottle.TEMPLATE_PATH = [TEMPLATE_PATH]
 
 class DotDict: pass
 
+@route('/')
+def blog():
+  return redirect('http://lilydjwg.is-programmer.com/', 301)
+
 @route('/updl/upload', method='GET')
 def uploader():
   return static_file('upload.html', root=ROOT_DIR)
@@ -80,6 +84,6 @@ def download(path):
   else:
     return static_file(path, DOWNLD_DIR)
 
-run(port='4323')
+run(port='4323', host='0.0.0.0')
 # run(port='4323', reloader=True)
 
