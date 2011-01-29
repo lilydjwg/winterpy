@@ -118,7 +118,7 @@ class TODO:
 
   def do_get(self):
     '''选取一项事务'''
-    sql = '''select id, what from item order by random() limit 1'''
+    sql = '''select id, what from item where id != %d order by random() limit 1''' % self.getlast()[0]
     self.cursor.execute(sql)
     for c in self.cursor:
       id, what = c
