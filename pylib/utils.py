@@ -2,9 +2,7 @@
 # vim:fileencoding=utf-8
 
 '''
-一些常用短小的函数/类
-
-2010年10月22日
+一些常用短小的函数/类，另见 termutils.py
 '''
 
 import os, sys
