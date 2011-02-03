@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE, STDOUT
 from python import mymodsImported
 
 def getModuleFiles(file):
-  return [m.__file__ for m in mymodsImported(file)]
+  return {m.__file__ for m in mymodsImported(file)}
 
 if __name__ == '__main__':
   fin = dry_run = False
@@ -28,6 +28,7 @@ if __name__ == '__main__':
 
   if fin:
     files = getModuleFiles(fin)
+    files.add(fin)
     if dry_run:
       print('\n'.join(files))
     else:
