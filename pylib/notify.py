@@ -10,6 +10,7 @@ TODO：优先级、超时时间等
 from ctypes import *
 
 libnotify = CDLL('libnotify.so')
+gobj = CDLL('libgobject-2.0.so')
 
 class notify:
   def __init__(self, summary, body=None, icon_str=None):
@@ -48,6 +49,7 @@ class notify:
 
   def __del__(self):
     try:
+      gobj.g_object_unref(self.notify)
       libnotify.notify_uninit()
     except AttributeError:
       # libnotify.so 已被卸载
