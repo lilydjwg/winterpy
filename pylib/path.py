@@ -246,6 +246,24 @@ class path:
     self.value = newname
     return self
 
+  def copyto(self, newpath):
+    '''复制文件，同时更新本对象所指'''
+    newpath = self.__class__(newpath)
+    if newpath.isdir():
+      newpath.join(self.basename)
+    import shutil
+    shutil.copy2(self.value, newpath.value)
+    self.value = newpath.value
+
+  def moveto(self, newpath):
+    '''移动文件，同时更新本对象所指'''
+    newpath = self.__class__(newpath)
+    if newpath.isdir():
+      newpath.join(self.basename)
+    import shutil
+    shutil.move(self.value, newpath.value)
+    self.value = newpath.value
+
   def glob(self, pattern):
     '''返回 list'''
     import glob
