@@ -19,7 +19,7 @@ def path_import(path):
 def filesize(size):
   '''将 数字 转化为 xxKiB 的形式'''
   units = 'KMGT'
-  left = size
+  left = abs(size)
   unit = -1
   while left > 1100 and unit < 3:
     left = left / 1024
@@ -27,6 +27,8 @@ def filesize(size):
   if unit == -1:
     return '%dB' % size
   else:
+    if size < 0:
+      left = -left
     return '%.1f%siB' % (left, units[unit])
 def input_t(timeout, prompt=''):
   '''带有超时的输入，使用 select() 实现
