@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+# coding=utf-8
+
+'''
+转换音乐文件以便传到手机
+
+参数为源目录和目的目录，从 stdin 读取文件列表（相对于源目录）
+'''
+
+import sys, os
+import queue
+from threading import Thread
+from path import path
+import subprocess
+import stagger
+
+THREAD_NUM = 2
+LOGFILE = path('~/etc/log/convertmusic').expand()
+
+q = queue.Queue()
+err = []
+
+def worker():
+  while True:
+    item = q.get()
+    song = os.path.join(srcdir, item)
+    tag = stagger.read_tag(song)
+    dstsong = os.path.join(dstdir, item)
+    path(dstsong).parent().mkdir()
+    cmd = ['lame', '--quiet', '-q', '2', '--cbr', '-b', '96', '--noreplaygain',
+      '--ignore-tag-errors', '--add-id3v2', '--pad-id3v2',
+      '--tt', tag.title, '--ta', tag.artist, '--tl', tag.album,
+      song, dstsong]
+    status = subprocess.call(cmd)
+    if status:
+      err.append(item)
+    q.task_done()
+
+def main():
+  global srcdir, dstdir
+  try:
+    _, srcdir, dstdir = sys.argv
+  except ValueError:
+    print('参数错误', file=sys.stderr)
+    sys.exit(-1)
+
+  for i in range(THREAD_NUM):
+     t = Thread(target=worker)
+     t.daemon = True
+     t.start()
+
+  for i in sys.stdin:
+    q.put(i.strip())
+
+  q.join()
+
+  if err:
+    with LOGFILE.open('w') as log:
+      for i in err:
+        print(i, file=log)
+    sys.exit(len(err))
+
+if __name__ == '__main__':
+  main()
