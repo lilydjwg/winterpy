@@ -9,31 +9,52 @@
 
 import sys, os
 import queue
-from threading import Thread
+import threading
 from path import path
 import subprocess
 import stagger
 
 THREAD_NUM = 2
 LOGFILE = path('~/etc/log/convertmusic').expand()
+tmpprefix = str(path('~/tmpfs/inprogress').expand())
 
 q = queue.Queue()
 err = []
+tagwritelock = threading.Condition()
+tagwritedata = [None, None, None]
 
 def worker():
   while True:
     item = q.get()
     song = os.path.join(srcdir, item)
-    tag = stagger.read_tag(song)
+    tmpsong = tmpprefix + '.%d' % threading.current_thread().ident
+    try:
+      tag = stagger.read_tag(song)
+    except stagger.errors.NoTagError:
+      tag = None
     dstsong = os.path.join(dstdir, item)
-    path(dstsong).parent().mkdir()
+    try:
+      path(dstsong).parent().mkdir()
+    except OSError: # File exists
+      pass
     cmd = ['lame', '--quiet', '-q', '2', '--cbr', '-b', '96', '--noreplaygain',
-      '--ignore-tag-errors', '--add-id3v2', '--pad-id3v2',
-      '--tt', tag.title, '--ta', tag.artist, '--tl', tag.album,
-      song, dstsong]
+      song, tmpsong]
     status = subprocess.call(cmd)
     if status:
       err.append(item)
+    else:
+      # stagger 用到了信号，但信号只能在主线程中设置
+      waiting = threading.Condition()
+      tagwritelock.acquire()
+      tagwritedata[0] = tag
+      tagwritedata[1] = tmpsong
+      tagwritedata[2] = waiting
+      tagwritelock.notify()
+      tagwritelock.release()
+      waiting.acquire()
+      waiting.wait()
+      path(tmpsong).moveto(dstsong)
+      waiting.release()
     q.task_done()
 
 def main():
@@ -45,13 +66,25 @@ def main():
     sys.exit(-1)
 
   for i in range(THREAD_NUM):
-     t = Thread(target=worker)
+     t = threading.Thread(target=worker)
      t.daemon = True
      t.start()
 
+  itemcount = 0
   for i in sys.stdin:
+    itemcount += 1
     q.put(i.strip())
 
+  while itemcount != 0:
+    tagwritelock.acquire()
+    tagwritelock.wait()
+    if tagwritedata[0] is not None:
+      tagwritedata[0].write(tagwritedata[1])
+    tagwritelock.release()
+    tagwritedata[2].acquire()
+    tagwritedata[2].notify()
+    tagwritedata[2].release()
+    itemcount -= 1
   q.join()
 
   if err:
