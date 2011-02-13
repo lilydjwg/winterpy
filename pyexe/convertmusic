@@ -31,7 +31,9 @@ def worker():
     try:
       tag = stagger.read_tag(song)
     except stagger.errors.NoTagError:
-      tag = None
+      tag = stagger.tags.Tag24()
+      tag.artist, tag.title = os.path.splitext(item)[0].split('/')
+      tag.album = '未知'
     dstsong = os.path.join(dstdir, item)
     try:
       path(dstsong).parent().mkdir()
