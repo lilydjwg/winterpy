@@ -11,3 +11,6 @@ def green(str):
 def red(str):
   return '\x1b[31m%s\x1b[m' % str
 
+def yellow(str):
+  return '\x1b[1;33m%s\x1b[m' % str
+
