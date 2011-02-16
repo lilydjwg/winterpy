@@ -4,7 +4,7 @@
 '''
 比较本地和手机的音乐
 
-依赖 convertmusic
+依赖 musicconvert
 '''
 
 import os, sys
@@ -75,14 +75,14 @@ def main():
           os.unlink(os.path.join(i.right, j))
       if i.diff_files:
         import subprocess
-        p = subprocess.Popen(('convertmusic', srcdir, dstdir), stdin=subprocess.PIPE)
+        p = subprocess.Popen(('musicconvert', srcdir, dstdir), stdin=subprocess.PIPE)
         for j in i.diff_files:
           j = os.path.join(i.right, j)
           p.stdin.write(j.encode()+b'\n')
         p.stdin.close()
         returncode = p.wait()
         if returncode:
-          print('convertmusic 返回了错误号', returncode, file=sys.stderr)
+          print('musicconvert 返回了错误号', returncode, file=sys.stderr)
 
 if __name__ == '__main__':
   main()

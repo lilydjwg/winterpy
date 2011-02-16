@@ -5,6 +5,8 @@
 转换音乐文件以便传到手机
 
 参数为源目录和目的目录，从 stdin 读取文件列表（相对于源目录）
+
+目前主要用于 musicselect.vim 插件和 musicmodified 程序
 '''
 
 import sys, os
@@ -15,7 +17,7 @@ import subprocess
 import stagger
 
 THREAD_NUM = 2
-LOGFILE = path('~/etc/log/convertmusic').expand()
+LOGFILE = path('~/etc/log/musicconvert').expand()
 tmpprefix = str(path('~/tmpfs/inprogress').expand())
 
 q = queue.Queue()
