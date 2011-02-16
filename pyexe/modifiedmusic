@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+'''
+比较本地和手机的音乐
+
+依赖 convertmusic
+'''
+
+import os, sys
+import filecmp
+from termutils import *
+
+srcdir = os.path.expanduser('~/音乐')
+dstdir = '/media/PHONE CARD/Music'
+
+class dircmp(filecmp.dircmp):
+  def phase3(self): # Find out differences between common files
+    # 使用自定义的比较函数
+    xx = ([], [], [])
+    for x in self.common_files:
+      ax = os.path.join(self.left, x)
+      bx = os.path.join(self.right, x)
+      xx[filecmp._cmp(ax, bx, True, cmp=newer)].append(x)
+    self.same_files, self.diff_files, self.funny_files = xx
+
+  def phase4(self): # Find out differences between common subdirectories
+    # 使用这个子类
+    self.subdirs = {}
+    for x in self.common_dirs:
+      a_x = os.path.join(self.left, x)
+      b_x = os.path.join(self.right, x)
+      self.subdirs[x] = dircmp(a_x, b_x, self.ignore, self.hide)
+
+  methodmap = dict(filecmp.dircmp.methodmap)
+  methodmap.update(subdirs=phase4,
+                   same_files=phase3, diff_files=phase3, funny_files=phase3)
+
+def newer(f1, f2, shallow=True):
+  """Compare two files.
+
+  Arguments:
+
+    f1 -- First file name
+    f2 -- Second file name
+    shallow -- Ignored
+
+  Return value:
+
+    True if the files are considered the same, False otherwise.
+  """
+  s1 = os.stat(f1)
+  s2 = os.stat(f2)
+  return s1.st_mtime <= s2.st_mtime
+
+def main():
+  cmp = dircmp(srcdir, dstdir)
+  subs = tuple(filter(lambda x: x.diff_files or x.right_only, cmp.subdirs.values()))
+  if not subs:
+    print('无变更。')
+    return
+
+  for i in subs:
+    if i.right_only:
+      i.right_only.sort()
+      print(red('应当删除：\n\t'), '\n\t'.join(i.right_only))
+    if i.diff_files:
+      i.diff_files.sort()
+      print(green('应当更新：\n\t'), '\n\t'.join(i.diff_files))
+
+  if input('执行以上操作吗？[y/N] ') in 'Yy':
+    for i in subs:
+      if i.right_only:
+        for j in i.right_only:
+          os.unlink(os.path.join(i.right, j))
+      if i.diff_files:
+        import subprocess
+        p = subprocess.Popen(('convertmusic', srcdir, dstdir), stdin=subprocess.PIPE)
+        for j in i.diff_files:
+          j = os.path.join(i.right, j)
+          p.stdin.write(j.encode()+b'\n')
+        p.stdin.close()
+        returncode = p.wait()
+        if returncode:
+          print('convertmusic 返回了错误号', returncode, file=sys.stderr)
+
+if __name__ == '__main__':
+  main()
+
