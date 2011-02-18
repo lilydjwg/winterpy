@@ -9,10 +9,11 @@ import pickle
 import os
 
 class PData:
-  def __init__(self, fname, readonly=False):
+  def __init__(self, fname, readonly=False, default=None):
     '''
     读取文件fname。readonly指定析构时不回存数据
     如果数据已加锁，将会抛出PDataError异常
+    default 指出如果文件不存在或为空时的数据
 
     注意：
       要正确地写回数据，需要保证此对象在需要写回时依旧存在，或者使用with语句
@@ -44,10 +45,10 @@ class PData:
     try:
       self.data = pickle.load(open(self.fname, 'rb'))
     except EOFError:
-      self.data = None
+      self.data = default
     except IOError as e:
       if e.errno == 2 and not readonly: #文件不存在
-        self.data = None
+        self.data = default
       else:
         raise
 
