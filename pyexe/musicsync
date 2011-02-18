@@ -10,9 +10,12 @@
 import os, sys
 import filecmp
 from termutils import *
+import pickleddata
+from path import path
 
 srcdir = os.path.expanduser('~/音乐')
 dstdir = '/media/PHONE CARD/Music'
+oldsongs = os.path.expanduser('~/scripts/python/pydata/oldsongs')
 
 class dircmp(filecmp.dircmp):
   def phase3(self): # Find out differences between common files
@@ -53,10 +56,22 @@ def newer(f1, f2, shallow=True):
   s2 = os.stat(f2)
   return s1.st_mtime <= s2.st_mtime
 
+def getNewSongs():
+  allsongs = set()
+  for i in path(srcdir).traverse():
+    if i.isfile():
+      allsongs.add(str(i)[len(str(srcdir))+1:])
+
+  with pickleddata.PData(oldsongs, default=set()) as o:
+    new = allsongs - o
+    o |= new
+  return new
+
 def main():
+  new = sorted(getNewSongs())
   cmp = dircmp(srcdir, dstdir)
   subs = tuple(filter(lambda x: x.diff_files or x.right_only, cmp.subdirs.values()))
-  if not subs:
+  if not (subs or new):
     print('无变更。')
     return
 
@@ -68,16 +83,21 @@ def main():
       i.diff_files.sort()
       print(green('应当更新：\n\t'), '\n\t'.join(i.diff_files))
 
+  if new:
+    print(yellow('新加歌曲：\n\t'), '\n\t'.join(new))
+
   if input('执行以上操作吗？[y/N] ') in 'Yy':
     for i in subs:
       if i.right_only:
         for j in i.right_only:
           os.unlink(os.path.join(i.right, j))
-      if i.diff_files:
+      if i.diff_files or newsonglist:
         import subprocess
         p = subprocess.Popen(('musicconvert', srcdir, dstdir), stdin=subprocess.PIPE)
         for j in i.diff_files:
           j = os.path.join(i.right, j)
+          p.stdin.write(j.encode()+b'\n')
+        for j in new:
           p.stdin.write(j.encode()+b'\n')
         p.stdin.close()
         returncode = p.wait()
