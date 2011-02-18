@@ -105,5 +105,8 @@ def main():
           print('musicconvert 返回了错误号', returncode, file=sys.stderr)
 
 if __name__ == '__main__':
+  if not os.path.isdir(dstdir):
+    print('目标目录 %s 不存在。' % dstdir, file=sys.stderr)
+    sys.exit(1)
   main()
 
