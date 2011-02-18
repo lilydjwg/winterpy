@@ -3,8 +3,6 @@
 
 '''
 让pickle更方便的类，使用它时只需要指定文件即可，不需要记着保存
-
-2010年7月20日
 '''
 
 import pickle
@@ -34,10 +32,9 @@ class PData:
           except ValueError:
             break
 
-          from psi.process import Process, NoSuchProcessError
           try:
-            p = Process(pid)
-          except NoSuchProcessError:
+            os.kill(pid, 0)
+          except OSError:
             break
           else:
             self.lock = None
