@@ -37,18 +37,15 @@ def getmail(config):
   os.system('getmail -n -r%s'%config.expand())
 
 def main():
-  pd = PData(datafile)
-  old = pd.data
-  if old is None:
-    pd.data = Config()
-  for p in configPath:
-    name = p.basename
-    time = priority[name] or defaultTime
-    time = timedelta(minutes=time)
-    old_time = old[name] or datetime(2010, 6, 15) # 写作此程序的这天
-    if datetime.today() - old_time >= time:
-      getmail(p)
-      old[name] = datetime.today()
+  with PData(datafile, default=Config()) as old:
+    for p in configPath:
+      name = p.basename
+      time = priority[name] or defaultTime
+      time = timedelta(minutes=time)
+      old_time = old[name] or datetime(2010, 6, 15) # 写作此程序的这天
+      if datetime.today() - old_time >= time:
+        getmail(p)
+        old[name] = datetime.today()
 
 if __name__ == '__main__':
   main()
