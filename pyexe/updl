@@ -43,6 +43,10 @@ def do_upload():
   files = request.files.getall('file')
   for f in files:
     name = f.filename
+    try:
+      name = name.encode('latin1').decode('utf-8')
+    except:
+      pass
     data = f.file.read(4096)
     outfile = os.path.join(UPLOAD_DIR, name)
     if os.path.exists(outfile):
