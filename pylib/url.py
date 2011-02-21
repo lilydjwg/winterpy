@@ -134,15 +134,6 @@ class PostData:
   def __bool__(self):
     return bool(self.data)
 
-def parseQuery(query):
-  '''解析 URL 中的 query 部分，返回 dict'''
-  items = query.split('&')
-  ret = {}
-  for x in items:
-    x = x.split('=')
-    ret[x[0]] = URIunescape(x[1])
-  return ret
-
 def entityunescape(string):
   '''HTML 实体反转义'''
   from html.entities import entitydefs
