@@ -78,31 +78,30 @@ def main():
   for i in subs:
     if i.right_only:
       i.right_only.sort()
-      print(red('应当删除：\n\t'), '\n\t'.join(i.right_only))
+      print(red('应当删除：\n\t'), '\n\t '.join(i.right_only))
     if i.diff_files:
       i.diff_files.sort()
-      print(green('应当更新：\n\t'), '\n\t'.join(i.diff_files))
+      print(green('应当更新：\n\t'), '\n\t '.join(i.diff_files))
 
   if new:
-    print(yellow('新加歌曲：\n\t'), '\n\t'.join(new))
+    print(yellow('新加歌曲：\n\t'), '\n\t '.join(new))
 
   if input('执行以上操作吗？[y/N] ') in 'Yy':
+    toconvert = set(new)
     for i in subs:
-      if i.right_only:
-        for j in i.right_only:
-          os.unlink(os.path.join(i.right, j))
-      if i.diff_files or newsonglist:
-        import subprocess
-        p = subprocess.Popen(('musicconvert', srcdir, dstdir), stdin=subprocess.PIPE)
-        for j in i.diff_files:
-          j = os.path.join(i.right, j)
-          p.stdin.write(j.encode()+b'\n')
-        for j in new:
-          p.stdin.write(j.encode()+b'\n')
-        p.stdin.close()
-        returncode = p.wait()
-        if returncode:
-          print('musicconvert 返回了错误号', returncode, file=sys.stderr)
+      for j in i.right_only:
+        os.unlink(os.path.join(i.right, j))
+      for j in i.diff_files:
+        toconvert.add(os.path.join(i.right, j))
+    if toconvert:
+      import subprocess
+      p = subprocess.Popen(('musicconvert', srcdir, dstdir), stdin=subprocess.PIPE)
+      for j in toconvert:
+        p.stdin.write(j.encode()+b'\n')
+      p.stdin.close()
+      returncode = p.wait()
+      if returncode:
+        print('musicconvert 返回了错误号', returncode, file=sys.stderr)
 
 if __name__ == '__main__':
   if not os.path.isdir(dstdir):
