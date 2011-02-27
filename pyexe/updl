@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim:fileencoding=utf-8
 
-import os
+import os, sys
 import time
 from utils import filesize
 try:
@@ -10,6 +10,8 @@ except ImportError:
   pass
 n = notify('updl server 开始运行')
 n.show()
+
+sys.stderr = open(os.path.expanduser('~/etc/log/updl.access.log'), 'a', buffering=1)
 
 import bottle
 # bottle.debug(True)
@@ -68,11 +70,12 @@ def dir_redirect():
 
 @route('/updl/dl/:path#.*#')
 def download(path):
+  path = path.lstrip('/')
   realpath = os.path.join(DOWNLD_DIR, path)
   if os.path.isdir(realpath):
     if os.path.exists(os.path.join(realpath, 'index.html')):
       return static_file('index.html', root=realpath)
-    elif not path.endswith('/'):
+    elif path and not path.endswith('/'):
       redirect('/updl/dl/%s/' % path, 301)
     files = []
     dirs = []
