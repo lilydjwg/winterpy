@@ -52,7 +52,7 @@ def do_upload():
     outfile = os.path.join(UPLOAD_DIR, name)
     if os.path.exists(outfile):
       outfile += '.1'
-    out = open(outfile, 'w', encoding='ISO-8859-1')
+    out = open(outfile, 'wb')
     while data:
       out.write(data)
       data = f.file.read(4096)
