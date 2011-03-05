@@ -18,7 +18,7 @@ class TODO:
 
   def __call__(self, argv):
     if not argv:
-      self.do_get()
+      self.do_last()
     else:
       cmd = 'do_%s' % argv[0]
       try:
