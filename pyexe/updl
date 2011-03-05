@@ -71,6 +71,10 @@ def dir_redirect():
 @route('/updl/dl/:path#.*#')
 def download(path):
   path = path.lstrip('/')
+  try:
+    path = path.encode('latin1').decode('utf-8')
+  except (UnicodeEncodeError, UnicodeDecodeError):
+    pass
   realpath = os.path.join(DOWNLD_DIR, path)
   if os.path.isdir(realpath):
     if os.path.exists(os.path.join(realpath, 'index.html')):
