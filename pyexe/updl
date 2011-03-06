@@ -33,6 +33,11 @@ def blog():
 
 @route('/updl/upload', method='GET')
 def uploader():
+  # 腾讯
+  print(request.header)
+  if request.header.get('user-agent') in ('Mozilla/4.0', None):
+    raise bottle.HTTPError(403, 'Forbidden')
+
   return static_file('upload.html', root=ROOT_DIR)
 
 @route('/updl/success', method='GET')
@@ -61,6 +66,11 @@ def do_upload():
 
 @route('/static/:path#.+#')
 def server_static(path):
+  # 腾讯
+  print(request.header)
+  if request.header.get('user-agent') in ('Mozilla/4.0', None):
+    raise bottle.HTTPError(403, 'Forbidden')
+
   return static_file(path, root=STATIC_DIR)
 
 @route('/updl/dl')
@@ -69,6 +79,10 @@ def dir_redirect():
 
 @route('/updl/dl/:path#.*#')
 def download(path):
+  # 腾讯
+  if request.header.get('user-agent') in ('Mozilla/4.0', None):
+    raise bottle.HTTPError(403, 'Forbidden')
+
   path = path.lstrip('/')
   try:
     path = path.encode('latin1').decode('utf-8')
@@ -118,7 +132,7 @@ class WSGIRefServer(ServerAdapter):
             code=str(code),
             length=str(size),
             referer=self.headers.get('http-referer') or '-',
-            UA=self.headers.get('user-agent'),
+            UA=self.headers.get('user-agent') or '-',
           ),
           file=logfile
         )
@@ -129,6 +143,6 @@ class WSGIRefServer(ServerAdapter):
 # bottle.debug(True)
 run(port='4323', host='0.0.0.0',
     server=WSGIRefServer,
-    # reloader=True,
+    reloader=True,
    )
 
