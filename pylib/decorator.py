@@ -8,6 +8,7 @@ def run_in_thread(daemon):
     t = threading.Thread(target=fn, args=k, kwargs=kw)
     t.daemon = daemon
     t.start()
+    return t
   if isinstance(daemon, bool):
     def wrapper(callback):
       nonlocal fn
