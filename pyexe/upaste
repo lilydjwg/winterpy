@@ -2,8 +2,6 @@
 # vim:fileencoding=utf-8
 
 from netservice import ubuntuPaste as post
-from path import path
-
 import os
 from optparse import OptionParser
 try:
@@ -50,17 +48,19 @@ def main():
       except EOFError:
         break
   if options.screenshot:
-    url = post(poster=options.poster,
-        code2='\n'.join(c),
-        screenshot=path(options.screenshot),
-        klass=options.klass,
-        filename=options.filename,
-      )
+    url = post(
+      poster     = options.poster,
+      code2      = '\n'.join(c),
+      screenshot = options.screenshot,
+      klass      = options.klass,
+      filename   = options.filename,
+    )
   else:
-    url = post(poster=options.poster,
-        code2='\n'.join(c),
-        klass=options.klass,
-      )
+    url = post(
+      poster    = options.poster,
+      code2     = '\n'.join(c),
+      klass     = options.klass,
+    )
   print(url)
     
 if __name__ == '__main__':

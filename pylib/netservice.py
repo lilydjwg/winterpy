@@ -35,7 +35,7 @@ def getTitle(url, headers={}, timeout=5):
     response = s.request(url, headers=headers)
   except socket.error:
     response = s.request(url, headers=headers, proxy={
-      'http': 'http://localhost:8000',
+      'http':  'http://localhost:8000',
       'https': 'http://localhost:8000',
     })
 
@@ -86,30 +86,30 @@ def ubuntuPaste(poster='', screenshot='', code2='',
     klass='bash', filename=None):
   '''
   paste 到 http://paste.ubuntu.org.cn/
-  screenshot 是 path 对象
+  screenshot 是文件路径
 
   返回查看此帖子的 URL （字符串）
   '''
   from httpsession import Session
   paste_url = 'http://paste.ubuntu.org.cn/'
   fields = [
-      ('paste', 'send'),
-      ('poster', poster),
-      ('code2', code2),
-      ('class', klass),
-    ]
+    ('paste',  'send'),
+    ('poster', poster),
+    ('code2',  code2),
+    ('class',  klass),
+  ]
   if screenshot:
     files = (
-        ('screenshot', filename or screenshot.basename, screenshot.open('rb').read()),
-      )
+      ('screenshot', filename or screenshot.basename, open(screenshot, 'rb').read()),
+    )
   else:
     files = ()
 
   data = encode_multipart_formdata(fields, files)
   s = Session()
   r = s.request(paste_url, data[1], headers={
-      'Content-Type': data[0],
-      'Expect': '100-continue',
-    })
+    'Content-Type': data[0],
+    'Expect': '100-continue',
+  })
   return r.geturl()
 
