@@ -33,6 +33,10 @@ class DotDict: pass
 def blog():
   return redirect('http://lilydjwg.is-programmer.com/', 301)
 
+@route('/favicon.ico')
+def favicon():
+  return static_file('favicon.ico', root='/var/www')
+
 @route('/updl/upload', method='GET')
 def uploader():
   # 腾讯
