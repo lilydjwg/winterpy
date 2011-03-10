@@ -4,8 +4,10 @@
 '''
 关于字符集的相关数据和函数
 
-2010年9月9日
+2011年3月10日
 '''
+
+import utils
 
 全角字符 = r'！＂＃＄％＆＇（）＊＋，－．／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［＼］＾＿｀ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝～￠￡￢￣￤￥'
 半角字符 = r'''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¢£¬¯¦¥'''
@@ -75,7 +77,7 @@ Constellation = 星座
 
 生肖 = '鼠牛虎兔龙蛇马羊猴鸡狗猪'
 
-def 宽度(字符串, ambiwidth=2):
+def 宽度_py(字符串, ambiwidth=2):
   '''ambiwidth: 宽度不定的字符算几个，取值为 1, 2'''
   if ambiwidth == 2:
     双宽度 = ('W', 'A')
@@ -92,6 +94,21 @@ def 宽度(字符串, ambiwidth=2):
       continue
     count += 1
   return count
+
+try:
+  from ctypes import *
+  _w = utils.loadso('_wchar.so')
+  _w.width.argtypes = (c_wchar_p,)
+  _w.width.restype = c_size_t
+  def 宽度(字符串, ambiwidth=1):
+    '''
+    ambiwidth 被忽略
+
+    这样比纯 Python 的 `宽度_py' 速度要快一倍以上
+    '''
+    return _w.width(字符串)
+except ImportError:
+  宽度 = 宽度_py
 
 width = 宽度
 
