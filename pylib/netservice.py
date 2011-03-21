@@ -100,7 +100,7 @@ def ubuntuPaste(poster='', screenshot='', code2='',
   ]
   if screenshot:
     files = (
-      ('screenshot', filename or screenshot.basename, open(screenshot, 'rb').read()),
+      ('screenshot', filename or os.path.split(screenshot)[1], open(screenshot, 'rb').read()),
     )
   else:
     files = ()
