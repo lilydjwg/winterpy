@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+# fileencoding=utf-8
+
+'''
+zhcon 码表生成
+'''
+
+import os, io
+import struct
+
+def convert(infile, outfile):
+  toBeIndexed1 = list('abcdefghijklmnopqrstuvwxy')
+  toBeIndexed2 = [x+y for x in toBeIndexed1 for y in toBeIndexed1]
+  indexIter1 = iter(toBeIndexed1)
+  indexIter2 = iter(toBeIndexed2)
+
+  with open(infile) as infile, open(outfile, 'wb') as outfile:
+    b = struct.pack('12s', '百合五笔'.encode('gb2312'))
+    outfile.write(b)
+    b = struct.pack('i', 4)
+    outfile.write(b)
+    b = struct.pack('47s', b'abcdefghijklmnopqrstuvwxy')
+    outfile.write(b)
+    b = struct.pack('c', b'z')
+    outfile.write(b)
+
+    tmp = io.BytesIO()
+    index2 = io.BytesIO()
+    l = ''
+    lastIndex1 = 'A'
+    lastIndex2 = 'AA'
+
+    def calcIndex(lastIndex, indexIter, buf):
+      if not code.startswith(lastIndex):
+        while len(lastIndex) <= len(code) and not code.startswith(lastIndex):
+          lastIndex = next(indexIter)
+          b = struct.pack('i', tmp.tell())
+          buf.write(b)
+      return lastIndex
+
+    while l != '[数据]\n':
+      l = infile.readline()
+    for l in infile:
+      code, hz = l[:-1].split(' ')
+      try:
+        hz.encode('ascii')
+      except UnicodeEncodeError:
+        try:
+          b = code.encode('gb2312') + hz.encode('gb2312')
+        except UnicodeEncodeError:
+          pass
+        else:
+          lastIndex1 = calcIndex(lastIndex1, indexIter1, outfile)
+          lastIndex2 = calcIndex(lastIndex2, indexIter2, index2)
+          tmp.write(b)
+          continue
+      print('%s 没有被加入。' % hz)
+
+    outfile.write(index2.getvalue())
+    outfile.write(tmp.getvalue())
+    outfile.write(b'\x00' * 4)
+    index2.close()
+    tmp.close()
+
+if __name__ == '__main__':
+  import sys
+  if len(sys.argv) == 3:
+    convert(*sys.argv[1:])
+  else:
+    print('用法： mb2zhcon fcitx码表导出文件 输出文件')
+    sys.exit(1)
+
