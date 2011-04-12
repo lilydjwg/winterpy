@@ -94,10 +94,10 @@ def download(path):
     pass
   realpath = os.path.join(DOWNLD_DIR, path)
   if os.path.isdir(realpath):
+    if path and not path.endswith('/'):
+      redirect('/updl/dl/%s/' % path, 301)
     if os.path.exists(os.path.join(realpath, 'index.html')):
       return static_file('index.html', root=realpath)
-    elif path and not path.endswith('/'):
-      redirect('/updl/dl/%s/' % path, 301)
     files = []
     dirs = []
     for i in os.listdir(realpath):
