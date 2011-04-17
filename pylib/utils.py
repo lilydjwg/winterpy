@@ -23,7 +23,7 @@ def filesize(size):
   unit = -1
   while left > 1100 and unit < 3:
     left = left / 1024
-    unit +=1
+    unit += 1
   if unit == -1:
     return '%dB' % size
   else:
