@@ -60,6 +60,8 @@ def getTitle(url, headers={}, timeout=5):
     import chardet
     title = title.decode(chardet.detect(title)['encoding'])
   else:
+    if charset.lower().find('big5') != -1:
+      charset = 'big5'
     title = title.decode(charset)
   title = entityunescape(title.replace('\n', '')).strip()
 
