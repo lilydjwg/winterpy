@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+'''
+类似 git 那样保留一份文件/目录列表
+'''
+
+import os
+from pickleddata import PData
+from path import path
+from termcolor import colored as c, cprint
+from utils import getchar
+
+datafile = path('~/scripts/python/pydata/dirsave').expand()
+dirprompt = '%s 是目录。%s' % (c('%s', 'green', attrs=['bold']), c('加入/忽略/进入/列出文件/tree/Vim/跳过？(y/n/e/l/t/v/s) ', 'blue'))
+fileprompt = '%s %s' % (c('%s', 'green', attrs=['bold']), c('加入/忽略/Vim/跳过？(y/n/v/s) ', 'blue'))
+
+def dirsave(startdir, data):
+  for f in startdir.list():
+    key = f.basename
+    if key.endswith('~'):
+      continue
+    ans = ''
+    if isinstance(data.get(key), bool):
+      continue
+    elif isinstance(data.get(key), dict):
+      dirsave(f, data[key])
+      continue
+    if f.isdir():
+      while not ans:
+        ans = getchar(dirprompt % f.value)
+        if ans == 'y':
+          data[key] = True
+        elif ans == 'n':
+          data[key] = False
+        elif ans == 'e':
+          data[key] = {}
+          dirsave(f, data[key])
+        elif ans == 'l':
+          os.chdir(f.value)
+          os.system('ls --color=auto')
+          ans = ''
+        elif ans == 't':
+          os.chdir(f.value)
+          os.system('tree -C')
+          ans = ''
+        elif ans == 'v':
+          os.chdir(f.value)
+          os.system("vim '%s'" % key)
+          ans = ''
+        elif ans == 's':
+          continue
+        else:
+          cprint('无效的选择。', 'red')
+          ans = ''
+    else:
+      while not ans:
+        ans = getchar(fileprompt % f.value)
+        if ans == 'y':
+          data[key] = True
+        elif ans == 'n':
+          data[key] = False
+        elif ans == 'v':
+          os.system("vim '%s'" % f.value)
+          ans = ''
+        elif ans == 's':
+          continue
+        else:
+          cprint('无效的选择。', 'red')
+          ans = ''
+
+if __name__ == '__main__':
+  with PData(datafile.value, default={}) as d:
+    dirsave(path('~').expand(), d)
