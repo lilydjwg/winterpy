@@ -3,12 +3,10 @@
 
 '''
 将一个 Python 程序所 import 的所有用户自己的模块找出来一起打包
-
-更新于2011年2月3日
 '''
 
 import sys, os
-from subprocess import Popen, PIPE, STDOUT
+import tarfile
 from python import mymodsImported
 
 def getModuleFiles(file):
@@ -33,23 +31,7 @@ if __name__ == '__main__':
       print('\n'.join(files))
     else:
       archieve = os.path.basename(fin)
-      if archieve.find('.') != -1:
-        archieve = archieve[:archieve.find('.')]
-      cmd = ['zip', '-uj', archieve, '-@']
-      try:
-        p = Popen(cmd, stdin=PIPE, stderr=PIPE)
-        err = p.communicate('\n'.join(files).encode())
-        errresult = err[1].decode()
-        if errresult.find('not found or empty') == -1:
-          print(errresult)
-        if p.returncode == 12:
-          # 12: nothing to do
-          print('原文件不需要改变。')
-        elif p.returncode:
-          print('zip 程序返回了', p.returncode)
-      except OSError:
-        sys.stderr.write('未能成功运行 zip 程序！\n')
-        sys.exit(1)
+      with tarfile.open(archieve + '.tar.bz2', 'w:bz2') as f:
+        for i in files:
+          f.add(i, os.path.split(i)[1])
       print('完成！')
-
-# vim:tw=78:expandtab:sts=2:fdm=expr:fde=getline(v\:lnum)=~'\\v^\\S.*\:(\\s*#.*)?$'?'>1'\:1
