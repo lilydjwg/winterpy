@@ -39,7 +39,7 @@ def main():
         cputemp, freqs['high'] / 1000000000)
       setMaxCPUFreq(freqs['high'])
       state = 'low'
-    elif state == 'high':
+    elif state == 'high' and cputemp > temp['high']:
       log('CPU Temperature still high (%f).', cputemp)
     time.sleep(2)
 

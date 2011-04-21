@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 
 priority = Config({
   #配置文件名 时间间隔（分）
-  '163rc': 15,
+  '163rc': 5,
   'gmailrc': 5,
   'heliorc': 7200,   # 5d
   'qqmail2rc': 1000,
