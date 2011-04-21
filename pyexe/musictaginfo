@@ -7,7 +7,13 @@
 
 from path import path
 import stagger
-from termutils import *
+from termcolor import colored
+def red(str):
+  return colored(str, 'red')
+def yellow(str):
+  return colored(str, 'yellow', attrs=['bold'])
+def green(str):
+  return colored(str, 'green', attrs=['bold'])
 
 def main():
   d = path('~/音乐').expand()

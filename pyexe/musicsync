@@ -9,9 +9,15 @@
 
 import os, sys
 import filecmp
-from termutils import *
+from termcolor import colored
 import pickleddata
 from path import path
+def red(str):
+  return colored(str, 'red')
+def yellow(str):
+  return colored(str, 'yellow', attrs=['bold'])
+def green(str):
+  return colored(str, 'green', attrs=['bold'])
 
 srcdir = os.path.expanduser('~/音乐')
 dstdir = '/media/PHONE CARD/Music'
