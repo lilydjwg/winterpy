@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8
 
 '''
-一些常用短小的函数/类，另见 termutils.py
+一些常用短小的函数/类
 '''
 
 import os, sys
