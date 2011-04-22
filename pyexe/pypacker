@@ -27,9 +27,8 @@ if __name__ == '__main__':
   if fin:
     files = getModuleFiles(fin)
     files.add(fin)
-    if dry_run:
-      print('\n'.join(files))
-    else:
+    print('\n'.join(files))
+    if not dry_run:
       archieve = os.path.basename(fin)
       with tarfile.open(archieve + '.tar.bz2', 'w:bz2') as f:
         for i in files:
