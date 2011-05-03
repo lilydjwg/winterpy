@@ -218,9 +218,9 @@ class path:
   def linksto(self, target, hardlink=False):
     target = str(target)
     if hardlink:
-      os.link(self.value, target)
+      os.link(target, self.value)
     else:
-      os.symlink(self.value, target)
+      os.symlink(target, self.value)
 
   def mkdir(self, *dirs):
     '''作为目录建立该路径，自动创建上层目录；
