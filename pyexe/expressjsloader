@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+'''
+express.js 的 wrapper
+'''
+
+import os
+import sys
+import re
+import time
+import subprocess
+import select
+from functools import lru_cache
+from subprocess import getoutput
+
+#TODO 使用 pyinotify 监视文件更新
+
+logfname = os.path.expanduser('~/etc/log/express.access.log')
+http_ip = re.compile(r'^(\d{1,3}\.){3}\d{1,3}')
+
+def main(app):
+  if app.find('/') != -1:
+    os.chdir(os.path.split(app)[0])
+  else:
+    app = './' + app
+  try:
+    with open(logfname, 'a', buffering=1) as log:
+      while True:
+        runapp(app, log)
+  except KeyboardInterrupt:
+    print('退出。')
+
+@lru_cache(maxsize=20)
+def lookupip(ip):
+  print('cip called')
+  return getoutput('cip ' + ip).replace('CZ88.NET', '').strip() or '-'
+
+def logAddIP(m):
+  ip = m.group(0)
+  return '%s (%s)' % (ip, lookupip(ip))
+
+def runapp(app, logfile):
+  t = os.stat(app).st_mtime
+  p = subprocess.Popen(app, bufsize=1, stdout=subprocess.PIPE)
+  poll = select.poll()
+  poll.register(p.stdout, select.POLLIN)
+  while True:
+    f = poll.poll(2)
+    if f:
+      l = p.stdout.readline()
+      if not l:
+        print('Error!', file=sys.stderr)
+        sys.exit(1)
+      log = l.rstrip().decode()
+      log = http_ip.sub(logAddIP, log)
+      print(log)
+      print(log, file=logfile)
+    try:
+      new_t = os.stat(app).st_mtime
+    except OSError:
+      break
+    if new_t != t:
+      poll.unregister(p.stdout)
+      p.terminate()
+      print('重新载入...')
+      time.sleep(1)
+      break
+
+if __name__ == '__main__':
+  if len(sys.argv) == 2:
+    app = sys.argv[1]
+  else:
+    app = 'app.js'
+
+  main(app)
+
