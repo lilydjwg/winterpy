@@ -41,7 +41,12 @@ def logAddIP(m):
   return '%s (%s)' % (ip, lookupip(ip))
 
 def runapp(app, logfile):
-  t = os.stat(app).st_mtime
+  try:
+    t = os.stat(app).st_mtime
+  except OSError:
+    print('重新载入...')
+    time.sleep(1)
+    return
   p = subprocess.Popen(app, bufsize=1, stdout=subprocess.PIPE)
   poll = select.poll()
   poll.register(p.stdout, select.POLLIN)
