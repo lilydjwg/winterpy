@@ -30,7 +30,7 @@ from httpsession import Session, Operation
 from getpass import getpass
 from path import path, sha1path
 from url import Cookie, URIescape, encode_multipart_formdata
-from utils import filesize
+from myutils import filesize
 import json
 import sys
 from datetime import datetime

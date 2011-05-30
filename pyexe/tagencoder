@@ -7,7 +7,7 @@
 
 import sys
 import stagger
-from utils import getchar
+from myutils import getchar
 
 def encode(song):
   print(song)

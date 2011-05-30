@@ -10,7 +10,7 @@ ard 解码
 '''
 
 from ctypes import *
-from utils import loadso
+from myutils import loadso
 
 _ard = loadso('_ard.so')
 _ard.ard.argtypes = (c_char_p,) * 2

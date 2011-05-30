@@ -3,7 +3,7 @@
 
 import os, sys
 import time
-from utils import filesize
+from myutils import filesize
 from functools import lru_cache
 from subprocess import getoutput
 try:

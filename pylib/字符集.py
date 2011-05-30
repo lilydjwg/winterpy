@@ -7,7 +7,7 @@
 2011年3月10日
 '''
 
-import utils
+import myutils
 
 全角字符 = r'！＂＃＄％＆＇（）＊＋，－．／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［＼］＾＿｀ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝～￠￡￢￣￤￥'
 半角字符 = r'''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¢£¬¯¦¥'''
@@ -97,7 +97,7 @@ def 宽度_py(字符串, ambiwidth=2):
 
 try:
   from ctypes import *
-  _w = utils.loadso('_wchar.so')
+  _w = myutils.loadso('_wchar.so')
   _w.width.argtypes = (c_wchar_p,)
   _w.width.restype = c_size_t
   def 宽度(字符串, ambiwidth=1):

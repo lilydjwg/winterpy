@@ -9,7 +9,7 @@ import os
 from pickleddata import PData
 from path import path
 from termcolor import colored as c, cprint
-from utils import getchar
+from myutils import getchar
 
 datafile = path('~/scripts/python/pydata/dirsave').expand()
 dirprompt = '%s 是目录。%s' % (c('%s', 'green', attrs=['bold']), c('加入/忽略/进入/列出文件/tree/Vim/跳过？(y/n/e/l/t/v/s) ', 'blue'))
