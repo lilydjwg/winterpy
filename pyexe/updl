@@ -25,6 +25,8 @@ DOWNLD_DIR = os.path.expanduser('~/tmpfs/.dl')
 TEMPLATE_PATH = os.path.join(ROOT_DIR, 'view')
 if not os.path.exists(UPLOAD_DIR):
   os.mkdir(UPLOAD_DIR)
+if not os.path.exists(DOWNLD_DIR):
+  os.mkdir(DOWNLD_DIR)
 bottle.TEMPLATE_PATH = [TEMPLATE_PATH]
 
 class DotDict: pass
