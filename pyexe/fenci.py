@@ -14,7 +14,7 @@ class Fenci:
     for line in open(dictfile, encoding='gb18030'):
       word, freq = line.split()
       d[word] = int(freq)
- 
+
   def __call__(self, string):
     d = self.d
     l = len(string)
@@ -33,7 +33,7 @@ class Fenci:
       words.append(string[i:i+t[i]])
       i += t[i]
     return words
- 
+
 if __name__ == '__main__':
   import os
   import sys
