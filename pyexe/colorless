@@ -30,7 +30,10 @@ def main(fname, lang):
   else:
     p = None
     output = sys.stdout
-  print(highlight(code, lexer, TerminalFormatter()), file=output)
+  try:
+    print(highlight(code, lexer, TerminalFormatter()), file=output)
+  except IOError: # SIGPIPE
+    pass
   if p:
     output.close()
     p.wait()
