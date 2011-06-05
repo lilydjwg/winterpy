@@ -27,7 +27,8 @@ def main(fname, lang):
     except TypeError:
       # unordered LexerMeta(); should be an issue in pygments
       if os.path.splitext(fname)[1].lower() in ('.html', '.htm'):
-        lexer = guess_lexer(code)
+        # if guessed, it would be xml instead.
+        lexer = get_lexer_by_name('html')
 
   if sys.stdout.isatty():
     p = subprocess.Popen(['less', '-RFX'], stdin=subprocess.PIPE,
