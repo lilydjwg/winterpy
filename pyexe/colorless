@@ -7,6 +7,7 @@ import subprocess
 
 from pygments import highlight
 import pygments.util
+from pygments.lexers import get_lexer_by_name
 from pygments.formatters import TerminalFormatter
 from pygments.lexers import guess_lexer, guess_lexer_for_filename
 
@@ -15,10 +16,13 @@ def main(fname, lang):
     code = sys.stdin.read()
   else:
     code = open(fname).read()
-  try:
-    lexer = guess_lexer_for_filename(fname, code)
-  except pygments.util.ClassNotFound:
-    lexer = guess_lexer(code)
+  if lang:
+    lexer = get_lexer_by_name(lang)
+  else:
+    try:
+      lexer = guess_lexer_for_filename(fname, code)
+    except pygments.util.ClassNotFound:
+      lexer = guess_lexer(code)
   if sys.stdout.isatty():
     p = subprocess.Popen(['less', '-RFX'], stdin=subprocess.PIPE,
                         universal_newlines=True)
