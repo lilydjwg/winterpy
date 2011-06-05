@@ -25,7 +25,8 @@ def main(fname, lang):
     except pygments.util.ClassNotFound:
       lexer = guess_lexer(code)
     except TypeError:
-      if os.path.splitext(fname)[1].lower() in ['.html', '.htm']:
+      # unordered LexerMeta(); should be an issue in pygments
+      if os.path.splitext(fname)[1].lower() in ('.html', '.htm'):
         lexer = guess_lexer(code)
 
   if sys.stdout.isatty():
