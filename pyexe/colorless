@@ -23,6 +23,10 @@ def main(fname, lang):
       lexer = guess_lexer_for_filename(fname, code)
     except pygments.util.ClassNotFound:
       lexer = guess_lexer(code)
+    except TypeError:
+      if os.path.splitext(fname)[1].lower() in ['.html', '.htm']:
+        lexer = guess_lexer(code)
+
   if sys.stdout.isatty():
     p = subprocess.Popen(['less', '-RFX'], stdin=subprocess.PIPE,
                         universal_newlines=True)
