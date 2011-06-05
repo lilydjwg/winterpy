@@ -5,6 +5,8 @@ import os
 import sys
 import argparse
 import subprocess
+import locale
+locale.setlocale(locale.LC_ALL, '')
 
 from pygments import highlight
 import pygments.util
