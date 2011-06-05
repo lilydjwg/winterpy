@@ -31,8 +31,8 @@ def main(fname, lang):
     p = None
     output = sys.stdout
   print(highlight(code, lexer, TerminalFormatter()), file=output)
-  output.close()
   if p:
+    output.close()
     p.wait()
 
 if __name__ == '__main__':
