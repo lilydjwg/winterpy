@@ -11,7 +11,7 @@ locale.setlocale(locale.LC_ALL, '')
 from pygments import highlight
 import pygments.util
 from pygments.lexers import get_lexer_by_name
-from pygments.formatters import TerminalFormatter
+from pygments.formatters import TerminalFormatter, Terminal256Formatter
 from pygments.lexers import guess_lexer, guess_lexer_for_filename
 
 def main(fname, lang):
@@ -39,8 +39,9 @@ def main(fname, lang):
   else:
     p = None
     output = sys.stdout
+  formatter = Terminal256Formatter if os.environ.get('TERM', '').find('256') != -1 else TerminalFormatter
   try:
-    print(highlight(code, lexer, TerminalFormatter()), file=output)
+    print(highlight(code, lexer, formatter()), file=output)
   except IOError: # SIGPIPE
     pass
   if p:
