@@ -11,7 +11,10 @@ from pygments.formatters import TerminalFormatter
 from pygments.lexers import guess_lexer, guess_lexer_for_filename
 
 def main(fname, lang):
-  code = open(fname).read()
+  if fname == '-':
+    code = sys.stdin.read()
+  else:
+    code = open(fname).read()
   try:
     lexer = guess_lexer_for_filename(fname, code)
   except pygments.util.ClassNotFound:
@@ -30,11 +33,14 @@ def main(fname, lang):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='用 less 显示高亮的代码')
-  parser.add_argument('files', metavar='FILE', nargs='+',
+  parser.add_argument('files', metavar='FILE', nargs='*',
                      help='要高亮的文件')
   parser.add_argument('-l', '--lang', dest='lang', default=None,
                      help='语法类型')
 
   args = parser.parse_args()
-  for l in args.files:
-    main(l, args.lang)
+  if args.files:
+    for l in args.files:
+      main(l, args.lang)
+  else:
+    main('-', args.lang)
