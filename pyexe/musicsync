@@ -20,7 +20,7 @@ def green(str):
   return colored(str, 'green', attrs=['bold'])
 
 srcdir = os.path.expanduser('~/音乐')
-dstdir = '/media/PHONE CARD/Music'
+dstdir = '/media/PHONE\\x20CARD/Music'
 oldsongs = os.path.expanduser('~/scripts/python/pydata/oldsongs')
 
 class dircmp(filecmp.dircmp):
