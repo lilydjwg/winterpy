@@ -65,6 +65,11 @@ def main():
       klass     = options.klass,
     )
   print(url)
+  head, tail = url.rsplit('/', 1)
+  if options.screenshot:
+    print('%s/i%s' % (head, tail))
+  else:
+    print('%s/d%s' % (head, tail))
     
 if __name__ == '__main__':
   try:
