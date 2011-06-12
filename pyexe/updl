@@ -21,7 +21,7 @@ from bottle import route, run, request, redirect, static_file, template, ServerA
 ROOT_DIR   = os.path.expanduser('~/scripts/python/pyother/updl')
 STATIC_DIR = os.path.join(ROOT_DIR, 'static')
 UPLOAD_DIR = os.path.expanduser('~/tmpfs/.upload')
-DOWNLD_DIR = os.path.expanduser('~/tmpfs/.dl')
+DOWNLD_DIR = os.path.expanduser('~/temp/.dl')
 TEMPLATE_PATH = os.path.join(ROOT_DIR, 'view')
 if not os.path.exists(UPLOAD_DIR):
   os.mkdir(UPLOAD_DIR)
