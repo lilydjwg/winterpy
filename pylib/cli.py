@@ -3,6 +3,7 @@
 
 '''一些在命令行上使用的便捷函数'''
 
+import os
 from path import path
 
 def findbroken(p):
@@ -23,3 +24,15 @@ def delbroken(p=path('.')):
   for i in l:
     i.unlink()
     print('已删除', i)
+
+def repl(local, histfile=None):
+  import readline
+  import rlcompleter
+  readline.parse_and_bind('tab: complete')
+  if histfile is not None and os.path.exists(histfile):
+    readline.read_history_file(histfile)
+  import code
+  code.interact(local=local)
+  if histfile is not None:
+    readline.write_history_file(histfile)
+
