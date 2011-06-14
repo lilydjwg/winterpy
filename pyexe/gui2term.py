@@ -12,6 +12,7 @@ __version__ = 3.0
 import os, sys, re
 import math
 from math import *
+import warnings
 
 # Global variables {{{1
 termcolor = { #{{{2
@@ -268,16 +269,18 @@ Normal = None
 
 # Functions {{{1
 def getRgbtxt(): # {{{2
-  scriptdir = os.path.dirname(os.path.abspath(sys.argv[0]))
-  if os.path.isfile('rgb.txt'):
-    rgbfile = 'rgb.txt'
-  elif os.path.isfile(os.path.join(scriptdir, 'rgb.txt')):
-    rgbfile = os.path.join(scriptdir, 'rgb.txt')
-  elif os.path.isfile('/usr/share/X11/rgb.txt'):
-    rgbfile = '/usr/share/X11/rgb.txt'
-  else:
-    raise UserWarning("rgb.txt not found, color names will be ignored")
-    rgbfile = None
+  try:
+    import subprocess
+    rgbfile = subprocess.check_output(['locate', '-b', 'rgb.txt']).decode().strip()
+  except:
+    scriptdir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    if os.path.isfile('rgb.txt'):
+      rgbfile = 'rgb.txt'
+    elif os.path.isfile(os.path.join(scriptdir, 'rgb.txt')):
+      rgbfile = os.path.join(scriptdir, 'rgb.txt')
+    else:
+      warnings.warn("rgb.txt not found, color names will cause errors", Warning)
+      rgbfile = None
   return rgbfile
 
 def color_norm(c): # {{{2
@@ -285,6 +288,8 @@ def color_norm(c): # {{{2
 
 def loadRgb(): # {{{2
   rgbfile = getRgbtxt()
+  if rgbfile is None:
+    return
   rgbtxt = re.compile('^(\d+)\s+(\d+)\s+(\d+)\s+([\w\s]+)$')
   try:
     for l in open(rgbfile):
