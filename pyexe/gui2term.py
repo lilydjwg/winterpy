@@ -534,8 +534,13 @@ class Group: # {{{2
 
   def __str__(self): # {{{3
     ret = ['highlight', self.name]
-    for i in self.attr.items():
-      ret.append('%s=%s' % i)
+    attr = self.attr
+    for k in sorted(attr.keys(), reverse=True):
+      # It's reported that 'none' with GVIM will cause E254
+      if attr[k] == 'none':
+        ret.append('%s=NONE' % k)
+      else:
+        ret.append('%s=%s' % (k, attr[k]))
     return ' '.join(ret) + '\n'
 
 def test(): # {{{1
