@@ -80,3 +80,16 @@ def loadso(fname):
     if os.path.exists(p):
       return CDLL(p)
   raise ImportError('%s not found' % fname)
+def restart_when_done(func, max_times, args=(), kwargs={}, secs=60):
+  '''
+  在函数退出后重新运行之，直到在 secs 秒（默认一分钟）时间内达到 max_times 次退出
+  '''
+  import time
+  from collections import deque
+  dq = deque(maxlen=max_times)
+
+  dq.append(time.time())
+  func(*args, **kwargs)
+  while len(dq) < max_times or time.time() - dq[0] > secs:
+    dq.append(time.time())
+    func(*args, **kwargs)
