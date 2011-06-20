@@ -271,7 +271,7 @@ Normal = None
 def getRgbtxt(): # {{{2
   try:
     import subprocess
-    rgbfile = subprocess.check_output(['locate', '-b', 'rgb.txt']).decode().strip()
+    rgbfile = subprocess.check_output(['locate', '-b', '--regex', '^rgb\.txt$']).decode().strip()
   except:
     scriptdir = os.path.dirname(os.path.abspath(sys.argv[0]))
     if os.path.isfile('rgb.txt'):
