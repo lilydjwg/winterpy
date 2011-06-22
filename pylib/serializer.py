@@ -21,7 +21,7 @@ class Serializer(metaclass=abc.ABCMeta):
     if readonly:
       self.lock = None
     else:
-      dir, file = os.path.split(fname)
+      dir, file = os.path.split(self.fname)
       self.lock = os.path.join(dir, '.%s.lock' % file)
       for i in (1,):
         # 处理文件锁
