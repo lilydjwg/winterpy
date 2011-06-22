@@ -269,16 +269,16 @@ Normal = None
 
 # Functions {{{1
 def getRgbtxt(): # {{{2
-  try:
-    import subprocess
-    rgbfile = subprocess.check_output(['locate', '-b', '--regex', '^rgb\.txt$']).decode().strip()
-  except:
-    scriptdir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    if os.path.isfile('rgb.txt'):
-      rgbfile = 'rgb.txt'
-    elif os.path.isfile(os.path.join(scriptdir, 'rgb.txt')):
-      rgbfile = os.path.join(scriptdir, 'rgb.txt')
-    else:
+  scriptdir = os.path.dirname(os.path.abspath(sys.argv[0]))
+  if os.path.isfile('rgb.txt'):
+    rgbfile = 'rgb.txt'
+  elif os.path.isfile(os.path.join(scriptdir, 'rgb.txt')):
+    rgbfile = os.path.join(scriptdir, 'rgb.txt')
+  else:
+    try:
+      import subprocess
+      rgbfile = subprocess.check_output(['locate', '-b', '--regex', '^rgb\.txt$']).decode().strip()
+    except:
       warnings.warn("rgb.txt not found, color names will cause errors", Warning)
       rgbfile = None
   return rgbfile
