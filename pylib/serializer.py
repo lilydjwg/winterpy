@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 # vim:fileencoding=utf-8
 
-'''
-让pickle更方便的类，使用它时只需要指定文件即可，不需要记着保存
-'''
+import os
+import abc
 
 import pickle
-import os
 
-class PData:
+class Serializer(metaclass=abc.ABCMeta):
   def __init__(self, fname, readonly=False, default=None):
     '''
     读取文件fname。readonly指定析构时不回存数据
-    如果数据已加锁，将会抛出PDataError异常
+    如果数据已加锁，将会抛出SerializerError异常
     default 指出如果文件不存在或为空时的数据
 
     注意：
@@ -23,7 +21,7 @@ class PData:
     if readonly:
       self.lock = None
     else:
-      dir, file = os.path.split(fname)
+      dir, file = os.path.split(self.fname)
       self.lock = os.path.join(dir, '.%s.lock' % file)
       for i in (1,):
         # 处理文件锁
@@ -39,11 +37,11 @@ class PData:
             break
           else:
             self.lock = None
-            raise PDataError('数据已加锁')
+            raise SerializerError('数据已加锁')
         open(self.lock, 'w').write(str(os.getpid()))
 
     try:
-      self.data = pickle.load(open(self.fname, 'rb'))
+      self.load()
     except EOFError:
       self.data = default
     except IOError as e:
@@ -55,7 +53,7 @@ class PData:
   def __del__(self):
     '''如果需要，删除 lock，保存文件'''
     if self.lock:
-      pickle.dump(self.data, open(self.fname, 'wb'))
+      self.save()
       os.unlink(self.lock)
 
   def __enter__(self):
@@ -64,9 +62,19 @@ class PData:
   def __exit__(self, exc_type, exc_value, traceback):
     pass
 
-class PDataError(Exception):
-  def __init__(self, value):
-    self.value = value
-  def __str__(self):
-    return repr(self.value)
+  @abc.abstractmethod
+  def load(self):
+    pass
 
+  @abc.abstractmethod
+  def save(self):
+    pass
+
+class PickledData(Serializer):
+  def save(self):
+    pickle.dump(self.data, open(self.fname, 'wb'))
+
+  def load(self):
+    self.data = pickle.load(open(self.fname, 'rb'))
+
+class SerializerError(Exception): pass

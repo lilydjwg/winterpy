@@ -10,7 +10,7 @@
 import os, sys
 import filecmp
 from termcolor import colored
-import pickleddata
+import serializer
 from path import path
 def red(str):
   return colored(str, 'red')
@@ -68,7 +68,7 @@ def getNewSongs():
     if i.isfile() and i.extension.find('lrc') == -1:
       allsongs.add(str(i)[len(str(srcdir))+1:])
 
-  with pickleddata.PData(oldsongs, default=set()) as o:
+  with serializer.PickledData(oldsongs, default=set()) as o:
     new = allsongs - o
     o |= new
   return new

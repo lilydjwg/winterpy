@@ -13,6 +13,7 @@ import subprocess
 import select
 from functools import lru_cache
 from subprocess import getoutput
+from myutils import restart_when_done
 
 #TODO 使用 pyinotify 监视文件更新
 
@@ -26,8 +27,7 @@ def main(app):
     app = './' + app
   try:
     with open(logfname, 'a', buffering=1) as log:
-      while True:
-        runapp(app, log)
+      restart_when_done(runapp, 10, args=(app, log))
   except KeyboardInterrupt:
     print('退出。')
 
@@ -56,7 +56,7 @@ def runapp(app, logfile):
       l = p.stdout.readline()
       if not l:
         print('Error!', file=sys.stderr)
-        sys.exit(1)
+        break
       log = l.rstrip().decode()
       log = http_ip.sub(logAddIP, log)
       print(log)

@@ -12,7 +12,7 @@ import sys
 sys.path.extend('/home/lilydjwg/scripts/python/pylib:/home/lilydjwg/scripts/py/lib3:/home/lilydjwg/scripts/py/lib'.split(':'))
 
 import os
-from pickleddata import PData
+from serializer import PickledData
 from path import path
 from my_class import Config
 from datetime import datetime, timedelta
@@ -36,7 +36,7 @@ def getmail(config):
   os.system('getmail -n -r%s'%config.expand())
 
 def main():
-  with PData(datafile, default=Config()) as old:
+  with PickledData(datafile, default=Config()) as old:
     for p in configPath:
       name = p.basename
       time = priority[name] or defaultTime
