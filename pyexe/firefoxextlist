@@ -6,7 +6,7 @@
 '''
 
 import sys
-from path import path
+from lilypath import path
 from lxml import etree
 
 def getInfo(extdir):

@@ -5,7 +5,7 @@
 显示音乐文件的相关信息
 '''
 
-from path import path
+from lilypath import path
 import stagger
 from termcolor import colored
 def red(str):
