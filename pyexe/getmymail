@@ -13,7 +13,7 @@ sys.path.extend('/home/lilydjwg/scripts/python/pylib:/home/lilydjwg/scripts/py/l
 
 import os
 from serializer import PickledData
-from path import path
+from lilypath import path
 from my_class import Config
 from datetime import datetime, timedelta
 

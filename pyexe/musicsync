@@ -11,7 +11,7 @@ import os, sys
 import filecmp
 from termcolor import colored
 import serializer
-from path import path
+from lilypath import path
 def red(str):
   return colored(str, 'red')
 def yellow(str):

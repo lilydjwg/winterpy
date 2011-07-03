@@ -9,7 +9,7 @@
 
 import sys
 argv = sys.argv
-from path import path
+from lilypath import path
 
 def main(num):
   artists = list(filter(lambda x: not x.basename.startswith('_'),
@@ -26,5 +26,5 @@ if __name__ == '__main__':
   elif len(argv) == 2:
     main(int(argv[1]))
   else:
-    print('Usage: %s [NUM]', path(argv[0]).basename)
+    print('Usage: %s [NUM]' % path(argv[0]).basename)
     sys.exit(1)

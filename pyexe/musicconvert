@@ -12,7 +12,7 @@
 import sys, os
 import queue
 import threading
-from path import path
+from lilypath import path
 import subprocess
 import stagger
 

@@ -28,7 +28,7 @@ file 包含的属性
 
 from httpsession import Session, Operation
 from getpass import getpass
-from path import path, sha1path
+from lilypath import path, sha1path
 from url import Cookie, URIescape, encode_multipart_formdata
 from myutils import filesize
 import json
