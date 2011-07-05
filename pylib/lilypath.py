@@ -177,7 +177,7 @@ class path:
   def list(self, nameonly=False):
     '''
     路径下所有的东东，如同 os.listdir()，不包含 . 和 ..
-    
+
     nameonly 指定是只返回名字还是返回 path 对象
     '''
     if nameonly:
