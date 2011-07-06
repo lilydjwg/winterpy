@@ -2,20 +2,21 @@
 # vim:fileencoding=utf-8
 
 '''
-跟踪需要备份的配置文件
-
-文件格式说明：
-  最顶层的路径是目录位置，支持 ~ 扩展
+跟踪需要备份的配置文件，以 $HOME 为基准目录
 '''
 
 import os
 
-from path import path
+from lilypath import path
 from yamlserializer import YAMLData
 from termcolor import colored as c
 from myutils import getchar
 import locale
 locale.setlocale(locale.LC_ALL, '')
+
+Ignore = 'ignore'
+Normal = 'normal'
+Secret = 'secret'
 
 def cprint(text, color=None, on_color=None, attrs=None, **kwargs):
   print((c(text, color, on_color, attrs)), **kwargs)
@@ -27,7 +28,7 @@ class rcfile(YAMLData):
   def __init__(self, conffile, readonly=False):
     super().__init__(conffile, readonly=readonly, default={})
 
-  def filelist(self, include=1):
+  def filelist(self, include=Normal):
     filelist = []
 
     def parsedir(d, p):
@@ -45,15 +46,14 @@ class rcfile(YAMLData):
 
     return filelist
 
-  def update(self, startdir):
+  def update(self):
     '''交互式更新未纳入管理的文件'''
-    data = self.data[startdir]
-    if data is None:
-      data = self.data[startdir] = {}
-    startdir = path(startdir).expanduser()
+    startdir = path('~').expanduser()
     oldpwd = os.getcwd()
+    if self.data is None:
+      self.data = {}
     try:
-      self._update(startdir, data)
+      self._update(startdir, self.data)
     except KeyboardInterrupt:
       print('已中止。')
     finally:
@@ -66,7 +66,7 @@ class rcfile(YAMLData):
       if key.endswith('~'):
         continue
       ans = ''
-      if isinstance(data.get(key), int):
+      if isinstance(data.get(key), str):
         continue
       elif isinstance(data.get(key), dict) and data[key]:
         try:
@@ -79,11 +79,11 @@ class rcfile(YAMLData):
         while not ans:
           ans = getchar(self.dirprompt % f.value)
           if ans == 'y':
-            data[key] = 1
+            data[key] = Normal
           elif ans == 'Y':
-            data[key] = 2
+            data[key] = Secret
           elif ans == 'n':
-            data[key] = 0
+            data[key] = Ignore
           elif ans == 'e':
             data[key] = {}
             try:
@@ -128,11 +128,11 @@ class rcfile(YAMLData):
         while not ans:
           ans = getchar(self.fileprompt % f.value)
           if ans == 'y':
-            data[key] = 1
+            data[key] = Normal
           elif ans == 'Y':
-            data[key] = 2
+            data[key] = Secret
           elif ans == 'n':
-            data[key] = 0
+            data[key] = Ignore
           elif ans == 'v':
             os.system("vim '%s'" % f.value)
             ans = ''
@@ -141,12 +141,4 @@ class rcfile(YAMLData):
           else:
             cprint('无效的选择。', 'red')
             ans = ''
-
-  def updateAll(self):
-    for d in self.data:
-      self.update(d)
-
-  def new(self, path):
-    self.data[path] = None
-    self.update(path)
 
