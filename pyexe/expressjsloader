@@ -48,29 +48,35 @@ def runapp(app, logfile):
     time.sleep(1)
     return
   p = subprocess.Popen(app, bufsize=1, stdout=subprocess.PIPE)
-  poll = select.poll()
-  poll.register(p.stdout, select.POLLIN)
-  while True:
-    f = poll.poll(2)
-    if f:
-      l = p.stdout.readline()
-      if not l:
-        print('Error!', file=sys.stderr)
+  try:
+    poll = select.poll()
+    poll.register(p.stdout, select.POLLIN)
+    while True:
+      f = poll.poll(2)
+      if f:
+        l = p.stdout.readline()
+        if not l:
+          print('Error!', file=sys.stderr)
+          break
+        log = l.rstrip().decode()
+        log = http_ip.sub(logAddIP, log)
+        print(log)
+        print(log, file=logfile)
+      try:
+        new_t = os.stat(app).st_mtime
+      except OSError:
         break
-      log = l.rstrip().decode()
-      log = http_ip.sub(logAddIP, log)
-      print(log)
-      print(log, file=logfile)
+      if new_t != t:
+        poll.unregister(p.stdout)
+        p.terminate()
+        print('重新载入...')
+        time.sleep(1)
+        break
+  finally:
     try:
-      new_t = os.stat(app).st_mtime
-    except OSError:
-      break
-    if new_t != t:
-      poll.unregister(p.stdout)
       p.terminate()
-      print('重新载入...')
-      time.sleep(1)
-      break
+    except:
+      pass
 
 if __name__ == '__main__':
   if len(sys.argv) == 2:
