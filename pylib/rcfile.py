@@ -17,13 +17,14 @@ locale.setlocale(locale.LC_ALL, '')
 Ignore = 'ignore'
 Normal = 'normal'
 Secret = 'secret'
+Handled = 'handled'
 
 def cprint(text, color=None, on_color=None, attrs=None, **kwargs):
   print((c(text, color, on_color, attrs)), **kwargs)
 
 class rcfile(YAMLData):
-  dirprompt = '%s 是目录。%s' % (c('%s', 'green', attrs=['bold']), c('加入/忽略/进入/列出文件/tree/Vim/跳过？(y/Y/n/e/l/t/v/s) ', 'blue'))
-  fileprompt = '%s %s' % (c('%s', 'green', attrs=['bold']), c('加入/忽略/Vim/跳过？(y/Y/n/v/s) ', 'blue'))
+  dirprompt = '%s 是目录。%s' % (c('%s', 'green', attrs=['bold']), c('加入/忽略/已处理/进入/列出文件/tree/Vim/跳过？(y/Y/n/h/e/l/t/v/s) ', 'blue'))
+  fileprompt = '%s %s' % (c('%s', 'green', attrs=['bold']), c('加入/忽略/已处理/Vim/跳过？(y/Y/n/h/v/s) ', 'blue'))
 
   def __init__(self, conffile, readonly=False):
     super().__init__(conffile, readonly=readonly, default={})
@@ -33,16 +34,18 @@ class rcfile(YAMLData):
 
     def parsedir(d, p):
       for k, v in d.items():
+        pp = p + k
+        if not pp.exists():
+          if v != Ignore:
+            print('WARNING: %s not found' % pp)
+          continue
         if isinstance(v, dict):
-          parsedir(v, p+k)
+          parsedir(v, pp)
         else:
           if v == include:
-            filelist.append((p+k).value)
+            filelist.append(pp.value)
 
-    for k, v in self.data.items():
-      if v is not None:
-        p = path(k).expanduser()
-        parsedir(v, p)
+    parsedir(self.data, path('~').expanduser())
 
     return filelist
 
@@ -84,6 +87,8 @@ class rcfile(YAMLData):
             data[key] = Secret
           elif ans == 'n':
             data[key] = Ignore
+          elif ans == 'h':
+            data[key] = Handled
           elif ans == 'e':
             data[key] = {}
             try:
@@ -133,6 +138,8 @@ class rcfile(YAMLData):
             data[key] = Secret
           elif ans == 'n':
             data[key] = Ignore
+          elif ans == 'h':
+            data[key] = Handled
           elif ans == 'v':
             os.system("vim '%s'" % f.value)
             ans = ''
