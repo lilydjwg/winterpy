@@ -4,7 +4,7 @@
 '''一些在命令行上使用的便捷函数'''
 
 import os
-from path import path
+from lilypath import path
 
 def findbroken(p):
   '''递归寻找断掉的软链接'''

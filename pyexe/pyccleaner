@@ -18,7 +18,7 @@ def filefilter(f):
 def isnewcachefile(f):
   if f.find('__pycache__') == -1:
     return False
-  from path import path
+  from lilypath import path
   p = path(f)
   pp = p.parent()
   if pp.basename != '__pycache__':

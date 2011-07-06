@@ -7,7 +7,7 @@
 2010年11月21日
 '''
 
-from path import path, sha1path
+from lilypath import path, sha1path
 from my_class import Config
 import kuaipan
 from time import sleep

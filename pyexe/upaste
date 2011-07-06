@@ -70,7 +70,7 @@ def main():
     print('%s/i%s' % (head, tail))
   else:
     print('%s/d%s' % (head, tail))
-    
+
 if __name__ == '__main__':
   try:
     main()

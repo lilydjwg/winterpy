@@ -11,6 +11,7 @@ ard 解码
 
 from ctypes import *
 from myutils import loadso
+import sys
 
 _ard = loadso('_ard.so')
 _ard.ard.argtypes = (c_char_p,) * 2
@@ -19,3 +20,5 @@ _ard.ard.restype = c_char_p
 def ard(str1, str2):
   return _ard.ard(str1, str2).decode('utf-8')
 
+if __name__ == '__main__':
+  print ard(sys.argv[1], sys.argv[2])
