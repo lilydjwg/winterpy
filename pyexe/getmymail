@@ -25,6 +25,7 @@ priority = Config({
   'qqmail2rc': 1000,
   'qqmailrc': 1000,  # 经常超时
   'whurc': 10080,    # 1 week
+  'zdrc': 120,
   })
 defaultTime = 30
 
