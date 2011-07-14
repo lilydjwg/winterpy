@@ -22,7 +22,7 @@ class Memory(LoggingMixIn, Operations):
         self.data = defaultdict(bytearray)
         self.fd = 0
         now = time()
-        self.files['/'] = dict(st_mode=(S_IFDIR | 0o755), st_ctime=now,
+        self.files[b'/'] = dict(st_mode=(S_IFDIR | 0o755), st_ctime=now,
             st_mtime=now, st_atime=now, st_nlink=2)
         
     def chmod(self, path, mode):
@@ -51,7 +51,7 @@ class Memory(LoggingMixIn, Operations):
         try:
             return attrs[name]
         except KeyError:
-            return ''       # Should return ENOATTR
+            return b''       # Should return ENOATTR
     
     def listxattr(self, path):
         attrs = self.files[path].get('attrs', {})
@@ -60,7 +60,7 @@ class Memory(LoggingMixIn, Operations):
     def mkdir(self, path, mode):
         self.files[path] = dict(st_mode=(S_IFDIR | mode), st_nlink=2,
                 st_size=0, st_ctime=time(), st_mtime=time(), st_atime=time())
-        self.files['/']['st_nlink'] += 1
+        self.files[b'/']['st_nlink'] += 1
     
     def open(self, path, flags):
         self.fd += 1
@@ -70,7 +70,10 @@ class Memory(LoggingMixIn, Operations):
         return bytes(self.data[path][offset:offset + size])
     
     def readdir(self, path, fh):
-        return ['.', '..'] + [x[1:] for x in self.files if x != '/']
+        return [b'.', b'..'] + [x[len(path):].lstrip(b'/') for x in self.files \
+                                if x != path and x.startswith(path) \
+                                and b'/' not in x[len(path):].lstrip(b'/')
+                               ]
     
     def readlink(self, path):
         return self.data[path].decode('utf-8')
@@ -87,7 +90,7 @@ class Memory(LoggingMixIn, Operations):
     
     def rmdir(self, path):
         self.files.pop(path)
-        self.files['/']['st_nlink'] -= 1
+        self.files[b'/']['st_nlink'] -= 1
     
     def setxattr(self, path, name, value, options, position=0):
         # Ignore options

@@ -388,7 +388,6 @@ class FUSE(object):
     def getxattr(self, path, name, value, size, *args):
         ret = self.operations('getxattr', path, name, *args)
         retsize = len(ret)
-        ret = ret.encode()
         buf = create_string_buffer(ret, retsize)    # Does not add trailing 0
         if bool(value):
             if retsize > size:
@@ -398,7 +397,7 @@ class FUSE(object):
     
     def listxattr(self, path, namebuf, size):
         ret = self.operations('listxattr', path)
-        buf = create_string_buffer('\x00'.join(ret)) if ret else ''
+        buf = create_string_buffer(b'\x00'.join(ret)) if ret else b''
         bufsize = len(buf)
         if bool(namebuf):
             if bufsize > size:
