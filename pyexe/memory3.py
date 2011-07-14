@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+# taken from http://code.google.com/p/fusepy/
 
 from fuse3 import FUSE, Operations, LoggingMixIn
 

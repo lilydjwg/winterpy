@@ -12,6 +12,8 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# taken from http://code.google.com/p/fusepy/
+
 from ctypes import *
 from ctypes.util import find_library
 from errno import *
@@ -276,6 +278,7 @@ class FUSE(object):
         args.append(','.join(key if val == True else '%s=%s' % (key, val)
             for key, val in kwargs.items()))
         args.append(mountpoint)
+        args = [x.encode() for x in args]
         argv = (c_char_p * len(args))(*args)
         
         fuse_ops = fuse_operations()
@@ -385,6 +388,7 @@ class FUSE(object):
     def getxattr(self, path, name, value, size, *args):
         ret = self.operations('getxattr', path, name, *args)
         retsize = len(ret)
+        ret = ret.encode()
         buf = create_string_buffer(ret, retsize)    # Does not add trailing 0
         if bool(value):
             if retsize > size:
@@ -413,6 +417,8 @@ class FUSE(object):
     def readdir(self, path, buf, filler, offset, fip):
         # Ignore raw_fi
         for item in self.operations('readdir', path, fip.contents.fh):
+            if isinstance(item, bytes):
+              item = item.decode('utf-8')
             if isinstance(item, str):
                 name, st, offset = item, None, 0
             else:
