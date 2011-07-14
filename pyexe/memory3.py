@@ -10,6 +10,7 @@ from stat import S_IFDIR, S_IFLNK, S_IFREG
 from sys import argv, exit
 from time import time
 
+import os
 import logging
 
 
@@ -124,7 +125,7 @@ class Memory(LoggingMixIn, Operations):
 
 if __name__ == "__main__":
     if len(argv) != 2:
-        print('usage: %s <mountpoint>' % argv[0])
+        print('usage: %s <mountpoint>' % os.path.split(argv[0])[1])
         exit(1)
     logging.getLogger().setLevel(logging.DEBUG)
     fuse = FUSE(Memory(), argv[1], foreground=True)
