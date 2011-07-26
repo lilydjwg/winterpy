@@ -6,6 +6,7 @@
 '''
 
 import os
+import sys
 
 from lilypath import path
 from yamlserializer import YAMLData
@@ -37,7 +38,7 @@ class rcfile(YAMLData):
         pp = p + k
         if not pp.exists():
           if v != Ignore:
-            print('WARNING: %s not found' % pp)
+            print('WARNING: %s not found' % pp, file=sys.stderr)
           continue
         if isinstance(v, dict):
           parsedir(v, pp)
