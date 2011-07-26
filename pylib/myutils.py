@@ -6,6 +6,7 @@
 '''
 
 import os, sys
+import datetime
 
 def path_import(path):
   '''指定路径来 import'''
@@ -80,6 +81,7 @@ def loadso(fname):
     if os.path.exists(p):
       return CDLL(p)
   raise ImportError('%s not found' % fname)
+
 def restart_when_done(func, max_times, args=(), kwargs={}, secs=60):
   '''
   在函数退出后重新运行之，直到在 secs 秒（默认一分钟）时间内达到 max_times 次退出
@@ -93,3 +95,9 @@ def restart_when_done(func, max_times, args=(), kwargs={}, secs=60):
   while len(dq) < max_times or time.time() - dq[0] > secs:
     dq.append(time.time())
     func(*args, **kwargs)
+
+def daterange(start, stop=datetime.date.today(), step=datetime.timedelta(days=1)):
+  d = start
+  while d < stop:
+    yield d
+    d += step
