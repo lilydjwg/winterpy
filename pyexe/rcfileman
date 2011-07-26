@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim:fileencoding=utf-8
 
-import os
+import os, sys
 import argparse
 import rcfile
 
@@ -21,10 +21,13 @@ def main():
   if args.update:
     rc = rcfile.rcfile(os.path.expanduser(args.config))
     rc.update()
-  elif hasattr(args, 'list'):
+  elif args.list is not None:
     rc = rcfile.rcfile(os.path.expanduser(args.config), readonly=True)
     for l in rc.filelist(args.list):
       print(l)
+  else:
+    print('参数错误。', file=sys.stderr)
+    sys.exit(1)
 
 if __name__ == '__main__':
   main()
