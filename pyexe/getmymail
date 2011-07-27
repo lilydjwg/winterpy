@@ -34,7 +34,7 @@ datafile = os.path.expanduser('~/scripts/python/pydata/getmymail')
 
 def getmail(config):
   '''config 为 path 对象，指向配置文件'''
-  os.system('getmail -n -r%s'%config.expand())
+  return os.system('getmail -n -r%s'%config.expand())
 
 def main():
   with PickledData(datafile, default=Config()) as old:
@@ -44,8 +44,8 @@ def main():
       time = timedelta(minutes=time)
       old_time = old[name] or datetime(2010, 6, 15) # 写作此程序的这天
       if datetime.today() - old_time >= time:
-        getmail(p)
-        old[name] = datetime.today()
+        if getmail(p) == 0:
+          old[name] = datetime.today()
 
 if __name__ == '__main__':
   main()
