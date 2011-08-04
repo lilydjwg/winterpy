@@ -18,7 +18,7 @@ _ard.ard.argtypes = (c_char_p,) * 2
 _ard.ard.restype = c_char_p
 
 def ard(str1, str2):
-  return _ard.ard(str1, str2).decode('utf-8')
+  return _ard.ard(str1.encode('utf-8'), str2.encode('utf-8')).decode('utf-8')
 
 if __name__ == '__main__':
-  print ard(sys.argv[1], sys.argv[2])
+  print(ard(sys.argv[1], sys.argv[2]))
