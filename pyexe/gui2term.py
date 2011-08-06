@@ -7,9 +7,9 @@ Generate 256-color definition for Vim's colorscheme
 http://www.vim.org/scripts/script.php?script_id=2778
 '''
 
-__version__ = 3.0
+__version__ = 3.1
 
-import os, sys, re
+import os, sys, re, io
 import math
 from math import *
 import warnings
@@ -277,7 +277,7 @@ def getRgbtxt(): # {{{2
   else:
     try:
       import subprocess
-      rgbfile = subprocess.check_output(['locate', '-b', '--regex', '-e', '^rgb\.txt$']).decode().strip()
+      rgbfile = io.StringIO(subprocess.check_output(['locate', '-b', '--regex', '-e', '^rgb\.txt$']).decode()).readline().strip()
     except:
       warnings.warn("rgb.txt not found, color names will cause errors", Warning)
       rgbfile = None
