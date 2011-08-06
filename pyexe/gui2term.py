@@ -277,7 +277,7 @@ def getRgbtxt(): # {{{2
   else:
     try:
       import subprocess
-      rgbfile = subprocess.check_output(['locate', '-b', '--regex', '^rgb\.txt$']).decode().strip()
+      rgbfile = subprocess.check_output(['locate', '-b', '--regex', '-e', '^rgb\.txt$']).decode().strip()
     except:
       warnings.warn("rgb.txt not found, color names will cause errors", Warning)
       rgbfile = None
