@@ -7,7 +7,7 @@ Generate 256-color definition for Vim's colorscheme
 http://www.vim.org/scripts/script.php?script_id=2778
 '''
 
-__version__ = 3.1
+__version__ = 3.03
 
 import os, sys, re, io
 import math
