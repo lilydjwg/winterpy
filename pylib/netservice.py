@@ -18,6 +18,7 @@ def getTitle(url, headers={}, timeout=5):
     socket.timeout: timed out
   '''
   # TODO 对 meta 刷新的处理
+  # TODO 使用 Content-Type 中指定的编码
   import re
   import socket
   from httpsession import Session
