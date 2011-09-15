@@ -12,16 +12,16 @@ logger = logging.getLogger(__name__)
 global_exclude_7z = ['-xr!' + x for x in base.global_exclude]
 global_exclude_tar = ['--exclude=' + x for x in base.global_exclude]
 
-def p7zip(name, dstfile, sources, extraopts=(), extraexclude=()):
+def p7zip(name, dstfile, sources, exclude=(), opts=()):
   if isinstance(sources, str):
     sources = [sources]
   cmd = ['7z', 'u', dstfile]
   cmd.extend(global_exclude_7z)
-  if extraexclude:
-    exclude = ['-xr!' + x for x in extraexclude]
+  if exclude:
+    exclude = ['-xr!' + x for x in exclude]
     cmd.extend(exclude)
-  if extraopts:
-    cmd.extend(extraopts)
+  if opts:
+    cmd.extend(opts)
   cmd.extend(sources)
 
   retcode = base.run_command(cmd)

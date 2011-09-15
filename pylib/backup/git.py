@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 
 def push(name, directory, remote='origin', force=False):
   cmd = [
-    'git', '--work-tree='+directory,
+    'git',
+    '--work-tree='+directory,
     '--git-dir='+os.path.join(directory, '.git'),
     'push',
     remote
@@ -49,7 +50,7 @@ def pull(name, directory, srcdir):
     cmd = [
       'git',
       '--git-dir='+os.path.join(directory, '.git'),
-      'pull', '--all',
+      'pull',
     ]
     cloning = False
 
