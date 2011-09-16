@@ -47,6 +47,7 @@ def pull(name, directory, srcdir):
     ]
     cloning = True
   else:
+    #FIXME This has a problem, see http://stackoverflow.com/questions/5083224/git-pull-while-not-in-a-git-directory
     cmd = [
       'git',
       '--git-dir='+os.path.join(directory, '.git'),
