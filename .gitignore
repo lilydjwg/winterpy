@@ -1,4 +1,3 @@
 pydata/
 other/
 pylib/*.so
-*.pyc
