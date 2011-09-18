@@ -92,7 +92,7 @@ def main():
   if new:
     print(yellow('新加歌曲：\n\t'), '\n\t '.join(new))
 
-  if input('执行以上操作吗？[y/N] ') in 'Yy':
+  if input('执行以上操作吗？[Y/n] ') in 'Yy':
     toconvert = set(new)
     for i in subs:
       for j in i.right_only:
