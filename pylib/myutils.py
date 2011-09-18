@@ -101,3 +101,26 @@ def daterange(start, stop=datetime.date.today(), step=datetime.timedelta(days=1)
   while d < stop:
     yield d
     d += step
+def enable_pretty_logging():
+  import logging
+
+  logger = logging.getLogger()
+  h = logging.StreamHandler()
+  formatter = logging.Formatter('%(asctime)s:%(levelname)-7s:%(name)-12s:%(message)s')
+  try:
+    import curses
+    import tornado.options
+    color = False
+    curses.setupterm()
+    if curses.tigetnum("colors") > 0:
+      color = True
+    formatter = tornado.options._LogFormatter(color=color)
+  except:
+    import traceback
+    traceback.print_exc()
+  finally:
+    h.setLevel(logging.DEBUG)
+    h.setFormatter(formatter)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(h)
+
