@@ -9,9 +9,7 @@
   You can store backup files into truecrypt volume.
 '''
 
-
 import logging
-from getpass import getpass
 
 from . import base
 
@@ -19,28 +17,23 @@ __all__ = ['mount', 'unmount']
 
 logger = logging.getLogger(__name__)
 
-
-def mount(source, dest='/opt/backup', password=False, sudo=False):
+def mount(source, dest, sudo=False):
   cmd = [
     'truecrypt',
     source,
     dest
   ]
-  if password:
-    ps = getpass('Truecrypt password:\n')
-    cmd.extend(['-p', ps])
   if sudo:
     cmd.insert(0, 'sudo')
   retcode = base.run_command(cmd)
   if retcode == 0:
-    logging.info('Mount %s at %s successfully', source, base.bold(dest))
+    logging.info('mount %s at %s successfully', source, base.bold(dest))
   else:
-    logging.error('Mount %s at %s is failed with code %d',
-                 source,
-                 base.bold(dest),
-                 retcode)
+    logging.error('mounting %s at %s failed with code %d',
+                  source,
+                  base.bold(dest),
+                  retcode)
   return not retcode
-
 
 def unmount(sudo=False):
   cmd = [
@@ -51,8 +44,8 @@ def unmount(sudo=False):
     cmd.insert(0, 'sudo')
   retcode = base.run_command(cmd)
   if retcode == 0:
-    logging.info('Unmount truecrypt volume successfully.')
+    logging.info('unmount truecrypt volume successfully.')
   else:
-    logging.error('Unmount truecrypt volume is failed with code %d', retcode)
+    logging.error('unmounting truecrypt volume failed with code %d', retcode)
 
   return not retcode
