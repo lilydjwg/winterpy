@@ -117,8 +117,8 @@ static PyMethodDef xlib_display_methods[] = {
   {
     "button", (PyCFunction)xtest_button, METH_VARARGS,
     "click the mouse\n" \
-      "Arguments are (button, is_press, delay), and all are optional." \
-      "button defaults to left button, and delay 0." \
+      "Arguments are (button, is_press, delay), and all are optional.\n" \
+      "button defaults to left button, and delay 0. " \
       "is_press defaults to -1, meaning press and release."
   },
   {
