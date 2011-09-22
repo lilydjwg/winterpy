@@ -123,11 +123,6 @@ static PyObject *scrnsaver_idletime(xlib_displayObject* self){
 
 static PyMethodDef xlib_display_methods[] = {
   {
-    "motion", (PyCFunction)xtest_motion, METH_VARARGS,
-    "moves the mouse cursor\n" \
-      "Arguments are (x, y, delay, screen_number). The latter two are optional."
-  },
-  {
     "button", (PyCFunction)xtest_button, METH_VARARGS,
     "click the mouse\n" \
       "Arguments are (button, is_press, delay), and all are optional.\n" \
@@ -145,6 +140,11 @@ static PyMethodDef xlib_display_methods[] = {
   {
     "getpos", (PyCFunction)xlib_getpos, METH_NOARGS,
     "get the mouse cursor position"
+  },
+  {
+    "motion", (PyCFunction)xtest_motion, METH_VARARGS,
+    "moves the mouse cursor\n" \
+      "Arguments are (x, y, delay, screen_number). The latter two are optional."
   },
   {NULL}  /* Sentinel */
 };
@@ -222,4 +222,8 @@ PyMODINIT_FUNC PyInit_X(void){
   PyModule_AddObject(m, "WHEEL_DOWN", PyLong_FromLong(5));
   return m;
 }
-/* vim: se path+=/usr/include/python3.2mu: */
+/* ===================================================================== *
+ * vim modeline                                                          *
+ * vim:se fdm=expr foldexpr=getline(v\:lnum)=~'^\\S.*{'?'>1'\:1:         *
+ * vim: se path+=/usr/include/python3.2mu:                               *
+ * ===================================================================== */
