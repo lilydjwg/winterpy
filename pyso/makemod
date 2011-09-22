@@ -17,4 +17,4 @@ makeamod () {
   gcc $@ -O2 -shared "$infile" -o "$outfile" $FLAGS
 }
 
-makeamod X.c -lX11 -lXtst
+makeamod X.c -lX11 -lXtst -lXss

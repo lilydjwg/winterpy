@@ -1,5 +1,6 @@
 #include<Python.h>
 #include<X11/Xlib.h>
+#include<X11/extensions/scrnsaver.h>
 
 typedef struct {
   PyObject_HEAD
@@ -108,6 +109,18 @@ static PyObject *xtest_button(xlib_displayObject* self, PyObject* args){
   Py_RETURN_NONE;
 }
 
+static PyObject *scrnsaver_idletime(xlib_displayObject* self){
+  Display *display = self->dpy;
+  XScreenSaverInfo *info;
+
+  Py_BEGIN_ALLOW_THREADS
+  info = XScreenSaverAllocInfo();
+  XScreenSaverQueryInfo(display, DefaultRootWindow(display), info);
+  Py_END_ALLOW_THREADS
+
+  return PyLong_FromUnsignedLong(info->idle);
+}
+
 static PyMethodDef xlib_display_methods[] = {
   {
     "motion", (PyCFunction)xtest_motion, METH_VARARGS,
@@ -124,6 +137,10 @@ static PyMethodDef xlib_display_methods[] = {
   {
     "flush", (PyCFunction)xlib_flush, METH_NOARGS,
     "flush X display"
+  },
+  {
+    "idletime", (PyCFunction)scrnsaver_idletime, METH_NOARGS,
+    "get user idle time in milliseconds"
   },
   {
     "getpos", (PyCFunction)xlib_getpos, METH_NOARGS,
