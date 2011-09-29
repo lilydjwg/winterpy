@@ -3,17 +3,16 @@
 
 '''
 XML 相关的小工具函数
-
-2011年1月9日
 '''
 
-from lxml import etree
 import re
+from lxml.html import parse, etree, tostring, fromstring
+
 allen = re.compile(r'^[\x20-\x7f]+$')
 en = re.compile(r'[\x20-\x7f]+')
 
 def enText(doc):
-  doc.xpath('//body')[0].attrib['lang'] = 'zh'
+  doc.set('lang', 'zh-CN')
   for el in doc.xpath('//p|//dt|//dd|//li|//a|//span|//em|//h2|//h3'):
     if el.getparent().tag == 'pre':
       continue
@@ -59,6 +58,15 @@ def enText(doc):
           el.tail = text[m.end():]
 
 def enText_convert(oldfile, newfile):
-  doc = etree.parse(oldfile)
+  doc = fromstring(open(oldfile).read())
   enText(doc)
-  doc.write(newfile, encoding='UTF-8', xml_declaration=True)
+  with open(newfile, 'w') as f:
+    f.write(doc.getroottree().docinfo.doctype + '\n')
+    f.write(tostring(doc, encoding=str, method='xml'))
+
+if __name__ == '__main__':
+  import sys
+  if len(sys.argv) == 3:
+    enText_convert(*sys.argv[1:])
+  else:
+    print('parameters: old_file new_file', file=sys.stderr)
