@@ -18,3 +18,4 @@ makeamod () {
 }
 
 makeamod X.c -lX11 -lXtst -lXss
+makeamod myopencv.c `pkg-config --cflags --libs opencv`
