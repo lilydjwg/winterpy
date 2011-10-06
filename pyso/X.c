@@ -156,7 +156,7 @@ static PyGetSetDef xlib_display_getset[] = {
 
 static PyTypeObject xlib_displayType = {
   PyVarObject_HEAD_INIT(NULL, 0)
-  "x.Display",					/* tp_name */
+  "Display",						/* tp_name */
   sizeof(xlib_displayObject),				/* tp_basicsize */
   0,							/* tp_itemsize */
   (destructor)xlib_display_del,				/* tp_dealloc */
