@@ -48,7 +48,10 @@ def enText(doc):
         span = etree.Element('span')
         span.set('lang', 'en')
         span.text = m.group(0)
+        tail = el.tail
         el.addnext(span)
+        # re-insert mispositioned tail; the previous one will be overwritten
+        el.tail = tail
         if i == 0:
           el.tail = text[:m.start()]
         el = span
