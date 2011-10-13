@@ -64,9 +64,7 @@ def main():
   application = tornado.web.Application([
     (r'/queryip$', IPHandler),
     (r'/privoxy/add$', PrivoxyMan),
-  ],
-    debug=True,
-  )
+  ])
   application.listen(options.port)
   tornado.ioloop.IOLoop.instance().start()
 
