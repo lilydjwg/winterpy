@@ -39,7 +39,7 @@ class IPHandler(tornado.web.RequestHandler):
     }
     cb = self.get_argument('cb', None)
     if cb:
-      self.set_header('Content-Type', 'text/plain; charset=utf-8')
+      self.set_header('Content-Type', 'text/javascript; charset=utf-8')
       self.write('%s(%s)' % (cb, json.dumps(ans, ensure_ascii=False)))
     else:
       self.write(ans)
