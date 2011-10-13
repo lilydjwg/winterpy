@@ -38,7 +38,7 @@ class Subprocess(subprocess.Popen):
       self.polls[fd] = select.poll()
       self.polls[fd].register(fd, select.POLLOUT)
 
-    r = self.polls[fd].poll(0.005)
+    r = self.polls[fd].poll(5)
     if not r:
       raise IOError(errno.EWOULDBLOCK, 'writing would block')
 
@@ -51,7 +51,7 @@ class Subprocess(subprocess.Popen):
     self.stdin.write(msg)
     self.stdin.flush()
 
-  def poll(self, fd, timeout=0.05):
+  def poll(self, fd, timeout):
     '''从文件描述符 fd 中读取尽可能多的字符，返回类型由 decode 属性决定'''
     ret = b''
 
@@ -73,16 +73,19 @@ class Subprocess(subprocess.Popen):
     else:
       return ret
 
-  def output(self):
-    '''如果指定了 stdout=PIPE，则返回 stdout 输出，否则抛出 AttributeError 异常'''
+  def output(self, timeout=0.05):
+    '''如果指定了 stdout=PIPE，则返回 stdout 输出，否则抛出 AttributeError 异常
+    timeout 单位为秒'''
+    if isinstance(timeout, int):
+      timeout *= 1000
     if self.stdout is not None:
-      return self.poll(self.stdout.fileno())
+      return self.poll(self.stdout.fileno(), timeout=timeout)
     else:
       raise AttributeError('stdout 不是 pipe')
 
-  def error(self):
+  def error(self, timeout=0.05):
     '''如果指定了 stderr=PIPE，则返回 stderr 输出，否则抛出 AttributeError 异常'''
     if self.stderr is not None:
-      return self.poll(self.stderr.fileno())
+      return self.poll(self.stderr.fileno(), timeout=timeout)
     else:
       raise AttributeError('stderr 不是 pipe')
