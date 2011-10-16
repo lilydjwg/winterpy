@@ -1,5 +1,6 @@
 #include<Python.h>
 #include<X11/Xlib.h>
+#include<X11/keysym.h>
 #include<X11/extensions/scrnsaver.h>
 
 typedef struct {
@@ -117,8 +118,45 @@ static PyObject *xtest_key(xlib_displayObject* self, PyObject* args){
   unsigned int keycode = 1;
   int is_press = -1;
   unsigned long delay = 0;
-  if(!PyArg_ParseTuple(args, "i|ik", &keycode, &is_press, &delay))
+  PyObject* key;
+  PyObject* obj;
+  const char* keystr;
+  KeySym keysym, key_lower, key_upper;
+  KeyCode shiftkeycode = 0;
+
+  if(!PyArg_ParseTuple(args, "O|ik", &key, &is_press, &delay))
     return NULL;
+  Py_INCREF(key);
+  if(PyUnicode_Check(key)){
+    obj = PyUnicode_EncodeFSDefault(key);
+    Py_DECREF(key);
+    keystr = PyBytes_AsString(obj);
+    Py_BEGIN_ALLOW_THREADS
+    keysym = XStringToKeysym(keystr);
+    if(keysym == NoSymbol){
+      keycode = 0;
+    }else{
+      keycode = XKeysymToKeycode(dpy, keysym);
+    }
+    Py_END_ALLOW_THREADS
+    if(keycode == 0){/* invalid */
+      PyErr_Format(PyExc_ValueError, "invalid keysym name: %s", keystr);
+      Py_DECREF(obj);
+      return NULL;
+    }
+    Py_DECREF(obj);
+  }else if(PyLong_Check(key)){
+    keycode = PyLong_AsUnsignedLong(key);
+    Py_DECREF(key);
+  }else{
+    obj = PyObject_Type(key);
+    Py_DECREF(key);
+    key = PyObject_GetAttrString(obj, "__name__");
+    Py_DECREF(obj);
+    PyErr_Format(PyExc_TypeError, "int or str expected, but got: %S", key);
+    Py_DECREF(key);
+    return NULL;
+  }
   if(is_press < -1 || is_press > 1){
     PyErr_SetString(PyExc_ValueError, "is_press should be bool or -1");
     return NULL;
@@ -126,8 +164,21 @@ static PyObject *xtest_key(xlib_displayObject* self, PyObject* args){
 
   Py_BEGIN_ALLOW_THREADS
   if(is_press == -1){
+    XConvertCase(keysym, &key_lower, &key_upper);
+    if(keysym == key_upper && keysym != key_lower){
+      shiftkeycode = XKeysymToKeycode(dpy, XK_Shift_L);
+      XTestFakeKeyEvent(dpy, shiftkeycode, 1, delay);
+    }
+  }
+  if(is_press == -1){
+    /*
+     * FIXME: if delay specified, keypress will be repeated several times after
+     * the correct one after a small delay. */
     XTestFakeKeyEvent(dpy, keycode, 1, delay);
     XTestFakeKeyEvent(dpy, keycode, 0, delay);
+    if(shiftkeycode != 0){
+      XTestFakeKeyEvent(dpy, shiftkeycode, 0, delay);
+    }
   }else{
     XTestFakeKeyEvent(dpy, keycode, is_press, delay);
   }
@@ -150,7 +201,7 @@ static PyObject *scrnsaver_idletime(xlib_displayObject* self){
 
 static PyObject* scrnsaver_state(xlib_displayObject* self){
   /*
-   * In my practice, ScreenSaverDisabled is got if the monitor is on, and
+   * In my practice, ScreenSaverDisabled iPyUnicode_AS_DATAs got if the monitor is on, and
    * ScreenSaverOn if it is off. `kind` is always ScreenSaverBlanked.
    */
   Display *dpy;
@@ -192,8 +243,8 @@ static PyMethodDef xlib_display_methods[] = {
     "button", (PyCFunction)xtest_button, METH_VARARGS,
     "click the mouse\n" \
       "Arguments are (button, is_press, delay), and all are optional.\n" \
-      "button defaults to left button, and delay 0. " \
-      "is_press defaults to -1, meaning press and release."
+      ".button. defaults to left button, and delay 0. " \
+      "`is_press` defaults to -1, meaning press and release."
   },
   {
     "flush", (PyCFunction)xlib_flush, METH_NOARGS,
@@ -210,9 +261,9 @@ static PyMethodDef xlib_display_methods[] = {
   {
     "key", (PyCFunction)xtest_key, METH_VARARGS,
     "press the keyboard\n" \
-      "Arguments are (keycode, is_press, delay), the latter two are optional.\n" \
-      "delay defaults to 0. " \
-      "is_press defaults to -1, meaning press and release."
+      "Arguments are (key, is_press, delay), the latter two are optional.\n" \
+      "`key` can be keycode or keysym name. `delay` defaults to 0. " \
+      "`is_press` defaults to -1, meaning press and release."
   },
   {
     "motion", (PyCFunction)xtest_motion, METH_VARARGS,
