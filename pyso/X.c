@@ -124,6 +124,10 @@ static PyObject *scrnsaver_idletime(xlib_displayObject* self){
 }
 
 static PyObject* scrnsaver_state(xlib_displayObject* self){
+  /*
+   * In my practice, ScreenSaverDisabled is got if the monitor is on, and
+   * ScreenSaverOn if it is off. `kind` is always ScreenSaverBlanked.
+   */
   Display *dpy;
   XScreenSaverInfo *info;
   int ss_event, ss_error;
@@ -186,7 +190,7 @@ static PyMethodDef xlib_display_methods[] = {
   {
     "screensaver_state", (PyCFunction)scrnsaver_state, METH_NOARGS,
     "get the screensaver state, returns a tuple of (state, kind)\n" \
-      "state can be 0 for off, 1 for on, -1 for disabled, and -2 for others"
+      "`state` can be 0 for off, 1 for on, -1 for disabled, and -2 for others"
   },
   {NULL}  /* Sentinel */
 };
