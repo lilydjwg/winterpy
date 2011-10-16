@@ -94,8 +94,10 @@ static PyObject *xtest_button(xlib_displayObject* self, PyObject* args){
   unsigned long delay = 0;
   if(!PyArg_ParseTuple(args, "|iik", &button, &is_press, &delay))
     return NULL;
-  if(is_press < -1 || is_press > 1)
+  if(is_press < -1 || is_press > 1){
     PyErr_SetString(PyExc_ValueError, "is_press should be bool or -1");
+    return NULL;
+  }
 
   Py_BEGIN_ALLOW_THREADS
   if(is_press == -1){
