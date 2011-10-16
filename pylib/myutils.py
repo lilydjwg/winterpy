@@ -7,6 +7,7 @@
 
 import os, sys
 import datetime
+from functools import lru_cache
 
 def path_import(path):
   '''指定路径来 import'''
@@ -124,3 +125,10 @@ def enable_pretty_logging():
     logger.setLevel(logging.DEBUG)
     logger.addHandler(h)
 
+@lru_cache()
+def findfont(fontname):
+  from subprocess import check_output
+  out = check_output(['fc-match', '-v', fontname]).decode()
+  for l in out.split('\n'):
+    if l.lstrip().startswith('file:'):
+      return l.split('"', 2)[1]
