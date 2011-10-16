@@ -111,6 +111,31 @@ static PyObject *xtest_button(xlib_displayObject* self, PyObject* args){
   Py_RETURN_NONE;
 }
 
+static PyObject *xtest_key(xlib_displayObject* self, PyObject* args){
+  Display *dpy;
+  dpy = self->dpy;
+  unsigned int keycode = 1;
+  int is_press = -1;
+  unsigned long delay = 0;
+  if(!PyArg_ParseTuple(args, "i|ik", &keycode, &is_press, &delay))
+    return NULL;
+  if(is_press < -1 || is_press > 1){
+    PyErr_SetString(PyExc_ValueError, "is_press should be bool or -1");
+    return NULL;
+  }
+
+  Py_BEGIN_ALLOW_THREADS
+  if(is_press == -1){
+    XTestFakeKeyEvent(dpy, keycode, 1, delay);
+    XTestFakeKeyEvent(dpy, keycode, 0, delay);
+  }else{
+    XTestFakeKeyEvent(dpy, keycode, is_press, delay);
+  }
+  Py_END_ALLOW_THREADS
+
+  Py_RETURN_NONE;
+}
+
 static PyObject *scrnsaver_idletime(xlib_displayObject* self){
   Display *display = self->dpy;
   XScreenSaverInfo *info;
@@ -175,12 +200,19 @@ static PyMethodDef xlib_display_methods[] = {
     "flush X display"
   },
   {
+    "getpos", (PyCFunction)xlib_getpos, METH_NOARGS,
+    "get the mouse cursor position"
+  },
+  {
     "idletime", (PyCFunction)scrnsaver_idletime, METH_NOARGS,
     "get user idle time in milliseconds"
   },
   {
-    "getpos", (PyCFunction)xlib_getpos, METH_NOARGS,
-    "get the mouse cursor position"
+    "key", (PyCFunction)xtest_key, METH_VARARGS,
+    "press the keyboard\n" \
+      "Arguments are (keycode, is_press, delay), the latter two are optional.\n" \
+      "delay defaults to 0. " \
+      "is_press defaults to -1, meaning press and release."
   },
   {
     "motion", (PyCFunction)xtest_motion, METH_VARARGS,
