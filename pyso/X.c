@@ -121,6 +121,24 @@ static PyObject *scrnsaver_idletime(xlib_displayObject* self){
   return PyLong_FromUnsignedLong(info->idle);
 }
 
+static PyObject* scrnsaver_state(xlib_displayObject* self) {
+  Display *dpy;
+  dpy = self->dpy;
+  XScreenSaverInfo *info;
+  int ss_event, ss_error;
+
+  if (XScreenSaverQueryExtension(dpy, &ss_event, &ss_error)) {
+    Py_BEGIN_ALLOW_THREADS
+    info = XScreenSaverAllocInfo();
+    XScreenSaverQueryInfo(dpy, DefaultRootWindow(dpy), info);
+    Py_END_ALLOW_THREADS
+    return Py_BuildValue("ii", info->state, info->kind);
+  }
+  else {
+    return NULL;
+  }
+}
+
 static PyMethodDef xlib_display_methods[] = {
   {
     "button", (PyCFunction)xtest_button, METH_VARARGS,
@@ -136,6 +154,10 @@ static PyMethodDef xlib_display_methods[] = {
   {
     "idletime", (PyCFunction)scrnsaver_idletime, METH_NOARGS,
     "get user idle time in milliseconds"
+  },
+  {
+    "state", (PyCFunction)scrnsaver_state, METH_NOARGS,
+    "get the screensaver state"
   },
   {
     "getpos", (PyCFunction)xlib_getpos, METH_NOARGS,
@@ -156,43 +178,43 @@ static PyGetSetDef xlib_display_getset[] = {
 
 static PyTypeObject xlib_displayType = {
   PyVarObject_HEAD_INIT(NULL, 0)
-  "Display",						/* tp_name */
-  sizeof(xlib_displayObject),				/* tp_basicsize */
-  0,							/* tp_itemsize */
-  (destructor)xlib_display_del,				/* tp_dealloc */
-  0,							/* tp_print */
-  0,							/* tp_getattr */
-  0,							/* tp_setattr */
-  0,							/* tp_reserved */
-  0,							/* tp_repr */
-  0,							/* tp_as_number */
-  0,							/* tp_as_sequence */
-  0,							/* tp_as_mapping */
-  0,							/* tp_hash  */
-  0,							/* tp_call */
-  0,							/* tp_str */
-  0,							/* tp_getattro */
-  0,							/* tp_setattro */
-  0,							/* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,		/* tp_flags */
-  "X Display",						/* tp_doc */
-  0,							/* tp_traverse */
-  0,							/* tp_clear */
-  0,							/* tp_richcompare */
-  0,							/* tp_weaklistoffset */
-  0,							/* tp_iter */
-  0,							/* tp_iternext */
-  xlib_display_methods,	     				/* tp_methods */
-  0,			     				/* tp_members */
-  xlib_display_getset,	     				/* tp_getset */
-  0,			     				/* tp_base */
-  0,			     				/* tp_dict */
-  0,			     				/* tp_descr_get */
-  0,			     				/* tp_descr_set */
-  0,			     				/* tp_dictoffset */
-  (initproc)xlib_display_init,				/* tp_init */
-  0,			     				/* tp_alloc */
-  PyType_GenericNew,		     			/* tp_new */
+  "Display",            /* tp_name */
+  sizeof(xlib_displayObject),       /* tp_basicsize */
+  0,              /* tp_itemsize */
+  (destructor)xlib_display_del,       /* tp_dealloc */
+  0,              /* tp_print */
+  0,              /* tp_getattr */
+  0,              /* tp_setattr */
+  0,              /* tp_reserved */
+  0,              /* tp_repr */
+  0,              /* tp_as_number */
+  0,              /* tp_as_sequence */
+  0,              /* tp_as_mapping */
+  0,              /* tp_hash  */
+  0,              /* tp_call */
+  0,              /* tp_str */
+  0,              /* tp_getattro */
+  0,              /* tp_setattro */
+  0,              /* tp_as_buffer */
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   /* tp_flags */
+  "X Display",            /* tp_doc */
+  0,              /* tp_traverse */
+  0,              /* tp_clear */
+  0,              /* tp_richcompare */
+  0,              /* tp_weaklistoffset */
+  0,              /* tp_iter */
+  0,              /* tp_iternext */
+  xlib_display_methods,             /* tp_methods */
+  0,                  /* tp_members */
+  xlib_display_getset,              /* tp_getset */
+  0,                  /* tp_base */
+  0,                  /* tp_dict */
+  0,                  /* tp_descr_get */
+  0,                  /* tp_descr_set */
+  0,                  /* tp_dictoffset */
+  (initproc)xlib_display_init,        /* tp_init */
+  0,                  /* tp_alloc */
+  PyType_GenericNew,              /* tp_new */
 };
 
 static PyModuleDef xlibmodule = {
