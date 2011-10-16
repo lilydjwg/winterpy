@@ -121,20 +121,37 @@ static PyObject *scrnsaver_idletime(xlib_displayObject* self){
   return PyLong_FromUnsignedLong(info->idle);
 }
 
-static PyObject* scrnsaver_state(xlib_displayObject* self) {
+static PyObject* scrnsaver_state(xlib_displayObject* self){
   Display *dpy;
-  dpy = self->dpy;
   XScreenSaverInfo *info;
   int ss_event, ss_error;
+  int state, kind;
+  dpy = self->dpy;
 
-  if (XScreenSaverQueryExtension(dpy, &ss_event, &ss_error)) {
+  if(XScreenSaverQueryExtension(dpy, &ss_event, &ss_error)){
     Py_BEGIN_ALLOW_THREADS
     info = XScreenSaverAllocInfo();
     XScreenSaverQueryInfo(dpy, DefaultRootWindow(dpy), info);
+    state = info->state;
+    kind = info->kind;
+    XFree(info);
+    switch(state){
+      case ScreenSaverOff:
+	state = 0;
+	break;
+      case ScreenSaverOn:
+	state = 1;
+	break;
+      case ScreenSaverDisabled:
+	state = -1;
+	break;
+      default:
+	state = -2;
+    }
     Py_END_ALLOW_THREADS
-    return Py_BuildValue("ii", info->state, info->kind);
-  }
-  else {
+    return Py_BuildValue("ii", state, kind);
+  }else{
+    PyErr_SetString(PyExc_RuntimeError, "XScreeSaver not supported");
     return NULL;
   }
 }
@@ -156,10 +173,6 @@ static PyMethodDef xlib_display_methods[] = {
     "get user idle time in milliseconds"
   },
   {
-    "state", (PyCFunction)scrnsaver_state, METH_NOARGS,
-    "get the screensaver state"
-  },
-  {
     "getpos", (PyCFunction)xlib_getpos, METH_NOARGS,
     "get the mouse cursor position"
   },
@@ -167,6 +180,11 @@ static PyMethodDef xlib_display_methods[] = {
     "motion", (PyCFunction)xtest_motion, METH_VARARGS,
     "moves the mouse cursor\n" \
       "Arguments are (x, y, delay, screen_number). The latter two are optional."
+  },
+  {
+    "screensaver_state", (PyCFunction)scrnsaver_state, METH_NOARGS,
+    "get the screensaver state, returns a tuple of (state, kind)\n" \
+      "state can be 0 for off, 1 for on, -1 for disabled, and -2 for others"
   },
   {NULL}  /* Sentinel */
 };
