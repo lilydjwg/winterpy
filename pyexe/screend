@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+'''
+锁屏、设置 empathy 状态、etc
+'''
+
+#TODO: 日志
+
+IDLE_TIME = 5 # 单位：分
+
+import os
+import sys
+import select
+from time import sleep
+from subprocess import call
+import signal
+import X
+
+FIFO = '/dev/shm/screend'
+pid_file = '/var/lock/screend.pid'
+screen_locked = False
+our_leave = False
+
+def sigterm(signum, frame):
+  sys.exit()
+
+signal.signal(signal.SIGTERM, sigterm)
+
+def monitor_off():
+  return call(['xset', 'dpms', 'force', 'off'])
+
+def lockscreen():
+  global screen_locked
+  st1 = call(['gnome-screensaver-command', '-l'])
+  st2 = monitor_off()
+  if not any((st1, st2)):
+    screen_locked = True
+
+def empathy_leave(state):
+  global our_leave
+  st = 1
+  if state:
+    st = call(['setstatus', 'away', 'away from keyboard'])
+  elif our_leave:
+    st = call(['setstatus', 'available'])
+  if st == 0:
+    our_leave = state
+
+def main():
+  global screen_locked
+  if not os.path.exists(FIFO):
+    os.mkfifo(FIFO)
+  d = X.Display()
+  fd = os.open(FIFO, os.O_NONBLOCK | os.O_RDONLY)
+  while True:
+    if not screen_locked:
+      if select.select([fd], [], [], 1)[0]:
+        req = os.read(fd, 1024).decode()
+        if req.strip() == 'lock':
+          lockscreen()
+          empathy_leave(True)
+        elif not req:
+          os.close(fd)
+          fd = os.open(FIFO, os.O_NONBLOCK | os.O_RDONLY)
+      elif d.idletime() > IDLE_TIME * 1000 * 60:
+        lockscreen()
+        empathy_leave(True)
+    elif d.idletime() < IDLE_TIME * 1000 * 60:
+      # I'm back
+      screen_locked = False
+      empathy_leave(False)
+    elif d.screensaver_state()[0] != 1:
+      # accidentally turned on, let's turn it off again
+      monitor_off()
+
+if __name__ == '__main__':
+  from pidfile import Daemonized
+
+  with Daemonized(pid_file):
+    try:
+      main()
+    finally:
+      os.unlink(FIFO)
