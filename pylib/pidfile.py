@@ -50,10 +50,11 @@ class Daemonized(PIDFile):
 
     super().__init__(pidfile)
     os.chdir('/')
-    os.close(0)
-    os.open('/dev/null', os.O_RDWR)
-    os.dup2(0, 1)
-    os.dup2(0, 2)
+    fd = os.open('/dev/null', os.O_RDWR)
+    os.dup2(fd, 0)
+    os.dup2(fd, 1)
+    os.dup2(fd, 2)
+    os.close(fd)
 
 class AlreadyRun(Exception):
   def __init__(self, pid):
