@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+from gi.repository import Gtk
+
+icon_mounted = 'document-new'
+icon_nomount = 'gtk-file'
+icon_nodrive = 'ascii'
+
+class AutoMountIcon(Gtk.StatusIcon):
+  def __init__(self, icon_name, tooltip=None):
+    super().__init__()
+    self.set_from_icon_name(icon_name)
+    if tooltip:
+      self.set_tooltip_text(tooltip)
+    self.menu = Gtk.Menu()
+    self.connect('popup-menu', self.popup)
+    self.connect('activate', self.click)
+
+  def add_menu(self, menu_text, callback, mnemonic=False, checked=None, stock=None):
+    if stock is not None:
+      item = Gtk.ImageMenuItem.new_from_stock(stock, None)
+      if menu_text:
+        item.set_label(menu_text)
+    else:
+      if checked is not None:
+        MenuItem = Gtk.CheckMenuItem
+      else:
+        MenuItem = Gtk.MenuItem
+      if mnemonic:
+        item = MenuItem.new_with_mnemonic(menu_text)
+      else:
+        item = MenuItem(menu_text)
+      if checked:
+        item.set_active(True)
+    item.connect('activate', callback)
+    self.menu.append(item)
+    return item
+
+  def add_separator(self):
+    # have to use `.new` here, or we'll get a blank MenuItem
+    item = Gtk.SeparatorMenuItem.new()
+    self.menu.append(item)
+    return item
+
+  def start(self):
+    self.menu.show_all()
+    Gtk.main()
+
+  def quit(self, data=None):
+    Gtk.main_quit()
+
+  def popup(self, icon, button, time):
+    self.menu.popup(None, None, None, None, button, time)
+
+  def click(self, icon):
+    self.popup(icon, 1, Gtk.get_current_event_time())
+
+def drive_status(menuitem, mounted):
+  if mounted:
+    label = '卸载磁盘 %s 上的所有分区 (_U)' % menuitem.dev
+  else:
+    label = '磁盘 %s (共 %d 分区)' % (menuitem.dev, menuitem.num)
+  menuitem.set_label(label)
+  menuitem.set_sensitive(mounted)
+
+def test():
+  def umount_drive(menuitem):
+    drive = menuitem.dev
+    p = menuitem.get_parent()
+    p.unmount_all = True
+    for i in p:
+      if isinstance(i, Gtk.CheckMenuItem) and i.dev.startswith(drive):
+        i.set_active(False)
+    app.set_from_icon_name(icon_nodrive)
+    p.unmount_all = False
+    drive_status(menuitem, False)
+
+  def toggle_mount(menuitem):
+    do_mount = menuitem.get_active()
+    if do_mount:
+      label = '%s (已挂载到 /media/%s)' % (menuitem.dev, menuitem.label)
+      menuitem.set_label(label)
+      app.set_from_icon_name(icon_mounted)
+    else:
+      label = '%s (未挂载)' % menuitem.dev
+      menuitem.set_label(label)
+      app.set_from_icon_name(icon_nomount)
+    p = menuitem.get_parent()
+    if not p.unmount_all:
+      for i in p:
+        if i.__class__ is Gtk.MenuItem and menuitem.dev.startswith(i.dev):
+          drive_status(i, do_mount)
+          break
+
+  app = AutoMountIcon(icon_nodrive, 'test')
+
+  label = '磁盘 /dev/sdb (共 1 分区)'
+  item = app.add_menu(label, umount_drive, mnemonic=True)
+  item.dev = '/dev/sdb'
+  item.num = 2
+  item.get_parent().unmount_all = False
+  item.set_sensitive(False)
+
+  item = app.add_menu('/dev/sdb1 (未挂载)', toggle_mount, checked=False)
+  item.dev = '/dev/sdb1'
+  item.label = 'test'
+
+  item = app.add_menu('/dev/sdb2 (未挂载)', toggle_mount, checked=False)
+  item.dev = '/dev/sdb2'
+  item.label = 'another'
+
+  app.add_separator()
+  app.add_menu(None, app.quit, stock=Gtk.STOCK_QUIT)
+  app.start()
+
+if __name__ == '__main__':
+  test()
