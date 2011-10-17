@@ -41,6 +41,7 @@ def monitor_off():
 def lockscreen():
   global screen_locked
   st1 = call(['gnome-screensaver-command', '-l'])
+  sleep(1)
   st2 = monitor_off()
   if not any((st1, st2)):
     screen_locked = True
