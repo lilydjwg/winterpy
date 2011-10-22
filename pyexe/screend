@@ -21,6 +21,7 @@ FIFO = '/dev/shm/screend'
 pid_file = '/var/lock/screend.pid'
 screen_locked = False
 our_leave = False
+sys.stderr = open('/tmp/screed.log', 'w')
 # logging.basicConfig(level=logging.DEBUG)
 
 def sigterm(signum, frame):
