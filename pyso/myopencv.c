@@ -79,7 +79,7 @@ static PyMethodDef IplImage_methods[] = {
   {
     "match", (PyCFunction)IplImage_match, METH_VARARGS,
     "find the most match portion for the given IplImage pattern\n" \
-      "Returns a tuple: ((x, y), interlinkage"
+      "Returns a tuple: ((x, y), interlinkage)"
   },
   {NULL}  /* Sentinel */
 };
