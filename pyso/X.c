@@ -85,7 +85,7 @@ static PyObject *xtest_motion(xlib_displayObject* self, PyObject* args, PyObject
   if(!PyArg_ParseTupleAndKeywords(args, kwds, "ii|kiO!", kwlist, &x, &y,
 	&delay, &screen, &PyBool_Type, &rel))
     return NULL;
-  is_rel = PyLong_AsLong(rel);
+  is_rel = rel == Py_True;
 
   Py_BEGIN_ALLOW_THREADS
   if(is_rel){
