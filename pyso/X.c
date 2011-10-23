@@ -72,17 +72,28 @@ PyObject* xlib_getpos(xlib_displayObject* self){
   return Py_BuildValue("ii", event.xbutton.x, event.xbutton.y);
 }
 
-static PyObject *xtest_motion(xlib_displayObject* self, PyObject* args){
+static PyObject *xtest_motion(xlib_displayObject* self, PyObject* args, PyObject* kwds){
   Display *dpy;
   dpy = self->dpy;
   int x, y;
   unsigned long delay = 0;
   int screen = -1;
-  if(!PyArg_ParseTuple(args, "ii|ki", &x, &y, &delay, &screen))
+  static char *kwlist[] = {"x", "y", "delay", "screen", "relative", NULL};
+  PyObject* rel;
+  int is_rel = 0;
+
+  if(!PyArg_ParseTupleAndKeywords(args, kwds, "ii|kiO!", kwlist, &x, &y,
+	&delay, &screen, &PyBool_Type, &rel))
     return NULL;
+  is_rel = PyLong_AsLong(rel);
 
   Py_BEGIN_ALLOW_THREADS
-  XTestFakeMotionEvent(dpy, screen, x, y, delay);
+  if(is_rel){
+    /* NOTE: only four args here; the doc is wrong. */
+    XTestFakeRelativeMotionEvent(dpy, x, y, delay);
+  }else{
+    XTestFakeMotionEvent(dpy, screen, x, y, delay);
+  }
   Py_END_ALLOW_THREADS
 
   Py_RETURN_NONE;
@@ -267,9 +278,10 @@ static PyMethodDef xlib_display_methods[] = {
       "`is_press` defaults to -1, meaning press and release."
   },
   {
-    "motion", (PyCFunction)xtest_motion, METH_VARARGS,
+    "motion", (PyCFunction)xtest_motion, METH_VARARGS | METH_KEYWORDS,
     "moves the mouse cursor\n" \
-      "Arguments are (x, y, delay, screen_number). The latter two are optional."
+      "Arguments are (x, y, delay, screen, relative). The latter three are optional.\n" \
+      "`relative` is a boolean indicating if the motion is relative."
   },
   {
     "screensaver_state", (PyCFunction)scrnsaver_state, METH_NOARGS,
