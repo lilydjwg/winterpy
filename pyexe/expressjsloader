@@ -59,12 +59,14 @@ def runapp(app, tc, logfile):
       if tc.check():
         poll.unregister(p.stdout)
         p.terminate()
+        p.wait()
         print('重新载入...')
         time.sleep(1)
         break
   finally:
     try:
       p.terminate()
+      p.wait()
     except:
       pass
 
