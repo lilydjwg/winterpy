@@ -78,11 +78,11 @@ static PyObject *xtest_motion(xlib_displayObject* self, PyObject* args, PyObject
   int x, y;
   unsigned long delay = 0;
   int screen = -1;
-  static char *kwlist[] = {"x", "y", "delay", "screen", "relative", NULL};
+  static char *kwlist[] = {"pos", "delay", "screen", "relative", NULL};
   PyObject* rel;
   int is_rel = 0;
 
-  if(!PyArg_ParseTupleAndKeywords(args, kwds, "ii|kiO!", kwlist, &x, &y,
+  if(!PyArg_ParseTupleAndKeywords(args, kwds, "(ii)|kiO!", kwlist, &x, &y,
 	&delay, &screen, &PyBool_Type, &rel))
     return NULL;
   is_rel = rel == Py_True;
@@ -280,7 +280,8 @@ static PyMethodDef xlib_display_methods[] = {
   {
     "motion", (PyCFunction)xtest_motion, METH_VARARGS | METH_KEYWORDS,
     "moves the mouse cursor\n" \
-      "Arguments are (x, y, delay, screen, relative). The latter three are optional.\n" \
+      "Arguments are (pos, delay, screen, relative). The latter three are optional.\n" \
+      "`pos` is a tuple of two integers representing a coordinate,\n" \
       "`relative` is a boolean indicating if the motion is relative."
   },
   {
