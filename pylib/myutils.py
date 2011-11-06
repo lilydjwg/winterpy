@@ -7,7 +7,8 @@
 
 import os, sys
 import datetime
-from functools import lru_cache
+from functools import lru_cache, wraps
+import logging
 
 def path_import(path):
   '''指定路径来 import'''
@@ -132,3 +133,17 @@ def findfont(fontname):
   for l in out.split('\n'):
     if l.lstrip().startswith('file:'):
       return l.split('"', 2)[1]
+
+def debugfunc(logger=logging, *, _id=[0]):
+  def w(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+      myid = _id[0]
+      _id[0] += 1
+      logger.debug('[func %d] %s(%r, %r)', myid, func.__name__, args, kwargs)
+      ret = func(*args, **kwargs)
+      logger.debug('[func %d] return: %r', myid, ret)
+      return ret
+    return wrapper
+  return w
+
