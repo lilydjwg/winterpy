@@ -34,10 +34,11 @@ def getTitle(url, headers={}, timeout=5):
   try:
     response = s.request(url, headers=headers)
   except socket.error:
-    response = s.request(url, headers=headers, proxy={
-      'http':  'http://localhost:8000',
-      'https': 'http://localhost:8000',
+    s = Session(proxy={
+      'http':  'http://localhost:8087',
+      'https': 'http://localhost:8087',
     })
+    response = s.request(url, headers=headers)
 
   contentType = response.getheader('Content-Type', default='text/html')
   type = contentType.split(';', 1)[0]
