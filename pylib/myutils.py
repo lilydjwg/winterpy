@@ -103,9 +103,7 @@ def daterange(start, stop=datetime.date.today(), step=datetime.timedelta(days=1)
   while d < stop:
     yield d
     d += step
-def enable_pretty_logging():
-  import logging
-
+def enable_pretty_logging(level=logging.DEBUG):
   logger = logging.getLogger()
   h = logging.StreamHandler()
   formatter = logging.Formatter('%(asctime)s:%(levelname)-7s:%(name)-12s:%(message)s')
@@ -121,9 +119,9 @@ def enable_pretty_logging():
     import traceback
     traceback.print_exc()
   finally:
-    h.setLevel(logging.DEBUG)
+    h.setLevel(level)
     h.setFormatter(formatter)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
     logger.addHandler(h)
 
 @lru_cache()
