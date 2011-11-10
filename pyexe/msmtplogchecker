@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+'''
+检查 msmtp 日志文件中发送失败的邮件
+'''
+
+import os
+import sys
+sys.path.append(os.path.expanduser('~/scripts/python/pylib'))
+
+import X
+
+datafile = os.path.expanduser('~/scripts/python/pydata/msmtplogchecker')
+
+# cron 里一些环境变量没有被设置
+def getLogfile():
+  for l in open(os.path.expanduser('~/.msmtprc')):
+    if l.startswith('logfile'):
+      return os.path.expanduser(l.split(None, 1)[1].rstrip())
+
+def getLastMailTime():
+  try:
+    return open(datafile).read()
+  except IOError:
+    return
+
+def setLastMailTime(t):
+  return open(datafile, 'w').write(t)
+
+def getMailTime(l):
+  host = l.find('host')
+  assert host != -1
+  return l[:host-1]
+
+def locateFirstNew(f, lmt):
+  it = iter(f)
+  if not lmt:
+    return it
+
+  try:
+    while True:
+      l = next(it)
+      if l.startswith(lmt):
+        break
+    return it
+  except StopIteration:
+    pass
+
+def checkIfOk(l):
+  return l.find('EX_OK') != -1
+
+def notifyUser(msg, displayName):
+  msg = '邮件发送失败！\n\n' + msg.rstrip()
+  cmd = ['zenity', '--question', '--title', 'msmtp 出错', '--text', msg, '--window-icon', 'error']
+  pid = os.fork()
+  if pid == 0:
+    os.environ['DISPLAY'] = displayName
+    os.execvp(cmd[0], cmd)
+  else:
+    st = os.waitpid(pid, 0)
+  return st[1] == 0
+
+def getDisplayName():
+  d = os.environ.get('DISPLAY', None)
+  if d:
+    return d
+
+  for n in (':0', ':1', ':2'):
+    try:
+      d = X.Display(n)
+      return d.name
+    except ValueError:
+      continue
+
+def main():
+  lmt = getLastMailTime()
+  f = open(getLogfile())
+  it = locateFirstNew(f, lmt)
+  try:
+    while True:
+      l = next(it)
+      if not checkIfOk(l):
+        if not notifyUser(l, getDisplayName()):
+          raise SystemExit('aborted')
+      lmt = getMailTime(l)
+  except StopIteration:
+    pass
+  finally:
+    setLastMailTime(lmt)
+
+if __name__ == '__main__':
+  main()
