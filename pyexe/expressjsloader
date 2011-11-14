@@ -46,7 +46,7 @@ def runapp(app, tc, logfile):
     poll = select.poll()
     poll.register(p.stdout, select.POLLIN)
     while True:
-      f = poll.poll(2)
+      f = poll.poll(2000)
       if f:
         l = p.stdout.readline()
         if not l:
