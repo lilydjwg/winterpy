@@ -30,6 +30,9 @@ def repl(local, histfile=None):
   import rlcompleter
   readline.parse_and_bind('tab: complete')
   if histfile is not None and os.path.exists(histfile):
+    # avoid duplicate reading
+    readline.clear_history()
+    readline.set_history_length(10000)
     readline.read_history_file(histfile)
   import code
   code.interact(local=local)
