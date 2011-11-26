@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# fileencoding=utf-8
-
 '''一些算法'''
 
 def LevenshteinDistance(s, t):

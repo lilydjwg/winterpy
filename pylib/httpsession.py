@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# vim:fileencoding=utf-8
-
 '''
 HTTP 会话，主要针对需要登录的服务
 

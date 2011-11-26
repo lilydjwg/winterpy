@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# vim:fileencoding=utf-8
-
 '''
 系统工具，大多是调用外部程序
 '''

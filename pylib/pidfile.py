@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# vim:fileencoding=utf-8
-
 '''
 PID 管理，在 with 语句中使用，控制进程只有一个在运行，否则抛出 AlreadyRun 异常
 '''

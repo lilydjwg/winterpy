@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# fileencoding=utf-8
-
 '''
 关于字符集的相关数据和函数
 

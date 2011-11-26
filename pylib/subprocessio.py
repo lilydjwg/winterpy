@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# fileencoding=utf-8
-
 '''利用 poll() 与子进程交互'''
 
 import subprocess

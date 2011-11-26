@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# fileencoding=utf-8
-
 '''
 一些和HTTP/HTML相关的函数/类
 

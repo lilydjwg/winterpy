@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# vim:fileencoding=utf-8
-
 '''
 跟踪需要备份的配置文件，以 $HOME 为基准目录
 '''

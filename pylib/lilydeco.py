@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# vim:fileencoding=utf-8
-
 def run_in_thread(daemon):
   import threading
   fn = None

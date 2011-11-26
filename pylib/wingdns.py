@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# vim:fileencoding=utf-8
-
 import re
 from urllib.parse import urlencode
 from getpass import getpass
