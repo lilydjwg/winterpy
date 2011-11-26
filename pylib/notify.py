@@ -3,18 +3,30 @@
 
 '''
 调用 libnotify
-
-TODO：优先级、超时时间等
 '''
 
 from ctypes import *
+from threading import Lock
+
+NOTIFY_URGENCY_LOW = 0
+NOTIFY_URGENCY_NORMAL = 1
+NOTIFY_URGENCY_CRITICAL = 2
+UrgencyLevel = {NOTIFY_URGENCY_LOW, NOTIFY_URGENCY_NORMAL, NOTIFY_URGENCY_CRITICAL}
 
 libnotify = CDLL('libnotify.so')
 gobj = CDLL('libgobject-2.0.so')
+libnotify_lock = Lock()
+libnotify_inited = 0
 
 class notify:
-  def __init__(self, summary, body=None, icon_str=None):
-    libnotify.notify_init("notify-send")
+  def __init__(self, summary='', body=None, icon_str=None, name="pynotify"):
+    '''optional `name' is used as the app name when init the library'''
+    global libnotify_inited
+    with libnotify_lock:
+      if not libnotify_inited:
+        libnotify.notify_init(name)
+      libnotify_inited += 1
+
     self.summary = summary.encode()
     if body:
       self.body = body.encode()
@@ -47,10 +59,24 @@ class notify:
 
     self.show()
 
+  def set_timeout(self, timeout):
+    '''set `timeout' in milliseconds'''
+    libnotify.notify_notification_set_timeout(self.notify, int(timeout))
+
+  def set_urgency(self, urgency):
+    if urgency not in UrgencyLevel:
+      raise ValueError
+    libnotify.notify_notification_set_urgency(self.notify, urgency)
+
   def __del__(self):
     try:
       gobj.g_object_unref(self.notify)
-      libnotify.notify_uninit()
+
+      global libnotify_inited
+      with libnotify_lock:
+        libnotify_inited -= 1
+        if not libnotify_inited:
+          libnotify.notify_uninit()
     except AttributeError:
       # libnotify.so 已被卸载
       pass
