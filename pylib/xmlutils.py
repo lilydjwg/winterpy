@@ -13,7 +13,7 @@ en = re.compile(r'[\x20-\x7f]+')
 
 def enText(doc):
   doc.set('lang', 'zh-CN')
-  for el in doc.xpath('//p|//dt|//dd|//li|//a|//span|//em|//h2|//h3'):
+  for el in doc.xpath('//p|//dt|//dd|//li|//a|//span|//em|//h2|//h3|//strong'):
     if el.getparent().tag == 'pre':
       continue
     if el.getparent().get('role') == 'pre':
@@ -37,7 +37,7 @@ def enText(doc):
       else:
         el.set('lang', 'en')
 
-  for el in doc.xpath('//a|//span|//em|//code'):
+  for el in doc.xpath('//a|//span|//em|//code|//strong'):
     if el.getparent().tag == 'pre':
       continue
     text = el.tail
