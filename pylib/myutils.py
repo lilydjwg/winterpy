@@ -6,6 +6,7 @@ import os, sys
 import datetime
 from functools import lru_cache, wraps
 import logging
+import time
 
 def path_import(path):
   '''指定路径来 import'''
@@ -81,19 +82,24 @@ def loadso(fname):
       return CDLL(p)
   raise ImportError('%s not found' % fname)
 
-def restart_when_done(func, max_times, args=(), kwargs={}, secs=60):
+def restart_if_failed(func, max_tries, args=(), kwargs={}, secs=60):
   '''
-  在函数退出后重新运行之，直到在 secs 秒（默认一分钟）时间内达到 max_times 次退出
+  re-run when some exception happens, until `max_tries` in `secs`
   '''
-  import time
+  import traceback
   from collections import deque
-  dq = deque(maxlen=max_times)
 
-  dq.append(time.time())
-  func(*args, **kwargs)
-  while len(dq) < max_times or time.time() - dq[0] > secs:
+  dq = deque(maxlen=max_tries)
+  while True:
     dq.append(time.time())
-    func(*args, **kwargs)
+    try:
+      func(*args, **kwargs)
+    except:
+      traceback.print_exc()
+      if len(dq) == max_tries and time.time() - dq[0] < secs:
+        break
+    else:
+      break
 
 def daterange(start, stop=datetime.date.today(), step=datetime.timedelta(days=1)):
   d = start

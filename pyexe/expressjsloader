@@ -13,7 +13,7 @@ import subprocess
 import select
 from functools import lru_cache
 from subprocess import getoutput
-from myutils import restart_when_done
+from myutils import restart_if_failed
 from checktime import TimeChecker
 
 logfname = os.path.expanduser('~/etc/log/express.access.log')
@@ -27,7 +27,7 @@ def main(app, files):
   try:
     tc = TimeChecker(files)
     with open(logfname, 'a', buffering=1) as log:
-      restart_when_done(runapp, 10, args=(app, tc, log))
+      restart_if_failed(runapp, 10, args=(app, tc, log))
   except KeyboardInterrupt:
     print('退出。')
 
@@ -69,6 +69,9 @@ def runapp(app, tc, logfile):
       p.wait()
     except:
       pass
+
+  # wait for re-run
+  raise Exception
 
 if __name__ == '__main__':
   if len(sys.argv) >= 2:
