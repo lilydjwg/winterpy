@@ -22,7 +22,7 @@ def delbroken(p=path('.')):
     i.unlink()
     print('已删除', i)
 
-def repl(local, histfile=None):
+def repl(local, histfile=None, banner=None):
   import readline
   import rlcompleter
   readline.parse_and_bind('tab: complete')
@@ -32,7 +32,7 @@ def repl(local, histfile=None):
     readline.set_history_length(10000)
     readline.read_history_file(histfile)
   import code
-  code.interact(local=local)
+  code.interact(local=local, banner=banner)
   if histfile is not None:
     readline.write_history_file(histfile)
 
