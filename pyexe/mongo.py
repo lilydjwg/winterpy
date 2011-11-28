@@ -22,6 +22,9 @@ if env['TERM'].find('256'):
   env['TERM'] = env['TERM'].split('-', 1)[0]
 
 def displayfunc(value):
+  if value is None:
+    return
+
   if isinstance(value, pymongo.cursor.Cursor):
     p = subprocess.Popen(['colorless', '-l', 'python'], stdin=subprocess.PIPE,
                         universal_newlines=True, env=env)
