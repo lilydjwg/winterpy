@@ -23,25 +23,30 @@ if env['TERM'].find('256'):
 
 def displayfunc(value):
   if value is None:
+    v['_'] = None
     return
 
   if isinstance(value, pymongo.cursor.Cursor):
     p = subprocess.Popen(['colorless', '-l', 'python'], stdin=subprocess.PIPE,
                         universal_newlines=True, env=env)
-    pprint(list(value), stream=p.stdin)
+    value = list(value)
+    pprint(value, stream=p.stdin)
     p.stdin.close()
     p.wait()
   else:
     pprint(value)
+  v['_'] = value
 
 def main():
   global db
   conn = Connection(host=host, port=port)
   db = conn[db]
 
+  global v
   v = globals().copy()
   v.update(locals())
-  del v['repl'], v['argv'], v['main'], v['v'], v['host'], v['port']
+  v['_'] = None
+  del v['repl'], v['argv'], v['main'], v['host'], v['port']
   del v['displayfunc'], v['subprocess'], v['env']
   del v['__name__'], v['__cached__'], v['__doc__'], v['__file__'], v['__package__']
   sys.displayhook = displayfunc
@@ -52,6 +57,13 @@ def main():
   )
 
 if __name__ == '__main__':
+  try:
+    import setproctitle
+    setproctitle.setproctitle('mongo.py')
+    del setproctitle
+  except ImportError:
+    pass
+
   argv = sys.argv
   if len(argv) == 2:
     if '/' in argv[1]:
