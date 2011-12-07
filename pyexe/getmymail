@@ -21,11 +21,9 @@ priority = Config({
   #配置文件名 时间间隔（分）
   '163rc': 1,
   'gmailrc': 5,
-  'matlabrc': 4320,  # 3d
   'heliorc': 7200,   # 5d
   'qqmail2rc': 1000,
   'qqmailrc': 1000,  # 经常超时
-  'whurc': 10080,    # 1 week
   })
 defaultTime = 30
 
