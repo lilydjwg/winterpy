@@ -8,6 +8,7 @@ import pymongo.cursor
 from cli import repl
 from pprint import pprint
 import subprocess
+import datetime
 
 import locale
 locale.setlocale(locale.LC_ALL, '')
