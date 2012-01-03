@@ -30,9 +30,10 @@ class XAuto:
       self.moveto(pos)
     return pos
 
-  def click(self, pos, button=X.LEFT_BUTTON):
+  def click(self, pos=None, button=X.LEFT_BUTTON):
     d = self.d
-    d.motion(pos)
+    if pos is not None:
+      d.motion(pos)
     d.button(button)
     d.flush()
 
