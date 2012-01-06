@@ -65,7 +65,7 @@ def newer(f1, f2, shallow=True):
 def getNewSongs():
   allsongs = set()
   for i in path(srcdir).traverse():
-    if i.isfile() and i.extension.find('lrc') == -1:
+    if i.isfile() and i.extension == '.mp3':
       allsongs.add(str(i)[len(str(srcdir))+1:])
 
   with serializer.PickledData(oldsongs, default=set()) as o:
