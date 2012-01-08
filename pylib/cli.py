@@ -32,6 +32,7 @@ def repl(local, histfile=None, banner=None):
     readline.set_history_length(10000)
     readline.read_history_file(histfile)
   import code
+  readline.set_completer(rlcompleter.Completer(local).complete)
   code.interact(local=local, banner=banner)
   if histfile is not None:
     readline.write_history_file(histfile)
