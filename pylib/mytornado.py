@@ -6,12 +6,47 @@ import threading
 import email.utils
 import time
 import logging
+import http.client
+import traceback
 from functools import partial
 
 from tornado.web import HTTPError, RequestHandler, asynchronous, GZipContentEncoding
 import tornado.escape
 
 logger = logging.getLogger(__name__)
+
+class ErrorHandlerMixin:
+  error_page = '''\
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>%(code)s %(message)s</title>
+<style type="text/css">
+  body { font-family: serif; }
+</style>
+<h1>%(code)s %(message)s</h1>
+<p>%(err)s</p>
+<hr/>
+'''
+
+  def write_error(self, status_code, **kwargs):
+    if self.settings.get("debug") and "exc_info" in kwargs:
+      # in debug mode, try to send a traceback
+      self.set_header('Content-Type', 'text/plain')
+      for line in traceback.format_exception(*kwargs["exc_info"]):
+        self.write(line)
+      self.finish()
+    else:
+      err_msg = kwargs.get('exc_info', '  ')[1].log_message
+      if err_msg is None:
+        err_msg = ''
+      else:
+        err_msg += '.'
+
+      self.finish(self.error_page % {
+        "code": status_code,
+        "message": http.client.responses[status_code],
+        "err": err_msg,
+      })
 
 class FileEntry:
   isdir = False
