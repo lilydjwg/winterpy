@@ -89,37 +89,47 @@ class StaticFileHandler(RequestHandler):
     # it needs to be temporarily added back for requests to root/
     if not (abspath + os.path.sep).startswith(self.root):
       raise HTTPError(403, "%s is not in root static directory", path)
+    self.send_file(path, abspath, include_body)
+
+  def send_file(self, path, abspath, include_body=True):
+    '''send a static file to client'''
+    # use @asynchronous on a seperate method so that HTTPError won't get
+    # messed up
     if os.path.isdir(abspath):
       # need to look at the request.path here for when path is empty
       # but there is some prefix to the path that was already
       # trimmed by the routing
       if not self.request.path.endswith("/"):
         self.redirect(self.request.path + "/")
-        return
+        self.finish()
+
+      found = False
       if self.default_filenames is not None:
         for i in self.default_filenames:
           abspath_ = os.path.join(abspath, i)
           if os.path.exists(abspath_):
             abspath = abspath_
+            found = True
             break
+
+      if not found:
+        if self.dirindex is not None:
+          if not include_body:
+            raise HTTPError(405)
+          self.renderIndex(abspath)
+          self.finish()
         else:
-          if self.dirindex is not None:
-            if not include_body:
-              raise HTTPError(405)
-            self.renderIndex(abspath)
-            return
-          else:
-            raise HTTPError(403, "Directory Listing Not Allowed")
+          raise HTTPError(403, "Directory Listing Not Allowed")
 
-    self.send_file(path, abspath, include_body)
-
-  @asynchronous
-  def send_file(self, path, abspath, include_body=True):
-    if not os.path.exists(abspath):
+    if path.endswith('/') or not os.path.exists(abspath):
       raise HTTPError(404)
     if not os.path.isfile(abspath):
       raise HTTPError(403, "%s is not a file", path)
 
+    self._send_file_async(path, abspath, include_body)
+
+  @asynchronous
+  def _send_file_async(self, path, abspath, include_body=True):
     stat_result = os.stat(abspath)
     modified = datetime.datetime.fromtimestamp(stat_result[stat.ST_MTIME])
     self.set_header("Last-Modified", modified)
