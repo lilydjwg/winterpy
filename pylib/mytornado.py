@@ -135,7 +135,7 @@ class StaticFileHandler(RequestHandler):
       # but there is some prefix to the path that was already
       # trimmed by the routing
       if not self.request.path.endswith("/"):
-        self.redirect(self.request.path + "/")
+        self.redirect(self.request.path + "/", permanent=True)
         self.finish()
 
       found = False
