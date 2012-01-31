@@ -15,7 +15,7 @@ gobj = CDLL('libgobject-2.0.so')
 libnotify_lock = Lock()
 libnotify_inited = 0
 
-class notify:
+class Notify:
   def __init__(self, summary='', body=None, icon_str=None, name="pynotify"):
     '''optional `name' is used as the app name when init the library'''
     global libnotify_inited
@@ -82,7 +82,7 @@ class notify:
 
 if __name__ == '__main__':
   from time import sleep
-  n = notify('This is a test', '测试一下。')
+  n = Notify('This is a test', '测试一下。')
   n.show()
   sleep(1)
   n.update('再测试一下。')
