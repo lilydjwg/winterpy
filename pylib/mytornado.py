@@ -153,7 +153,7 @@ class StaticFileHandler(RequestHandler):
           if not include_body:
             raise HTTPError(405)
           self.renderIndex(abspath)
-          self.finish()
+          return
         else:
           raise HTTPError(403, "Directory Listing Not Allowed")
 
