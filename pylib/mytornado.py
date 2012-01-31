@@ -128,6 +128,8 @@ class StaticFileHandler(RequestHandler):
 
   def send_file(self, path, abspath, include_body=True):
     '''send a static file to client'''
+    # we've found the file
+    found = False
     # use @asynchronous on a seperate method so that HTTPError won't get
     # messed up
     if os.path.isdir(abspath):
@@ -138,7 +140,6 @@ class StaticFileHandler(RequestHandler):
         self.redirect(self.request.path + "/", permanent=True)
         self.finish()
 
-      found = False
       if self.default_filenames is not None:
         for i in self.default_filenames:
           abspath_ = os.path.join(abspath, i)
@@ -156,7 +157,7 @@ class StaticFileHandler(RequestHandler):
         else:
           raise HTTPError(403, "Directory Listing Not Allowed")
 
-    if path.endswith('/') or not os.path.exists(abspath):
+    if (not found and path.endswith('/')) or not os.path.exists(abspath):
       raise HTTPError(404)
     if not os.path.isfile(abspath):
       raise HTTPError(403, "%s is not a file", path)
