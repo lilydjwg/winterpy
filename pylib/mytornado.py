@@ -212,8 +212,8 @@ class StaticFileHandler(RequestHandler):
       return
 
     file = open(abspath, "rb")
-    self.write_chunk(file)
-    self.request.connection.stream.set_close_callback(partial(self.close_on_error, file))
+    self._write_chunk(file)
+    self.request.connection.stream.set_close_callback(partial(self._close_on_error, file))
 
   def renderIndex(self, path):
     files = []
@@ -228,17 +228,17 @@ class StaticFileHandler(RequestHandler):
     self.render(self.dirindex, files=files, url=self.request.path,
                decodeURIComponent=tornado.escape.url_unescape)
 
-  def write_chunk(self, file):
+  def _write_chunk(self, file):
     chunk = file.read(self.BLOCK_SIZE)
     self.write(chunk)
     if len(chunk) == self.BLOCK_SIZE:
-      cb = partial(self.write_chunk, file)
+      cb = partial(self._write_chunk, file)
     else:
       cb = self.finish
       file.close()
     self.flush(callback=cb)
 
-  def close_on_error(self, file):
+  def _close_on_error(self, file):
     logger.info('closing %d on connection close.', file.fileno())
     file.close()
 
