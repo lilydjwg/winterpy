@@ -97,7 +97,7 @@ class StaticFileHandler(RequestHandler):
   more fine-grained cache control.
   """
   CACHE_MAX_AGE = 86400*365*10 #10 years
-  BLOCK_SIZE = 4096 #stat.st_blksize is not available
+  BLOCK_SIZE = 40960 # 4096 is too slow; this value works great here
   FileEntry = FileEntry
 
   _static_hashes = {}
