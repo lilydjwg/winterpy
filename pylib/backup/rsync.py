@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 global_exclude = ['--exclude=' + x for x in base.global_exclude]
 
 def sync(name, src, dst, option, really, filelist, exclude=()):
+  '''if src is a symlink without trailing slash, it's expanded to real path'''
+  if not src.endswith('/'):
+    src = os.path.realpath(src)
   if filelist:
     cmd = [
       'rsync',
