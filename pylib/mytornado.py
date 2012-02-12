@@ -16,6 +16,7 @@ import tornado.escape
 logger = logging.getLogger(__name__)
 
 class ErrorHandlerMixin:
+  '''nicer error page'''
   error_page = '''\
 <!DOCTYPE html>
 <meta charset="utf-8" />
@@ -49,6 +50,7 @@ class ErrorHandlerMixin:
       })
 
 class FileEntry:
+  '''For ``StaticFileHandler`` with directory index enabled'''
   isdir = False
   def __init__(self, path, file):
     st = os.stat(os.path.join(path, file))
