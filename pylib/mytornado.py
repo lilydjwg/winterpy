@@ -1,4 +1,5 @@
 import os
+import re
 import datetime
 import stat
 import mimetypes
@@ -14,6 +15,7 @@ from tornado.web import HTTPError, RequestHandler, asynchronous, GZipContentEnco
 import tornado.escape
 
 logger = logging.getLogger(__name__)
+_legal_range = re.compile(r'bytes=(\d*)-(\d*)$')
 
 class ErrorHandlerMixin:
   '''nicer error page'''
@@ -184,8 +186,10 @@ class StaticFileHandler(RequestHandler):
         mime_type in GZipContentEncoding.CONTENT_TYPES:
       set_length = False
 
+    file_length = stat_result[stat.ST_SIZE]
     if set_length:
-      self.set_header("Content-Length", stat_result[stat.ST_SIZE])
+      self.set_header("Content-Length", file_length)
+      self.set_header('Accept-Ranges', 'bytes')
 
     cache_time = self.get_cache_time(path, modified, mime_type)
 
@@ -209,12 +213,34 @@ class StaticFileHandler(RequestHandler):
         self.finish()
         return
 
+    # Check for range requests
+    ranges = None
+    if set_length:
+      ranges = self.request.headers.get("Range")
+      if ranges:
+        range_match = _legal_range.match(ranges)
+        if range_match:
+          start = range_match.group(1)
+          start = start and int(start) or 0
+          stop = range_match.group(2)
+          stop = stop and int(stop) or file_length-1
+          if start >= file_length:
+            raise HTTPError(416)
+          self.set_status(206)
+          self.set_header('Content-Range', '%d-%d/%d' % (
+            start, stop, file_length))
+
     if not include_body:
       self.finish()
       return
 
     file = open(abspath, "rb")
-    self._write_chunk(file)
+    if ranges:
+      if start:
+        file.seek(start, os.SEEK_SET)
+      self._write_chunk(file, length=stop-start+1)
+    else:
+      self._write_chunk(file, length=file_length)
     self.request.connection.stream.set_close_callback(partial(self._close_on_error, file))
 
   def renderIndex(self, path):
@@ -230,11 +256,13 @@ class StaticFileHandler(RequestHandler):
     self.render(self.dirindex, files=files, url=self.request.path,
                decodeURIComponent=tornado.escape.url_unescape)
 
-  def _write_chunk(self, file):
-    chunk = file.read(self.BLOCK_SIZE)
+  def _write_chunk(self, file, length):
+    size = min(length, self.BLOCK_SIZE)
+    left = length - size
+    chunk = file.read(size)
     self.write(chunk)
-    if len(chunk) == self.BLOCK_SIZE:
-      cb = partial(self._write_chunk, file)
+    if left != 0:
+      cb = partial(self._write_chunk, file, length=left)
     else:
       cb = self.finish
       file.close()
