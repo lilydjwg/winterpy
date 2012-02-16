@@ -140,7 +140,7 @@ class StaticFileHandler(RequestHandler):
       # trimmed by the routing
       if not self.request.path.endswith("/"):
         self.redirect(self.request.path + "/", permanent=True)
-        self.finish()
+        return
 
       if self.default_filenames is not None:
         for i in self.default_filenames:
