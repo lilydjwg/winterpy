@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import datetime
 import stat
@@ -315,3 +316,19 @@ class StaticFileHandler(RequestHandler):
       return static_url_prefix + path + "?v=" + hsh[:5]
     else:
       return static_url_prefix + path
+
+def apache_style_log(handler):
+  request = handler.request
+  ip = request.remote_ip
+  dt = time.strftime('[%d/%b/%Y:%H:%M:%S %z]')
+  req = '"%s %s %s"' % (request.method, request.uri, request.version)
+  status = handler.get_status()
+  if 300 <= status < 400:
+    length = '-'
+  else:
+    length = handler._headers.get('Content-Length', '-')
+  referrer = '"%s"' % request.headers.get('Referer', '-')
+  ua = '"%s"' % request.headers.get('User-Agent', '-')
+  f = handler.application.settings.get('log_file', sys.stderr)
+  print(ip, '- -', dt, req, status, length, referrer, ua, file=f)
+  f.flush()
