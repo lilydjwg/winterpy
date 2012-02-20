@@ -46,13 +46,18 @@ def getTitle(url, headers={}, timeout=5):
     charset = contentType.rsplit('=', 1)[1]
   except IndexError:
     charset = None
-  # 1024 对于 Twitter 来说太小了
-  content = response.read(10240)
 
   title = b''
-  m = re.search(b'<title[^>]*>([^<]*)', content, re.IGNORECASE)
-  if m:
-    title = m.group(1)
+  content = b''
+  for i in range(300):
+    content += response.read(64)
+    if len(content) < 64:
+      break
+    m = re.search(b'<title[^>]*>([^<]*)', content, re.IGNORECASE)
+    if m:
+      title = m.group(1)
+      break
+  response.close()
 
   if charset is None:
     import chardet
