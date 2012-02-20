@@ -53,7 +53,7 @@ def getTitle(url, headers={}, timeout=5):
     content += response.read(64)
     if len(content) < 64:
       break
-    m = re.search(b'<title[^>]*>([^<]*)', content, re.IGNORECASE)
+    m = re.search(b'<title[^>]*>([^<]*)<', content, re.IGNORECASE)
     if m:
       title = m.group(1)
       break
