@@ -70,23 +70,6 @@ def getTitle(url, headers={}, timeout=5):
 
   return title or None
 
-def translate(q, langpair='|zh', hl='zh'):
-  '''使用 Google 翻译文本
-  http://code.google.com/intl/zh-CN/apis/ajaxlanguage/documentation/reference.html
-  '''
-  import json
-  import urllib.request
-
-  url = 'http://ajax.googleapis.com/ajax/services/language/translate'
-  url += '?format=text&v=1.0&hl=zh&langpair=%s&q=%s' % (
-      URIescape(langpair), URIescape(q))
-  ans = urllib.request.urlopen(url, timeout=5).read().decode('utf-8')
-  ans = json.loads(ans)
-  if ans['responseStatus'] != 200:
-    raise Exception(ans)
-
-  return ans['responseData']['translatedText']
-
 def ubuntuPaste(poster='', screenshot='', code2='',
     klass='bash', filename=None):
   '''
