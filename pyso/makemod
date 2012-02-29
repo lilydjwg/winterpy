@@ -1,5 +1,6 @@
 #!/bin/zsh
 
+emulate -L zsh
 setopt SH_WORD_SPLIT
 
 cd $(dirname $0)
