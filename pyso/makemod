@@ -1,7 +1,6 @@
 #!/bin/zsh
 
 emulate -L zsh
-setopt SH_WORD_SPLIT
 
 cd $(dirname $0)
 PS4=
@@ -15,7 +14,7 @@ makeamod () {
   fi
   shift
   setopt -x
-  gcc $@ -O2 -shared -fPIC "$infile" -o "$outfile" $FLAGS
+  gcc $@ -O2 -shared -fPIC "$infile" -o "$outfile" ${=FLAGS}
 }
 
 makeamod X.c -lX11 -lXtst -lXss
