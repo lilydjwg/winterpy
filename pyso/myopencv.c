@@ -1,5 +1,6 @@
 #include<Python.h>
 #include<cv.h>
+#include<highgui.h>
 
 typedef struct {
   PyObject_HEAD
@@ -21,7 +22,7 @@ static int IplImage_init(IplImageObject* self,
     return -1;
 
   Py_BEGIN_ALLOW_THREADS
-  img = (IplImage*)cvLoadImage(fpath, 1);
+  img = cvLoadImage(fpath, 1);
   Py_END_ALLOW_THREADS
 
   if(img == NULL){
