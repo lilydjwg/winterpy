@@ -25,30 +25,27 @@ class Notify:
       libnotify_inited += 1
 
     self.summary = summary.encode()
-    if body:
+    self.body = self.icon_str = None
+    if body is not None:
       self.body = body.encode()
-    else:
-      self.body = None
-    if icon_str:
+    if icon_str is not None:
       self.icon_str = icon_str.encode()
-    else:
-      self.icon_str = None
 
     self.notify = libnotify.notify_notification_new(c_char_p(self.summary),
         c_char_p(self.body), c_char_p(self.icon_str), c_void_p())
 
   def show(self):
-    libnotify.notify_notification_show(self.notify, c_void_p());
+    libnotify.notify_notification_show(self.notify, c_void_p())
 
   def update(self, summary=None, body=None, icon_str=None):
     if not any((summary, body)):
       raise TypeError('at least one argument please')
 
-    if summary:
+    if summary is not None:
       self.summary = summary.encode()
-    if body or body == '':
+    if body is not None:
       self.body = body.encode()
-    if icon_str or icon_str == '':
+    if icon_str is not None:
       self.icon_str = icon_str.encode()
 
     libnotify.notify_notification_update(self.notify, c_char_p(self.summary),
