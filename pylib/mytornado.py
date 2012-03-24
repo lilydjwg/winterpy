@@ -129,20 +129,33 @@ class StaticFileHandler(RequestHandler):
     # it needs to be temporarily added back for requests to root/
     if not (abspath + os.path.sep).startswith(self.root):
       raise HTTPError(403, "%s is not in root static directory", path)
-    self.send_file(path, abspath, include_body)
+    self.send_file(abspath, include_body)
 
-  def send_file(self, path, abspath, include_body=True):
-    '''send a static file to client'''
+  def send_file(self, abspath, include_body=True, path=None):
+    '''
+    send a static file to client
+
+    ``abspath``: the absolute path of the file on disk
+    ``path``: the path to use as if requested, if given
+
+    If you use ``send_file`` directly and want to use another file as default
+    index, you should set this parameter.
+    '''
     # we've found the file
     found = False
     # use @asynchronous on a seperate method so that HTTPError won't get
     # messed up
+    if path is None:
+      path = self.request.path
     if os.path.isdir(abspath):
       # need to look at the request.path here for when path is empty
       # but there is some prefix to the path that was already
       # trimmed by the routing
-      if not self.request.path.endswith("/"):
-        self.redirect(self.request.path + "/", permanent=True)
+      if not path.endswith("/"):
+        redir = path + '/'
+        if self.request.query:
+          redir += '?' + self.request.query
+        self.redirect(redir, permanent=True)
         return
 
       if self.default_filenames is not None:
@@ -165,7 +178,7 @@ class StaticFileHandler(RequestHandler):
     if (not found and path.endswith('/')) or not os.path.exists(abspath):
       raise HTTPError(404)
     if not os.path.isfile(abspath):
-      raise HTTPError(403, "%s is not a file", path)
+      raise HTTPError(403, "%s is not a file" % self.request.path)
 
     self._send_file_async(path, abspath, include_body)
 
