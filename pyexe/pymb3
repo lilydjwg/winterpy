@@ -3,7 +3,7 @@
 
 import sys, readline, os
 import mb3
-import 字符集, cursor
+import 字符集
 import code, traceback
 from datetime import datetime
 import traceback
@@ -13,6 +13,13 @@ ver = 0.3
 # 完整的版本号
 lastModified = datetime.fromtimestamp(os.path.getmtime(sys.argv[0]))
 version = '%.1f.%d%02d%02d' % (ver, lastModified.year, lastModified.month, lastModified.day)
+
+def bold(string):
+  return '\x1b[1m'+string+'\x1b[0m'
+
+def underline(string):
+  return '\x1b[4m'+string+'\x1b[0m'
+
 # 完整显示一条目时的格式；会在载入码表后修改
 format = '{code:%d}\t{hz}{hit:>5}{index:>8}'
 cmds = {
@@ -419,8 +426,8 @@ def usage(what):
   else:
     try:
       t = list(helps[what[0]])
-      what[0] = cursor.bold(what[0])
-      t[0] = cursor.underline(t[0])
+      what[0] = bold(what[0])
+      t[0] = underline(t[0])
       if t[2]:
         print(ff.format(cmd=what[0], format=t[0], fwidth=15,
           short=t[1], long=t[2]))
