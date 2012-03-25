@@ -15,13 +15,6 @@ def findbroken(p):
 
   return ret
 
-def delbroken(p=path('.')):
-  '''删掉该目录下断掉的软链接'''
-  l = [x for x in p.list() if not x.exists()]
-  for i in l:
-    i.unlink()
-    print('已删除', i)
-
 def repl(local, histfile=None, banner=None):
   import readline
   import rlcompleter
