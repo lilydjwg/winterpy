@@ -4,6 +4,7 @@
 import os
 import sys
 import base64
+import quopri
 from mailbox import mbox
 import email.header
 
@@ -68,7 +69,7 @@ def saveHTMLMail(m):
   mailtype = m.get_content_type()
   if mailtype == 'multipart/alternative':
     mainMail, mailbody = parseSingleMail(m)
-  elif mailtype == 'multipart/related':
+  elif mailtype in ('multipart/related', 'multipart/mixed'):
     mails = m.get_payload()
     cidMapping = {}
     for mail in mails:
@@ -111,6 +112,8 @@ def getMailContent(mail):
   encoding = mail['Content-Transfer-Encoding']
   if encoding == 'base64':
     mailbody = base64.decodebytes(rawbody.encode('ascii'))
+  elif encoding == 'quoted-printable':
+    mailbody = quopri.decodestring(rawbody.encode('ascii'))
   else:
     raise NotImplementedError('encoding %s not recognized' % encoding)
 
