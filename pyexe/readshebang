@@ -8,7 +8,7 @@
 '''
 
 import sys
-from 字符集 import 对齐
+from charset import CJK_align
 
 def report(i):
   try:
@@ -21,12 +21,12 @@ def report(i):
           start = l.rfind('/')
         else:
           start = env + 3
-        print(对齐(i, 30), l[start+1:])
+        print(CJK_align(i, 30), l[start+1:])
       else:
-        print(对齐(i, 30), "Shebang not found.", file=sys.stderr)
+        print(CJK_align(i, 30), "Shebang not found.", file=sys.stderr)
   except IOError as e:
     if e.errno == 21:
-      print(对齐(i, 30), "Is a directory", file=sys.stderr)
+      print(CJK_align(i, 30), "Is a directory", file=sys.stderr)
     else:
       raise
 

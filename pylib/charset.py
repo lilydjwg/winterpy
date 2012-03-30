@@ -109,7 +109,7 @@ except ImportError:
 
 width = 宽度
 
-def _对齐(字符串, 对齐宽度, 方向='左', 填充=' '):
+def _CJK_align(字符串, 对齐宽度, 方向='左', 填充=' '):
   '''对齐字符串，考虑字符宽度，不检测是否是ASCII字符串'''
   if len(填充) != 1:
     raise ValueError('填充字符只能是一个字符')
@@ -121,7 +121,7 @@ def _对齐(字符串, 对齐宽度, 方向='左', 填充=' '):
   else:
     raise ValueError("`方向' 可选为 '左' 或者 '右'")
 
-def 对齐(字符串, 对齐宽度, 方向='左', 填充=' '):
+def CJK_align(字符串, 对齐宽度, 方向='左', 填充=' '):
   '''对齐字符串，考虑字符宽度'''
   if isascii(字符串):
     if 方向 == '右':
@@ -131,7 +131,7 @@ def 对齐(字符串, 对齐宽度, 方向='左', 填充=' '):
     else:
       raise ValueError("`方向' 可选为 '左' 或者 '右'")
   else:
-    return _对齐(字符串, 对齐宽度, 方向, 填充)
+    return _CJK_align(字符串, 对齐宽度, 方向, 填充)
 
 def isascii(string):
   for i in string:

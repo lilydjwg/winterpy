@@ -3,7 +3,7 @@
 
 import sys, readline, os
 import mb3
-import 字符集
+import charset
 import code, traceback
 from datetime import datetime
 import traceback
@@ -408,7 +408,7 @@ def recprint(code, item):
   '''显示条目的详细信息'''
 
   code = '@' + item.code if item.ispy else item.code
-  print(format.format(code=code, hz=字符集.对齐(item.hz, 15), hit=item.hit, index=item.index))
+  print(format.format(code=code, hz=charset.CJK_align(item.hz, 15), hit=item.hit, index=item.index))
 
 def usage(what):
   '''帮助'''

@@ -3,7 +3,7 @@ import readline
 import ctypes
 import ctypes.util
 import struct
-from 字符集 import width
+from charset import width
 
 rllib_path = ctypes.util.find_library('readline')
 rllib = ctypes.CDLL(rllib_path)
