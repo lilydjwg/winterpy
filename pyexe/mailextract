@@ -26,7 +26,7 @@ def decodeHeader(h):
   try:
     var = var[0].decode(charset)
   except AttributeError:
-    var = var[0].split(' <', 1)[0]
+    var = var[0]
   return var
 
 def getMailSize(mail):
@@ -39,6 +39,8 @@ def getMailSize(mail):
 def selectMail(mb):
   for i, m in enumerate(mb):
     who = decodeHeader(m['From'])
+    if who.endswith('>'):
+      who = who.split(' <', 1)[0]
     subj = decodeHeader(m['Subject'])
     size = getMailSize(m)
     print(colored('%3d' % i, attrs=['bold']),
