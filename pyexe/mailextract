@@ -65,7 +65,7 @@ def parseSingleMail(mail):
   return mainMail, mailbody
 
 def saveHTMLMail(m):
-  title = m['Subject']
+  title = decodeHeader(m['Subject'])
   mailtype = m.get_content_type()
   if mailtype == 'multipart/alternative':
     mainMail, mailbody = parseSingleMail(m)
