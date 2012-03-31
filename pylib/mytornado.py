@@ -131,12 +131,14 @@ class StaticFileHandler(RequestHandler):
       raise HTTPError(403, "%s is not in root static directory", path)
     self.send_file(abspath, include_body)
 
-  def send_file(self, abspath, include_body=True, path=None):
+  def send_file(self, abspath, include_body=True, path=None, download=False):
     '''
     send a static file to client
 
     ``abspath``: the absolute path of the file on disk
     ``path``: the path to use as if requested, if given
+    ``download``: whether we should try to persuade the client to download the
+                  file. This can be either ``True`` or the intended filename
 
     If you use ``send_file`` directly and want to use another file as default
     index, you should set this parameter.
@@ -180,10 +182,17 @@ class StaticFileHandler(RequestHandler):
     if not os.path.isfile(abspath):
       raise HTTPError(403, "%s is not a file" % self.request.path)
 
-    self._send_file_async(path, abspath, include_body)
+    if download is not False:
+      if download is True:
+        filename = os.path.split(path)[1]
+      else:
+        filename = download
+      self.set_header('Content-Disposition', 'attachment; filename='+filename)
+
+    self._send_file_async(path, abspath, include_body, notype=download is not False)
 
   @asynchronous
-  def _send_file_async(self, path, abspath, include_body=True):
+  def _send_file_async(self, path, abspath, include_body=True, notype=False):
     stat_result = os.stat(abspath)
     modified = datetime.datetime.fromtimestamp(stat_result[stat.ST_MTIME])
     self.set_header("Last-Modified", modified)
@@ -193,7 +202,8 @@ class StaticFileHandler(RequestHandler):
     if not mime_type:
       # default is plain text
       mime_type = 'text/plain'
-    self.set_header("Content-Type", mime_type)
+    if not notype:
+      self.set_header("Content-Type", mime_type)
 
     # make use of gzip when possible
     if self.settings.get("gzip") and \
