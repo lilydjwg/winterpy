@@ -64,19 +64,19 @@ def selectMail(mb):
 def parseSingleMail(mail):
   mainMail = [m for m in mail.get_payload() if m.get_content_type() == 'text/html'][0]
   mailbody = getMailContent(mainMail)
-  return mainMail, mailbody
+  return mailbody
 
 def saveHTMLMail(m):
   title = decodeHeader(m['Subject'])
   mailtype = m.get_content_type()
   if mailtype == 'multipart/alternative':
-    mainMail, mailbody = parseSingleMail(m)
+    mailbody = parseSingleMail(m)
   elif mailtype in ('multipart/related', 'multipart/mixed'):
     mails = m.get_payload()
     cidMapping = {}
     for mail in mails:
       if mail.get_content_type() == 'multipart/alternative':
-        mainMail, mailbody = parseSingleMail(mail)
+        mailbody = parseSingleMail(mail)
       else:
         try:
           cid = mail['Content-ID'][1:-1]
