@@ -90,6 +90,8 @@ def saveHTMLMail(m):
   elif mailtype == 'text/plain':
     print('plain text mail, nothing to do')
     return
+  elif mailtype == 'text/html':
+    mailbody = getMailContent(m)
   else:
     raise NotImplementedError('type %s not recognized' % mailtype)
 
