@@ -108,8 +108,11 @@ class StaticFileHandler(RequestHandler):
   _static_hashes = {}
   _lock = threading.Lock()  # protects _static_hashes
 
-  def initialize(self, path, default_filenames=None, dirindex=None):
-    self.root = os.path.abspath(path) + os.path.sep
+  def initialize(self, path=None, default_filenames=None, dirindex=None):
+    if path is not None:
+      self.root = os.path.abspath(path) + os.path.sep
+    else:
+      self.root = None
     self.default_filenames = default_filenames
     self.dirindex = dirindex
 
@@ -189,10 +192,10 @@ class StaticFileHandler(RequestHandler):
         filename = download
       self.set_header('Content-Disposition', 'attachment; filename='+filename)
 
-    self._send_file_async(path, abspath, include_body, notype=download is not False)
+    self._send_file_async(path, abspath, include_body)
 
   @asynchronous
-  def _send_file_async(self, path, abspath, include_body=True, notype=False):
+  def _send_file_async(self, path, abspath, include_body=True):
     stat_result = os.stat(abspath)
     modified = datetime.datetime.fromtimestamp(stat_result[stat.ST_MTIME])
     self.set_header("Last-Modified", modified)
@@ -202,8 +205,7 @@ class StaticFileHandler(RequestHandler):
     if not mime_type:
       # default is plain text
       mime_type = 'text/plain'
-    if not notype:
-      self.set_header("Content-Type", mime_type)
+    self.set_header("Content-Type", mime_type)
 
     # make use of gzip when possible
     if self.settings.get("gzip") and \
