@@ -23,6 +23,8 @@ mailStyle = '''\
 def decodeHeader(h):
   var = email.header.decode_header(h)[0]
   charset = var[1] or 'ascii'
+  if charset.lower() == 'gb2312': #fxxk
+    charset = 'gb18030'
   try:
     var = var[0].decode(charset)
   except AttributeError:
