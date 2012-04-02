@@ -15,7 +15,7 @@ def main(num):
   artists = list(filter(lambda x: not x.basename.startswith('_'),
     path('~/音乐').expand().dirs()))
   for a in artists:
-    a.songs = len(a.files())
+    a.songs = len([f for f in a.files() if f.extension == '.mp3'])
   artists.sort(key=lambda x: x.songs, reverse=True)
   for i in artists[:num]:
     print(i.songs, i.basename, sep='\t')
