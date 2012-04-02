@@ -417,7 +417,7 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
     data = self._boundary_buffer + data
     logging.debug('file header is %r', data)
     self._boundary_buffer = buf
-    header_data = data[self._boundary_len+2:].decode('latin1')
+    header_data = data[self._boundary_len+2:].decode('utf-8')
     headers = tornado.httputil.HTTPHeaders.parse(header_data)
     disp_header = headers.get("Content-Disposition", "")
     disposition, disp_params = tornado.httputil._parse_header(disp_header)
