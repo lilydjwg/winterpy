@@ -10,10 +10,12 @@ import time
 import logging
 import http.client
 import traceback
+import tempfile
 from functools import partial
 
 from tornado.web import HTTPError, RequestHandler, asynchronous, GZipContentEncoding
 import tornado.escape
+import tornado.httpserver
 
 logger = logging.getLogger(__name__)
 _legal_range = re.compile(r'bytes=(\d*)-(\d*)$')
@@ -357,3 +359,135 @@ def apache_style_log(handler):
   f = handler.application.settings.get('log_file', sys.stderr)
   print(ip, '- -', dt, req, status, length, referrer, ua, file=f)
   f.flush()
+
+class HTTPConnection(tornado.httpserver.HTTPConnection):
+  _recv_a_time = 8192
+  def _on_headers(self, data):
+    try:
+      data = data.decode('latin1')
+      eol = data.find("\r\n")
+      start_line = data[:eol]
+      try:
+        method, uri, version = start_line.split(" ")
+      except ValueError:
+        raise tornado.httpserver._BadRequestException("Malformed HTTP request line")
+      if not version.startswith("HTTP/"):
+        raise tornado.httpserver._BadRequestException("Malformed HTTP version in HTTP Request-Line")
+      headers = tornado.httputil.HTTPHeaders.parse(data[eol:])
+      self._request = tornado.httpserver.HTTPRequest(
+        connection=self, method=method, uri=uri, version=version,
+        headers=headers, remote_ip=self.address[0])
+
+      content_length = headers.get("Content-Length")
+      if content_length:
+        content_length = int(content_length)
+        if headers.get("Expect") == "100-continue":
+          self.stream.write(b"HTTP/1.1 100 (Continue)\r\n\r\n")
+        self._receive_content(content_length)
+        return
+
+      self.request_callback(self._request)
+    except tornado.httpserver._BadRequestException as e:
+      logging.info("Malformed HTTP request from %s: %s",
+             self.address[0], e)
+      self.stream.close()
+      return
+
+  def _receive_content(self, content_length):
+    if self._request.method in ("POST", "PUT"):
+      content_type = self._request.headers.get("Content-Type", "")
+      if content_type.startswith("multipart/form-data"):
+        self._content_length_left = content_length
+        fields = content_type.split(";")
+        for field in fields:
+          k, sep, v = field.strip().partition("=")
+          if k == "boundary" and v:
+            if v.startswith('"') and v.endswith('"'):
+              v = v[1:-1]
+            self._boundary = v.encode('latin1')
+            self._boundary_buffer = b''
+            self._boundary_len = len(self._boundary)
+            break
+        self.stream.read_until(b"\r\n\r\n", self._on_content_headers)
+      else:
+        self.stream.read_bytes(content_length, self._on_request_body)
+
+  def _on_content_headers(self, data, buf=b''):
+    self._content_length_left -= len(data)
+    data = self._boundary_buffer + data
+    self._boundary_buffer = buf
+    header_data = data[self._boundary_len+2:].decode('latin1')
+    headers = tornado.httputil.HTTPHeaders.parse(header_data)
+    disp_header = headers.get("Content-Disposition", "")
+    disposition, disp_params = tornado.httputil._parse_header(disp_header)
+    if disposition != "form-data":
+      logging.warning("Invalid multipart/form-data")
+      self._read_content_body(None)
+    if not disp_params.get("name"):
+      logging.warning("multipart/form-data value missing name")
+      self._read_content_body(None)
+    name = disp_params["name"]
+    if disp_params.get("filename"):
+      ctype = headers.get("Content-Type", "application/unknown")
+      fd, tmp_filename = tempfile.mkstemp(suffix='.tmp', prefix='tornado')
+      self._request.files.setdefault(name, []).append(
+        tornado.httputil.HTTPFile(
+          filename=disp_params['filename'],
+          tmp_filename=tmp_filename,
+          content_type=ctype,
+        )
+      )
+      self._read_content_body(os.fdopen(fd, 'wb'))
+    else:
+      logging.warning("multipart/form-data is not file upload, skipping...")
+      self._read_content_body(None)
+
+  def _read_content_body(self, fp):
+    self.stream.read_bytes(
+      min(self._recv_a_time, self._content_length_left),
+      partial(self._read_into, fp)
+    )
+
+  def _read_into(self, fp, data):
+    self._content_length_left -= len(data)
+    buf = self._boundary_buffer + data
+    if self._content_length_left < 0:
+      logging.error('have read too much! Please report an issue.')
+    if self._content_length_left <= 0:
+      if fp:
+        if data.endswith(b"\r\n"):
+          footer_length = self._boundary_len + 6
+        else:
+          footer_length = self._boundary_len + 4
+        fp.write(buf[:footer_length])
+        fp.close()
+      del self._content_length_left
+      del self._boundary_buffer
+      del self._boundary_len
+      del self._boundary
+      self.request_callback(self._request)
+      return
+
+    bpos = buf.find(self._boundary)
+    if bpos != -1:
+      if fp:
+        fp.write(buf[:bpos])
+        fp.close()
+      spos = buf.find(b'\r\n\r\n', bpos)
+      if spos != -1:
+        self._boundary_buffer = buf[bpos:spos+4]
+        self._on_content_headers(b'', buf=buf[spos+4:])
+      else:
+        self._boundary_buffer = buf[bpos:]
+        self.stream.read_until(b"\r\n\r\n", self._on_content_headers)
+    else:
+      splitpos = -self._boundary_len
+      if fp:
+        fp.write(buf[:splitpos])
+      self._boundary_buffer = buf[splitpos:]
+      self._read_content_body(fp)
+
+class HTTPServer(tornado.httpserver.HTTPServer):
+  def handle_stream(self, stream, address):
+    HTTPConnection(stream, address, self.request_callback,
+                   self.no_keep_alive, self.xheaders)
