@@ -404,7 +404,7 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
           if k == "boundary" and v:
             if v.startswith('"') and v.endswith('"'):
               v = v[1:-1]
-            self._boundary = v.encode('latin1')
+            self._boundary = b'--' + v.encode('latin1')
             self._boundary_buffer = b''
             self._boundary_len = len(self._boundary)
             break
@@ -415,6 +415,7 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
   def _on_content_headers(self, data, buf=b''):
     self._content_length_left -= len(data)
     data = self._boundary_buffer + data
+    logging.debug('file header is %r', data)
     self._boundary_buffer = buf
     header_data = data[self._boundary_len+2:].decode('latin1')
     headers = tornado.httputil.HTTPHeaders.parse(header_data)
@@ -451,35 +452,26 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
   def _read_into(self, fp, data):
     self._content_length_left -= len(data)
     buf = self._boundary_buffer + data
-    if self._content_length_left < 0:
-      logging.error('have read too much! Please report an issue.')
-    if self._content_length_left <= 0:
-      if fp:
-        if data.endswith(b"\r\n"):
-          footer_length = self._boundary_len + 6
-        else:
-          footer_length = self._boundary_len + 4
-        fp.write(buf[:footer_length])
-        fp.close()
-      del self._content_length_left
-      del self._boundary_buffer
-      del self._boundary_len
-      del self._boundary
-      self.request_callback(self._request)
-      return
 
     bpos = buf.find(self._boundary)
     if bpos != -1:
       if fp:
-        fp.write(buf[:bpos])
+        fp.write(buf[:bpos-2])
         fp.close()
       spos = buf.find(b'\r\n\r\n', bpos)
       if spos != -1:
         self._boundary_buffer = buf[bpos:spos+4]
         self._on_content_headers(b'', buf=buf[spos+4:])
-      else:
+      elif self._content_length_left > 0:
         self._boundary_buffer = buf[bpos:]
         self.stream.read_until(b"\r\n\r\n", self._on_content_headers)
+      else:
+        del self._content_length_left
+        del self._boundary_buffer
+        del self._boundary_len
+        del self._boundary
+        self.request_callback(self._request)
+        return
     else:
       splitpos = -self._boundary_len
       if fp:
