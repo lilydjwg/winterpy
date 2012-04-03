@@ -381,9 +381,17 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
       content_length = headers.get("Content-Length")
       if content_length:
         content_length = int(content_length)
+        use_tmp_files = self._get_handler_info()
+        if not use_tmp_files and content_length > self.stream.max_buffer_size:
+          raise _BadRequestException("Content-Length too long")
         if headers.get("Expect") == "100-continue":
           self.stream.write(b"HTTP/1.1 100 (Continue)\r\n\r\n")
-        self._receive_content(content_length)
+        if use_tmp_files:
+          logging.debug('using temporary files for uploading')
+          self._receive_content(content_length)
+        else:
+          logging.debug('using memory for uploading')
+          self.stream.read_bytes(content_length, self._on_request_body)
         return
 
       self.request_callback(self._request)
@@ -478,6 +486,38 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
         fp.write(buf[:splitpos])
       self._boundary_buffer = buf[splitpos:]
       self._read_content_body(fp)
+
+  def _get_handler_info(self):
+    request = self._request
+    app = self.request_callback
+    handlers = app._get_host_handlers(request)
+    handler = None
+    for spec in handlers:
+      match = spec.regex.match(request.path)
+      if match:
+        handler = spec.handler_class(app, request, **spec.kwargs)
+        if spec.regex.groups:
+          # None-safe wrapper around url_unescape to handle
+          # unmatched optional groups correctly
+          def unquote(s):
+            if s is None:
+              return s
+            return tornado.escape.url_unescape(s, encoding=None)
+          # Pass matched groups to the handler.  Since
+          # match.groups() includes both named and unnamed groups,
+          # we want to use either groups or groupdict but not both.
+          # Note that args are passed as bytes so the handler can
+          # decide what encoding to use.
+
+          if spec.regex.groupindex:
+            kwargs = dict(
+              (str(k), unquote(v))
+              for (k, v) in match.groupdict().iteritems())
+          else:
+            args = [unquote(s) for s in match.groups()]
+        break
+    if handler:
+      return getattr(handler, 'use_tmp_files', False)
 
 class HTTPServer(tornado.httpserver.HTTPServer):
   def handle_stream(self, stream, address):
