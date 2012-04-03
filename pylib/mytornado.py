@@ -481,7 +481,7 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
         self.request_callback(self._request)
         return
     else:
-      splitpos = -self._boundary_len
+      splitpos = -self._boundary_len-1
       if fp:
         fp.write(buf[:splitpos])
       self._boundary_buffer = buf[splitpos:]
