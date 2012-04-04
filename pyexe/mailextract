@@ -82,7 +82,10 @@ def saveHTMLMail(m):
       else:
         try:
           cid = mail['Content-ID'][1:-1]
-        except:
+        except TypeError:
+          if mail['Content-Disposition'] and \
+             mail['Content-Disposition'].find('attachment') != -1:
+            continue
           from cli import repl
           repl(locals())
         fname = mail.get_filename()
