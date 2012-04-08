@@ -88,7 +88,7 @@ def saveHTMLMail(m):
             continue
           from cli import repl
           repl(locals())
-        fname = mail.get_filename()
+        fname = decodeHeader(mail.get_filename())
         cidMapping[cid] = fname
         body = getMailContent(mail)
         saveFile(fname, body)
