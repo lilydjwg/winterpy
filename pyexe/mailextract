@@ -40,9 +40,12 @@ def getMailSize(mail):
 
 def selectMail(mb):
   for i, m in enumerate(mb):
-    who = decodeHeader(m['From'])
+    who = m['From']
     if who.endswith('>'):
-      who = who.split(' <', 1)[0]
+      who = who.split(' <', 1)[0].strip('"')
+      who = decodeHeader(who)
+    else:
+      who = who.split('@', 1)[0]
     subj = decodeHeader(m['Subject'])
     size = getMailSize(m)
     print(colored('%3d' % i, attrs=['bold']),
