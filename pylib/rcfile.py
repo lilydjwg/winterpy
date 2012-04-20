@@ -120,7 +120,7 @@ class rcfile(YAMLData):
               cprint(e.strerror, 'red')
               ans = ''
               continue
-            os.system("vim '%s'" % key)
+            os.system("vim .")
             ans = ''
           elif ans == 's':
             continue
