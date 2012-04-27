@@ -19,11 +19,14 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
     self.connect = self.client.connect
     self.disconnect = self.client.disconnect
     self.run = self.client.run
-    self.roster = self.client.roster
+
+  @property
+  def roster(self):
+    return self.client.roster
 
   @message_stanza_handler()
   def handle_message(self, stanza):
-    if stanza.stanza_type.endswith('chat') and stanza.body:
+    if stanza.stanza_type and stanza.stanza_type.endswith('chat') and stanza.body:
       logging.info("%s said: %s", stanza.from_jid, stanza.body)
     else:
       logging.info("%s message: %s", stanza.from_jid, stanza.serialize())
@@ -108,9 +111,12 @@ def main():
 
   args = parser.parse_args()
   settings = XMPPSettings({
-              "software_name": "pyxmpp2 Bot"
-              })
+    "software_name": "pyxmpp2 Bot"
+  })
   settings.load_arguments(args)
+  if args.jid.endswith('@gmail.com'):
+    settings['starttls'] = True
+    settings['tls_verify_peer'] = False
 
   if settings.get("password") is None:
     password = getpass("{0!r} password: ".format(args.jid))
