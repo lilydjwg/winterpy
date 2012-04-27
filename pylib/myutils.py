@@ -133,8 +133,7 @@ class TornadoLogFormatter(logging.Formatter):
     if color:
       import curses
       curses.setupterm()
-      fg_color = str(curses.tigetstr("setaf") or
-                 curses.tigetstr("setf") or "", "ascii")
+      fg_color = curses.tigetstr("setaf") or curses.tigetstr("setf") or b""
       self._colors = {
         logging.DEBUG: str(curses.tparm(fg_color, 4), # Blue
                      "ascii"),
