@@ -1,16 +1,18 @@
 import sys
 import logging
+from xml.etree import ElementTree as ET
 
 from pyxmpp2.jid import JID
 from pyxmpp2.message import Message
 from pyxmpp2.presence import Presence
 from pyxmpp2.client import Client
 from pyxmpp2.settings import XMPPSettings
-from pyxmpp2.interfaces import EventHandler, event_handler, QUIT
+from pyxmpp2.interfaces import EventHandler, event_handler, QUIT, NO_CHANGE
 from pyxmpp2.streamevents import AuthorizedEvent, DisconnectedEvent
 from pyxmpp2.interfaces import XMPPFeatureHandler
 from pyxmpp2.interfaces import presence_stanza_handler, message_stanza_handler
 from pyxmpp2.ext.version import VersionProvider
+from pyxmpp2.iq import Iq
 
 class XMPPBot(EventHandler, XMPPFeatureHandler):
   def __init__(self, my_jid, settings, **kwargs):
@@ -43,6 +45,20 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
 
   def send(self, stanza):
     self.client.stream.send(stanza)
+
+  def get_vcard(self, jid, callback):
+    '''callback is used as both result handler and error handler'''
+    q = Iq(
+      to_jid = jid.bare(),
+      stanza_type = 'get'
+    )
+    vc = ET.Element("{vcard-temp}vCard")
+    q.add_payload(vc)
+    self.stanza_processor.set_response_handlers(q, callback, callback)
+    self.send(q)
+
+  def update_roster(self, jid, name=NO_CHANGE, groups=NO_CHANGE):
+    self.client.roster_client.update_item(jid, name, groups)
 
   @presence_stanza_handler("subscribe")
   def handle_presence_subscribe(self, stanza):
