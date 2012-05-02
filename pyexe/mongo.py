@@ -43,6 +43,10 @@ def main():
   conn = Connection(host=host, port=port)
   db = conn[db]
 
+  rc = os.path.expanduser('~/.mongorc.py')
+  if os.path.isfile(rc):
+    exec(compile(open(rc, 'rb').read(), '.mongorc.py', 'exec'))
+
   global v
   v = globals().copy()
   v.update(locals())
@@ -50,6 +54,7 @@ def main():
   del v['repl'], v['argv'], v['main'], v['host'], v['port']
   del v['displayfunc'], v['subprocess'], v['env']
   del v['__name__'], v['__cached__'], v['__doc__'], v['__file__'], v['__package__']
+  del v['rc']
   sys.displayhook = displayfunc
 
   repl(
