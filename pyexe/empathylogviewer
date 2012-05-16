@@ -39,6 +39,6 @@ def procFiles(files):
   convertMessage(msgs)
 
 if __name__ == '__main__':
-  files = [i for i in sys.argv[1:] if os.path.isfile(i)]
+  files = [i for i in sys.argv[1:]]
   procFiles(files)
 
