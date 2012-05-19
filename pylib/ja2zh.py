@@ -17,7 +17,7 @@ def translate(text):
   }
   ans = urllib.request.urlopen('http://fanyi.baidu.com/transcontent', PostData(post).data).read().decode('utf-8')
   result = json.loads(ans)
-  return result['data'][0]['dst']
+  return '\n'.join([x['dst'] for x in result['data']])
 
 if __name__ == '__main__':
   if len(sys.argv) == 2:
