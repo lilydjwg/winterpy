@@ -192,7 +192,8 @@ class StaticFileHandler(RequestHandler):
         filename = os.path.split(path)[1]
       else:
         filename = download
-      self.set_header('Content-Disposition', 'attachment; filename='+filename)
+      # See http://kb.mozillazine.org/Filenames_with_spaces_are_truncated_upon_download
+      self.set_header('Content-Disposition', 'attachment; filename="%s"' % filename.replace('"', r'\"'))
 
     self._send_file_async(path, abspath, include_body)
 
