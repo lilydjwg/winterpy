@@ -30,6 +30,7 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
   def handle_message(self, stanza):
     if stanza.stanza_type and stanza.stanza_type.endswith('chat') and stanza.body:
       logging.info("%s said: %s", stanza.from_jid, stanza.body)
+      self.last_chat_message = stanza
     else:
       logging.info("%s message: %s", stanza.from_jid, stanza.serialize())
     return True
