@@ -40,7 +40,7 @@ def displayfunc(value):
   v['_'] = value
 
 def main(kwargs):
-  global db
+  global db, conn
   conn = Connection(host=host, port=port, **kwargs)
   db = conn[db]
 
