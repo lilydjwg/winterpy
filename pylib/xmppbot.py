@@ -14,6 +14,36 @@ from pyxmpp2.interfaces import presence_stanza_handler, message_stanza_handler
 from pyxmpp2.ext.version import VersionProvider
 from pyxmpp2.iq import Iq
 
+class AutoAcceptMixin:
+  @presence_stanza_handler("subscribe")
+  def handle_presence_subscribe(self, stanza):
+    logging.info("{0} requested presence subscription"
+                          .format(stanza.from_jid))
+    presence = Presence(to_jid = stanza.from_jid.bare(),
+                          stanza_type = "subscribe")
+    return [stanza.make_accept_response(), presence]
+
+  @presence_stanza_handler("subscribed")
+  def handle_presence_subscribed(self, stanza):
+    logging.info("{0!r} accepted our subscription request"
+                          .format(stanza.from_jid))
+    return True
+
+  @presence_stanza_handler("unsubscribe")
+  def handle_presence_unsubscribe(self, stanza):
+    logging.info("{0} canceled presence subscription"
+                          .format(stanza.from_jid))
+    presence = Presence(to_jid = stanza.from_jid.bare(),
+                          stanza_type = "unsubscribe")
+    return [stanza.make_accept_response(), presence]
+
+  @presence_stanza_handler("unsubscribed")
+  def handle_presence_unsubscribed(self, stanza):
+    logging.info("{0!r} acknowledged our subscrption cancelation"
+                          .format(stanza.from_jid))
+    return True
+
+
 class XMPPBot(EventHandler, XMPPFeatureHandler):
   def __init__(self, my_jid, settings, **kwargs):
     version_provider = VersionProvider(settings)
@@ -61,34 +91,6 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
   def update_roster(self, jid, name=NO_CHANGE, groups=NO_CHANGE):
     self.client.roster_client.update_item(jid, name, groups)
 
-  @presence_stanza_handler("subscribe")
-  def handle_presence_subscribe(self, stanza):
-    logging.info("{0} requested presence subscription"
-                          .format(stanza.from_jid))
-    presence = Presence(to_jid = stanza.from_jid.bare(),
-                          stanza_type = "subscribe")
-    return [stanza.make_accept_response(), presence]
-
-  @presence_stanza_handler("subscribed")
-  def handle_presence_subscribed(self, stanza):
-    logging.info("{0!r} accepted our subscription request"
-                          .format(stanza.from_jid))
-    return True
-
-  @presence_stanza_handler("unsubscribe")
-  def handle_presence_unsubscribe(self, stanza):
-    logging.info("{0} canceled presence subscription"
-                          .format(stanza.from_jid))
-    presence = Presence(to_jid = stanza.from_jid.bare(),
-                          stanza_type = "unsubscribe")
-    return [stanza.make_accept_response(), presence]
-
-  @presence_stanza_handler("unsubscribed")
-  def handle_presence_unsubscribed(self, stanza):
-    logging.info("{0!r} acknowledged our subscrption cancelation"
-                          .format(stanza.from_jid))
-    return True
-
   @presence_stanza_handler()
   def handle_presence_available(self, stanza):
     logging.info('%s[%s]', stanza.from_jid, stanza.show or 'available')
@@ -103,6 +105,8 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
   def handle_all(self, event):
     """Log all events."""
     logging.info("-- {0}".format(event))
+
+class AutoAcceptBot(AutoAcceptMixin, XMPPBot): pass
 
 def main():
   import os
@@ -151,7 +155,7 @@ def main():
   del root.handlers[1]
   del root
 
-  bot = XMPPBot(JID(args.jid), settings)
+  bot = AutoAcceptBot(JID(args.jid), settings)
 
   q = sys.exit
   self = bot
