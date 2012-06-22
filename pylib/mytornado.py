@@ -165,6 +165,7 @@ class StaticFileHandler(RequestHandler):
         self.redirect(redir, permanent=True)
         return
 
+      # check if we have a default available
       if self.default_filenames is not None:
         for i in self.default_filenames:
           abspath_ = os.path.join(abspath, i)
@@ -174,6 +175,7 @@ class StaticFileHandler(RequestHandler):
             break
 
       if not found:
+        # try dir listing
         if self.dirindex is not None:
           if not include_body:
             raise HTTPError(405)
@@ -182,7 +184,8 @@ class StaticFileHandler(RequestHandler):
         else:
           raise HTTPError(403, "Directory Listing Not Allowed")
 
-    if (not found and path.endswith('/')) or not os.path.exists(abspath):
+    if not os.path.exists(abspath):
+      # failed to figure out the file to send
       raise HTTPError(404)
     if not os.path.isfile(abspath):
       raise HTTPError(403, "%s is not a file" % self.request.path)
