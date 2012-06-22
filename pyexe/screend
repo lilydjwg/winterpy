@@ -18,7 +18,7 @@ import signal
 import X
 
 FIFO = '/dev/shm/screend'
-pid_file = '/var/lock/screend.pid'
+pid_file = '/tmp/screend.pid'
 screen_locked = False
 our_leave = False
 sys.stderr = open('/tmp/screed.log', 'w')
