@@ -45,12 +45,27 @@ class AutoAcceptMixin:
 
 
 class XMPPBot(EventHandler, XMPPFeatureHandler):
-  def __init__(self, my_jid, settings, **kwargs):
-    version_provider = VersionProvider(settings)
-    self.client = Client(my_jid, [self, version_provider], settings, **kwargs)
-    self.connect = self.client.connect
-    self.disconnect = self.client.disconnect
-    self.run = self.client.run
+  def __init__(self, my_jid, settings, autoReconnect=False, **kwargs):
+    self.jid = my_jid
+    self.settings = settings
+    self.do_quit = not autoReconnect
+
+  def newclient(self, main_loop=None):
+    version_provider = VersionProvider(self.settings)
+    self.client = Client(
+      self.jid, [self, version_provider], self.settings,
+      main_loop=main_loop,
+    )
+
+  def start(self):
+    self.newclient()
+    self.client.connect()
+    self.client.run()
+
+  def disconnect(self):
+    self.do_quit = True
+    self.client.disconnect()
+    self.client.run(timeout=2)
 
   @property
   def roster(self):
@@ -77,6 +92,9 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
   def send(self, stanza):
     self.client.stream.send(stanza)
 
+  def delayed_call(self, seconds, func, *args, **kwargs):
+    self.client.main_loop.delayed_call(seconds, partial(func, *args, **kwargs))
+
   def get_vcard(self, jid, callback):
     '''callback is used as both result handler and error handler'''
     q = Iq(
@@ -98,8 +116,13 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
 
   @event_handler(DisconnectedEvent)
   def handle_disconnected(self, event):
-    """Quit the main loop upon disconnection."""
-    return QUIT
+    if self.do_quit:
+      return QUIT
+    else:
+      logging.warn('XMPP disconnected. Reconnecting...')
+      self.newclient()
+      self.start()
+      return True
 
   @event_handler()
   def handle_all(self, event):
@@ -171,10 +194,8 @@ def main():
         repl(v, os.path.expanduser('~/.xmppbot_history'))
   except SystemExit:
     bot.disconnect()
-    bot.run(timeout=2)
   except:
     bot.disconnect()
-    bot.run(timeout=2)
     import traceback
     traceback.print_exc()
 
