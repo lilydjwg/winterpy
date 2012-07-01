@@ -3,11 +3,12 @@
 
 import sys
 import json
+import socket
 import urllib.request
 
 from url import PostData
 
-def translate(text):
+def translate(text, timeout=socket._GLOBAL_DEFAULT_TIMEOUT):
   post = {
     'from': 'jp',
     'to': 'zh',
@@ -15,7 +16,7 @@ def translate(text):
     'source': 'txt',
     'query': text,
   }
-  ans = urllib.request.urlopen('http://fanyi.baidu.com/transcontent', PostData(post).data).read().decode('utf-8')
+  ans = urllib.request.urlopen('http://fanyi.baidu.com/transcontent', PostData(post).data, timeout=timeout).read().decode('utf-8')
   result = json.loads(ans)
   return '\n'.join([x['dst'] for x in result['data']])
 
