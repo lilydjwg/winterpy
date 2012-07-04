@@ -236,6 +236,7 @@ class path:
         os.mkdir(str(self))
       else:
         raise OSError(17, os.strerror(17), str(self.parent()))
+    return self
 
   def rename(self, newname):
     '''文件更名，同时更新本对象所指'''
