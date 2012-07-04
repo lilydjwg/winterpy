@@ -45,22 +45,27 @@ class AutoAcceptMixin:
 
 
 class XMPPBot(EventHandler, XMPPFeatureHandler):
-  def __init__(self, my_jid, settings, autoReconnect=False, **kwargs):
+  def __init__(self, my_jid, settings, autoReconnect=False, main_loop=None):
     self.jid = my_jid
     self.settings = settings
-    self.do_quit = not autoReconnect
+    self.autoReconnect = autoReconnect
+    self.do_quit = False
+    self.main_loop = main_loop
 
-  def newclient(self, main_loop=None):
+  def newclient(self):
     version_provider = VersionProvider(self.settings)
     self.client = Client(
       self.jid, [self, version_provider], self.settings,
-      main_loop=main_loop,
+      main_loop=self.main_loop,
     )
 
   def start(self):
-    self.newclient()
-    self.client.connect()
-    self.client.run()
+    while not self.do_quit:
+      self.newclient()
+      self.client.connect()
+      self.client.run()
+      if not self.autoReconnect:
+        self.do_quit = True
 
   def disconnect(self):
     self.do_quit = True
@@ -120,8 +125,7 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
       return QUIT
     else:
       logging.warn('XMPP disconnected. Reconnecting...')
-      self.newclient()
-      self.start()
+      # We can't restart here because the stack will overflow
       return True
 
   @event_handler()
