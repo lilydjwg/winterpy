@@ -45,10 +45,13 @@ class AutoAcceptMixin:
 
 
 class XMPPBot(EventHandler, XMPPFeatureHandler):
-  def __init__(self, my_jid, settings, autoReconnect=False, main_loop=None):
+  autoReconnect = True
+
+  def __init__(self, my_jid, settings, autoReconnect=None, main_loop=None):
     self.jid = my_jid
     self.settings = settings
-    self.autoReconnect = autoReconnect
+    if autoReconnect is not None:
+      self.autoReconnect = autoReconnect
     self.do_quit = False
     self.main_loop = main_loop
 
