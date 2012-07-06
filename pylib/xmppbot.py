@@ -45,7 +45,7 @@ class AutoAcceptMixin:
 
 
 class XMPPBot(EventHandler, XMPPFeatureHandler):
-  autoReconnect = True
+  autoReconnect = False
 
   def __init__(self, my_jid, settings, autoReconnect=None, main_loop=None):
     self.jid = my_jid
