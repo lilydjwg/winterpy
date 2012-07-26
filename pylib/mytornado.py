@@ -524,6 +524,7 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
       return getattr(handler, 'use_tmp_files', False)
 
 class HTTPServer(tornado.httpserver.HTTPServer):
+  '''HTTPServer that supports uploading files to temporary files'''
   def handle_stream(self, stream, address):
     HTTPConnection(stream, address, self.request_callback,
                    self.no_keep_alive, self.xheaders)
