@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import sys
 import re
@@ -8,7 +10,10 @@ import threading
 import email.utils
 import time
 import logging
-import http.client
+try:
+  import http.client as httpclient
+except ImportError:
+  import httplib as httpclient
 import traceback
 import tempfile
 from functools import partial
@@ -50,7 +55,7 @@ class ErrorHandlerMixin:
 
       self.finish(self.error_page % {
         "code": status_code,
-        "message": http.client.responses[status_code],
+        "message": httpclient.responses[status_code],
         "err": err_msg,
       })
 
