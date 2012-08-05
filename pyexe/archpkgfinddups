@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+import sys
+import glob
+
+import archpkg
+
+def main(path):
+  pkgs = glob.glob(path + '/*.pkg.tar.xz')
+  for k, v in archpkg.finddups(pkgs).items():
+    print('%s: %s' % (k, ', '.join(v)))
+
+if __name__ == '__main__':
+  if len(sys.argv) != 2:
+    sys.exit('where are your packages?')
+  main(sys.argv[1])
