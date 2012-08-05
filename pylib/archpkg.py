@@ -9,9 +9,9 @@ def trimext(name, num=1):
 def parsePkgName(pkg):
   return trimext(pkg, 3).rsplit('-', 3)
 
-def finddups(pkgs):
+def finddups(pkgs, n=1):
   ret = defaultdict(list)
   for f in pkgs:
     name, ver, build, arch = parsePkgName(os.path.split(f)[1])
     ret[name].append('%s-%s' % (ver, build))
-  return {n: sorted(v) for n, v in ret.items() if len(v) != 1}
+  return {k: sorted(v) for k, v in ret.items() if len(v) > n}
