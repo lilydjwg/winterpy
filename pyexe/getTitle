@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
 # vim:fileencoding=utf-8
 
-'''
-获取网页标题，url.py 中 getTitle 函数的测试程序
-
-2010年7月2日
-'''
-
 import netservice, sys, socket
 
 if __name__ == '__main__':
