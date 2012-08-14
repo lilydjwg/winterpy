@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+import sys
+import glob
+import argparse
+
+import archpkg
+
+def main(path, n):
+  pkgs = glob.glob(path + '/*.pkg.tar.xz')
+  for k, v in archpkg.finddups(pkgs, n).items():
+    print('%s: %s' % (k, ', '.join(v)))
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='Find duplicate Arch packages in a directory.')
+  parser.add_argument('pkgdir', metavar='DIR',
+                      help='the directory to find')
+  parser.add_argument('-n', type=int, default=1,
+                      help='only more than N is considered duplicate.')
+
+  args = parser.parse_args()
+  main(args.pkgdir, args.n)
