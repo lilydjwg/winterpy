@@ -1,3 +1,5 @@
+# vim:fileencoding=utf-8
+
 '''一些在命令行上使用的便捷函数'''
 
 import os

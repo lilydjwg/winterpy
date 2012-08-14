@@ -1,3 +1,5 @@
+# vim:fileencoding=utf-8
+
 '''
 更简单的路径处理
 
