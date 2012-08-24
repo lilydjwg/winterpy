@@ -41,3 +41,6 @@ class Stat:
         self.min = x
       elif x > self.max:
         self.max = x
+
+  def __str__(self):
+    return 'min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f' % (self.min, self.avg, self.max, self.mdev)
