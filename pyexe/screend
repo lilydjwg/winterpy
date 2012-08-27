@@ -5,7 +5,7 @@
 锁屏、设置 empathy 状态、etc
 '''
 
-IDLE_TIME = 5 # 单位：分
+IDLE_TIME = 15 # 单位：分
 CHECK_INTERNAL = 30 # 单位：秒
 
 import os

@@ -43,4 +43,19 @@ class Stat:
         self.max = x
 
   def __str__(self):
-    return 'min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f' % (self.min, self.avg, self.max, self.mdev)
+    try:
+      avg = self.avg
+      mdev = self.mdev
+      min = self.min
+      max = self.max
+    except ZeroDivisionError:
+      avg = mdev = 0
+      min = max = 0
+    return 'min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f' % (min, avg, max, mdev)
+
+  def __repr__(self):
+    return '<%s.%s: %s>' % (
+      self.__class__.__module__,
+      self.__class__.__name__,
+      self.__str__(),
+    )
