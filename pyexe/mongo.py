@@ -20,7 +20,7 @@ port = 27017
 db = 'test'
 
 env = os.environ.copy()
-if env['TERM'].find('256'):
+if env['TERM'].find('256') != -1:
   env['TERM'] = env['TERM'].split('-', 1)[0]
 
 def displayfunc(value):
