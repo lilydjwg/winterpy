@@ -46,9 +46,10 @@ def locateFirstNew(f, lmt):
       l = next(it)
       if l.startswith(lmt):
         break
-    return it
   except StopIteration:
     pass
+  finally:
+    return it
 
 def checkIfOk(l):
   return l.find('EX_OK') != -1
