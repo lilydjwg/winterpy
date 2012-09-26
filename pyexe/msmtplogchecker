@@ -26,7 +26,10 @@ def getLastMailTime():
     return
 
 def setLastMailTime(t):
-  return open(datafile, 'w').write(t)
+  open(datafile + '.tmp', 'w').write(t)
+  # if the above write failed (because disk is full), the old data should be
+  # kept
+  os.rename(datafile + '.tmp', datafile)
 
 def getMailTime(l):
   host = l.find('host')
@@ -43,9 +46,10 @@ def locateFirstNew(f, lmt):
       l = next(it)
       if l.startswith(lmt):
         break
-    return it
   except StopIteration:
     pass
+  finally:
+    return it
 
 def checkIfOk(l):
   return l.find('EX_OK') != -1
