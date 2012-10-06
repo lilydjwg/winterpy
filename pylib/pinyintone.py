@@ -8,38 +8,38 @@
 # http://www.pinyin.info/rules/where.html
 #
 # map (final) constanant+tone to tone+constanant
-mapConstTone2ToneConst = {'n1':'1n',
-                          'n2':'2n',
-                          'n3':'3n',
-                          'n4':'4n',
-                          'ng1':'1ng',
-                          'ng2':'2ng',
-                          'ng3':'3ng',
-                          'ng4':'4ng',
-                          'r1':'1r',
-                          'r2':'2r',
-                          'r3':'3r',
-                          'r4':'4r'}
+mapConstTone2ToneConst = {'n1':  '1n',
+                          'n2':  '2n',
+                          'n3':  '3n',
+                          'n4':  '4n',
+                          'ng1': '1ng',
+                          'ng2': '2ng',
+                          'ng3': '3ng',
+                          'ng4': '4ng',
+                          'r1':  '1r',
+                          'r2':  '2r',
+                          'r3':  '3r',
+                          'r4':  '4r'}
 
 # map vowel+vowel+tone to vowel+tone+vowel
-mapVowelVowelTone2VowelToneVowel = {'ai1':'a1i',
-                                    'ai2':'a2i',
-                                    'ai3':'a3i',
-                                    'ai4':'a4i',
-                                    'ao1':'a1o',
-                                    'ao2':'a2o',
-                                    'ao3':'a3o',
-                                    'ao4':'a4o',
-                                    'ei1':'e1i',
-                                    'ei2':'e2i',
-                                    'ei3':'e3i',
-                                    'ei4':'e4i',
-                                    'ou1':'o1u',
-                                    'ou2':'o2u',
-                                    'ou3':'o3u',
-                                    'ou4':'o4u'}
+mapVowelVowelTone2VowelToneVowel = {'ai1': 'a1i',
+                                    'ai2': 'a2i',
+                                    'ai3': 'a3i',
+                                    'ai4': 'a4i',
+                                    'ao1': 'a1o',
+                                    'ao2': 'a2o',
+                                    'ao3': 'a3o',
+                                    'ao4': 'a4o',
+                                    'ei1': 'e1i',
+                                    'ei2': 'e2i',
+                                    'ei3': 'e3i',
+                                    'ei4': 'e4i',
+                                    'ou1': 'o1u',
+                                    'ou2': 'o2u',
+                                    'ou3': 'o3u',
+                                    'ou4': 'o4u'}
 
-# map vowel-number combination to unicode hex equivalent
+# map vowel-number combination to unicode
 mapVowelTone2Unicode = {'a1': 'ā',
                         'a2': 'á',
                         'a3': 'ǎ',
@@ -60,10 +60,11 @@ mapVowelTone2Unicode = {'a1': 'ā',
                         'u2': 'ú',
                         'u3': 'ǔ',
                         'u4': 'ù',
-                        'v1': 'Ǜ',
+                        'v1': 'ǜ',
                         'v2': 'ǘ',
                         'v3': 'ǚ',
-                        'v4': 'ǜ'}
+                        'v4': 'ǜ',
+                       }
 
 def ConvertPinyinToneNumbers(lineIn):
   """
@@ -85,18 +86,18 @@ def ConvertPinyinToneNumbers(lineIn):
 
   # first transform
   for x, y in mapConstTone2ToneConst.items():
-    lineOut = lineOut.replace(x, y)
+    lineOut = lineOut.replace(x, y).replace(x.upper(), y.upper())
 
   # second transform
   for x, y in mapVowelVowelTone2VowelToneVowel.items():
-    lineOut = lineOut.replace(x, y)
+    lineOut = lineOut.replace(x, y).replace(x.upper(), y.upper())
 
   #
   # third transform
   for x, y in mapVowelTone2Unicode.items():
-    lineOut = lineOut.replace(x, y)
+    lineOut = lineOut.replace(x, y).replace(x.upper(), y.upper())
 
-  return lineOut
+  return lineOut.replace('v', 'ü').replace('V', 'Ü')
 
 if __name__ == '__main__':
   import sys
