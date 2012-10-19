@@ -76,11 +76,69 @@ static PyObject* IplImage_match(IplImageObject* self, PyObject* args){
   return Py_BuildValue("((ii)d)", max_point.x, max_point.y, max_interlinkage);
 }
 
+static PyObject* IplImage_findfaces(IplImageObject* self, PyObject* args){
+  char* cascade_file;
+  IplImage* img;
+  CvHaarClassifierCascade* cascade;
+  PyObject* str;
+  CvSeq* faces;
+  CvRect* r;
+  CvMemStorage* storage;
+  int i, len;
+  PyObject *ret, *face;
+
+  if(!PyArg_ParseTuple(args, "O&", PyUnicode_FSConverter, &str))
+    return NULL;
+
+  img = self->img;
+  cascade_file = PyBytes_AsString(str);
+
+  Py_BEGIN_ALLOW_THREADS
+  cascade = (CvHaarClassifierCascade*)cvLoad(cascade_file, 0, 0, 0);
+  Py_END_ALLOW_THREADS
+
+  Py_DECREF(str);
+  if(!cascade){
+    PyErr_Format(PyExc_IOError,
+	"failed to load classifier cascade: %s",
+	cascade_file);
+    return NULL;
+  }
+
+  Py_BEGIN_ALLOW_THREADS
+  storage = cvCreateMemStorage(0);
+  faces = cvHaarDetectObjects(img, cascade, storage,
+      1.1, 2, CV_HAAR_DO_CANNY_PRUNING,
+      cvSize(4, 4), cvSize(40, 40));
+  Py_END_ALLOW_THREADS
+
+  len = faces ? faces->total : 0;
+  ret = PyList_New(len);
+  for(i=0; i<len; i++){
+    r = (CvRect*)cvGetSeqElem(faces, i);
+    face = PyTuple_New(4);
+    PyTuple_SET_ITEM(face, 0, PyLong_FromLong(r->x));
+    PyTuple_SET_ITEM(face, 1, PyLong_FromLong(r->y));
+    PyTuple_SET_ITEM(face, 2, PyLong_FromLong(r->width));
+    PyTuple_SET_ITEM(face, 3, PyLong_FromLong(r->height));
+    PyList_SET_ITEM(ret, i, face);
+  }
+
+  cvReleaseHaarClassifierCascade(&cascade);
+
+  return ret;
+}
+
 static PyMethodDef IplImage_methods[] = {
   {
     "match", (PyCFunction)IplImage_match, METH_VARARGS,
     "find the most match portion for the given IplImage pattern\n" \
       "Returns a tuple: ((x, y), interlinkage)"
+  },
+  {
+    "findfaces", (PyCFunction)IplImage_findfaces, METH_VARARGS,
+    "find people's faces, need a casade file path\n" \
+      "Returns a list of rect points represented as (x, y, w, h)"
   },
   {NULL}  /* Sentinel */
 };

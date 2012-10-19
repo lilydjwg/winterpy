@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+import sys, os
+import myopencv
+from PIL import Image, ImageDraw
+
+def detectObjects(image):
+  return myopencv.Image(image).findfaces('/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml')
+
+def process(infile, outfile):
+  faces = detectObjects(infile)
+  if faces:
+    im = Image.open(infile)
+    draw = ImageDraw.Draw(im)
+    for f in faces:
+      x, y, w, h = f
+      f = (x, y, x+w, y+h)
+      draw.rectangle(f, outline=(255, 0, 255))
+    im.save(outfile)
+  else:
+    sys.exit('no faces found.')
+
+if __name__ == "__main__":
+  if len(sys.argv) != 3:
+    sys.exit('what to process and where to save the result?')
+  process(*sys.argv[1:])

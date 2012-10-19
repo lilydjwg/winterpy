@@ -3,6 +3,7 @@
 emulate -L zsh
 cd $(dirname $0)
 PS4=
+: ${CC:=gcc}
 
 makeaso () {
   infile=$1
@@ -12,7 +13,7 @@ makeaso () {
   fi
   shift
   setopt -x
-  gcc $@ -O2 -shared -fPIC "$infile" -o "$outfile"
+  "$CC" $@ -O2 -shared -fPIC "$infile" -o "$outfile"
 }
 
 makeaso ard.c
