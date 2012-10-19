@@ -82,10 +82,11 @@ def loadso(fname):
       return CDLL(p)
   raise ImportError('%s not found' % fname)
 
-def restart_if_failed(func, max_tries, args=(), kwargs={}, secs=60):
+def restart_if_failed(func, max_tries, args=(), kwargs={}, secs=60, sleep=None):
   '''
   re-run when some exception happens, until `max_tries` in `secs`
   '''
+  import time
   import traceback
   from collections import deque
 
@@ -98,6 +99,8 @@ def restart_if_failed(func, max_tries, args=(), kwargs={}, secs=60):
       traceback.print_exc()
       if len(dq) == max_tries and time.time() - dq[0] < secs:
         break
+      if sleep is not None:
+        time.sleep(sleep)
     else:
       break
 
