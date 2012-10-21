@@ -61,6 +61,17 @@ class ErrorHandlerMixin:
         "err": err_msg,
       })
 
+  @classmethod
+  def patchHandler(cls, RequestHandler):
+    '''patch a RequestHandler without subclassing
+
+    In this way we can change all ``tornado.web.RedirectHandler``. Simply
+subclassing and replacing won't work due to the Python 2-style ``super()``
+call in its ``__init__`` method.
+    '''
+    RequestHandler.write_error = cls.write_error
+    RequestHandler.error_page = cls.error_page
+
 class StaticFileHandler(RequestHandler):
   """A simple handler that can serve static content from a directory.
 
