@@ -2,7 +2,7 @@
 
 import re
 import socket
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urljoin
 from functools import partial
 from collections import namedtuple
 from html.entities import html5 as _entities
@@ -220,9 +220,7 @@ class TitleFetcher:
         if self.followed_times > self.max_follows:
           self.run_callback(TooManyRedirection)
         else:
-          newurl = self.headers['Location']
-          if newurl.startswith('/'):
-            newurl = self.url.scheme + '://' + self.host + newurl
+          newurl = urljoin(self.fullurl, self.headers['Location'])
           self.new_url(newurl)
         return
 
