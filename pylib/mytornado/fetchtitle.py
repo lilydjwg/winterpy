@@ -63,7 +63,7 @@ class TitleFetcher:
   stream = None
   max_follows = 10
   timeout = 15
-  _finished = False
+  _return_once = False
 
   def __init__(self, url, callback,
                timeout=None, max_follows=None, io_loop=None):
@@ -97,14 +97,19 @@ class TitleFetcher:
     self.url = u = urlsplit(url)
 
     self.host = u.netloc
-    if u.port:
-      self.host += ':%d' % u.port
+    try:
+      host, port = u.netloc.rsplit(':', 1)
+    except ValueError:
+      host = u.netloc
+      port = 0
+    else:
+      port = int(port)
 
     if u.scheme == 'http':
-      addr = u.netloc, u.port or 80
+      addr = host, port or 80
       stream = tornado.iostream.IOStream
     elif u.scheme == 'https':
-      addr = u.netloc, u.port or 443
+      addr = host, port or 443
       stream = tornado.iostream.SSLIOStream
     else:
       raise ValueError('bad url: %r' % url)
@@ -116,19 +121,21 @@ class TitleFetcher:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.addr = addr
     self.stream = StreamClass(s)
+    logger.debug('%s: connecting to %s...', self.fullurl, addr)
     self.stream.connect(addr, self.send_request)
 
   def new_url(self, url):
     addr, StreamClass = self.parse_url(url)
     if addr != self.addr:
       if self.stream:
+        self._return_once = True
         self.stream.close()
       self.new_connection(addr, StreamClass)
     else:
+      logger.debug('%s: reuse existing connection to %s', self.fullurl, self.addr)
       self.send_request(nocallback=True)
 
   def run_callback(self, arg):
-    self._finished = True
     self.io_loop.remove_timeout(self._timeout)
     self.stream.close()
     self._callback(arg, self)
@@ -155,13 +162,19 @@ class TitleFetcher:
     self.finder = TitleFinder()
     if not nocallback:
       self.stream.read_until_close(
-        partial(self.on_data, close=True),
+        # self.addr will have been changed when close callback is run
+        partial(self.on_data, close=True, addr=self.addr),
         streaming_callback=self.on_data,
       )
 
-  def on_data(self, data, close=False):
-    if self._finished:
-      # The connection is closing, and we have run the callback.
+  def on_data(self, data, close=False, addr=None):
+    if close:
+      logger.debug('%s: connection to %s closed.', self.fullurl, addr)
+
+    if self._return_once:
+      self._return_once = False
+      # The connection is closing, and we haven't run the callback because of
+      # redirection.
       return
 
     recved = len(data)
