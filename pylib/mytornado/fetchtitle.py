@@ -26,6 +26,7 @@ class SingletonFactory:
 MediaType = namedtuple('MediaType', 'type size')
 
 ConnectionClosed = SingletonFactory('ConnectionClosed')
+ConnectionFailed = SingletonFactory('ConnectionFailed')
 TooManyRedirection = SingletonFactory('TooManyRedirection')
 Timeout = SingletonFactory('Timeout')
 
@@ -76,6 +77,7 @@ class TitleFetcher:
   timeout = 15
   _return_once = False
   _cookie = None
+  _connected = False
 
   def __init__(self, url, callback,
                timeout=None, max_follows=None, io_loop=None):
@@ -134,6 +136,7 @@ class TitleFetcher:
     self.addr = addr
     self.stream = StreamClass(s)
     logger.debug('%s: connecting to %s...', self.fullurl, addr)
+    self.stream.set_close_callback(self.before_connected)
     self.stream.connect(addr, self.send_request)
 
   def new_url(self, url):
@@ -159,6 +162,7 @@ class TitleFetcher:
     self._callback(arg, self)
 
   def send_request(self, nocallback=False):
+    self._connected = True
     req = ('GET %s HTTP/1.1',
            'Host: %s',
            'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0',
@@ -247,6 +251,11 @@ class TitleFetcher:
       self.run_callback(None)
     elif close:
       self.run_callback(ConnectionClosed)
+
+  def before_connected(self):
+    '''check if something wrong before connected'''
+    if not self._connected:
+      self.run_callback(ConnectionFailed)
 
   def process_cookie(self):
     setcookie = self.headers.get('Set-Cookie', None)
