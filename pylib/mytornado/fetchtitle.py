@@ -5,6 +5,7 @@ import socket
 from urllib.parse import urlsplit
 from functools import partial
 from collections import namedtuple
+from html.entities import html5 as _entities
 import logging
 
 import tornado.ioloop
@@ -29,6 +30,16 @@ TooManyRedirection = SingletonFactory('TooManyRedirection')
 Timeout = SingletonFactory('Timeout')
 
 logger = logging.getLogger(__name__)
+
+def _mapEntity(m):
+  name = m.group()[1:]
+  try:
+    return _entities[name]
+  except KeyError:
+    return name
+
+def replaceEntities(s):
+  return re.sub(r'&[^;]+;', _mapEntity, s)
 
 class TitleFinder:
   found = None
@@ -225,7 +236,8 @@ class TitleFetcher:
       t = self.finder(chunk)
       if t:
         try:
-          self.run_callback(t.decode(self.charset))
+          title = replaceEntities(t.decode(self.charset))
+          self.run_callback(title)
         except (UnicodeDecodeError, LookupError):
           self.run_callback(t)
         return
