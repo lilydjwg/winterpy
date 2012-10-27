@@ -226,6 +226,11 @@ def main(urls):
   class BatchFetcher:
     n = 0
     def __call__(self, title, fetcher):
+      if isinstance(title, bytes):
+        try:
+          title = title.decode('gb18030')
+        except UnicodeDecodeError:
+          pass
       logger.info('done: [%d] %s <- %s' % (fetcher.status_code, title, fetcher.fullurl))
       self.n -= 1
       if not self.n:
