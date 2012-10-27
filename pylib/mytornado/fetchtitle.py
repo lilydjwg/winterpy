@@ -133,8 +133,14 @@ class TitleFetcher:
         self.stream.close()
       self.new_connection(addr, StreamClass)
     else:
-      logger.debug('%s: reuse existing connection to %s', self.fullurl, self.addr)
-      self.send_request(nocallback=True)
+      logger.debug('%s: try to reuse existing connection to %s', self.fullurl, self.addr)
+      try:
+        self.send_request(nocallback=True)
+      except tornado.iostream.StreamClosedError:
+        logger.debug('%s: server at %s doesn\'t like keep-alive, will reconnect.', self.fullurl, self.addr)
+        # The close callback should have already run
+        self.stream.close()
+        self.new_connection(addr, StreamClass)
 
   def run_callback(self, arg):
     self.io_loop.remove_timeout(self._timeout)
