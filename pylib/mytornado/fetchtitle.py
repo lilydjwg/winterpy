@@ -64,6 +64,7 @@ class TitleFetcher:
   max_follows = 10
   timeout = 15
   _return_once = False
+  _cookie = None
 
   def __init__(self, url, callback,
                timeout=None, max_follows=None, io_loop=None):
@@ -155,7 +156,10 @@ class TitleFetcher:
       path += '?' + self.url.query
     req = '\r\n'.join(req) % (
       path, self.host,
-    ) + '\r\n\r\n'
+    )
+    if self._cookie:
+      req += '\r\n' + self._cookie
+    req += '\r\n\r\n'
     self.stream.write(req.encode())
     self.headers_done = False
     self.parser = HttpParser(decompress=True)
@@ -189,6 +193,7 @@ class TitleFetcher:
 
       self.status_code = p.get_status_code()
       if self.status_code in (301, 302):
+        self.process_cookie() # or we may be redirecting to a loop
         logger.debug('%s: redirect to %s', self.fullurl, self.headers['Location'])
         self.followed_times += 1
         if self.followed_times > self.max_follows:
@@ -221,6 +226,14 @@ class TitleFetcher:
       self.run_callback(None)
     elif close:
       self.run_callback(ConnectionClosed)
+
+  def process_cookie(self):
+    setcookie = self.headers.get('Set-Cookie', None)
+    if not setcookie:
+      return
+
+    cookies = [c.rsplit(None, 1)[-1] for c in setcookie.split('; expires')[:-1]]
+    self._cookie = 'Cookie: ' + '; '.join(cookies)
 
 def main(urls):
   class BatchFetcher:
