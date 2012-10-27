@@ -313,9 +313,12 @@ def test():
 
 if __name__ == "__main__":
   import sys
-  if len(sys.argv) == 1:
-    sys.exit('no urls given.')
-  elif sys.argv[1] == 'test':
-    test()
-  else:
-    main(sys.argv[1:])
+  try:
+    if len(sys.argv) == 1:
+      sys.exit('no urls given.')
+    elif sys.argv[1] == 'test':
+      test()
+    else:
+      main(sys.argv[1:])
+  except KeyboardInterrupt:
+    print('Interrupted.')
