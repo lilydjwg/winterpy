@@ -109,21 +109,13 @@ class TitleFetcher:
   def parse_url(self, url):
     '''parse `url`, set self.host and return address and stream class'''
     self.url = u = urlsplit(url)
-
     self.host = u.netloc
-    try:
-      host, port = u.netloc.rsplit(':', 1)
-    except ValueError:
-      host = u.netloc
-      port = 0
-    else:
-      port = int(port)
 
     if u.scheme == 'http':
-      addr = host, port or 80
+      addr = u.hostname, u.port or 80
       stream = tornado.iostream.IOStream
     elif u.scheme == 'https':
-      addr = host, port or 443
+      addr = u.hostname, u.port or 443
       stream = tornado.iostream.SSLIOStream
     else:
       raise ValueError('bad url: %r' % url)
