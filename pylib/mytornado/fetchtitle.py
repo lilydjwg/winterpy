@@ -199,7 +199,10 @@ class TitleFetcher:
         if self.followed_times > self.max_follows:
           self.run_callback(TooManyRedirection)
         else:
-          self.new_url(self.headers['Location'])
+          newurl = self.headers['Location']
+          if newurl.startswith('/'):
+            newurl = self.url.scheme + '://' + self.host + newurl
+          self.new_url(newurl)
         return
 
       ctype = self.headers.get('Content-Type', 'text/html')
