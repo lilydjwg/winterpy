@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 def _sharp2uni(code):
   '''&#...; ==> unicode'''
-  s = code[1:-1]
+  s = code[1:].rstrip(';')
   if s.startswith('x'):
     return chr(int('0'+s, 16))
   else:
