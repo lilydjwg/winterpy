@@ -5,7 +5,11 @@ import socket
 from urllib.parse import urlsplit, urljoin
 from functools import partial
 from collections import namedtuple
-from html.entities import html5 as _entities
+try:
+  # Python 3.3
+  from html.entities import html5 as _entities
+except ImportError:
+  from html.entities import entitydefs as _entities
 import logging
 
 import tornado.ioloop
