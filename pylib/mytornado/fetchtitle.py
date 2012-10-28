@@ -75,7 +75,7 @@ class TitleFetcher:
   stream = None
   max_follows = 10
   timeout = 15
-  _return_once = False
+  _finished = False
   _cookie = None
   _connected = False
 
@@ -135,7 +135,7 @@ class TitleFetcher:
     addr, StreamClass = self.parse_url(url)
     if addr != self.addr:
       if self.stream:
-        self._return_once = True
+        self._finished = True
         self.stream.close()
       self.new_connection(addr, StreamClass)
     else:
@@ -150,6 +150,7 @@ class TitleFetcher:
 
   def run_callback(self, arg):
     self.io_loop.remove_timeout(self._timeout)
+    self._finished = True
     self.stream.close()
     self._callback(arg, self)
 
@@ -188,8 +189,8 @@ class TitleFetcher:
     if close:
       logger.debug('%s: connection to %s closed.', self.fullurl, addr)
 
-    if self._return_once:
-      self._return_once = False
+    if self._finished:
+      self._finished = False
       # The connection is closing, and we haven't run the callback because of
       # redirection.
       return
@@ -244,7 +245,7 @@ class TitleFetcher:
 
   def before_connected(self):
     '''check if something wrong before connected'''
-    if not self._connected:
+    if not self._connected and not self._finished:
       self.run_callback(ConnectionFailed)
 
   def process_cookie(self):
