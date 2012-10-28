@@ -254,6 +254,7 @@ class TitleFetcher:
       t = self.feed_finder(chunk)
       if t:
         self.run_callback(t)
+        return
 
     if p.is_message_complete():
       t = self.feed_finder(None)
