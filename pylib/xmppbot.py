@@ -64,11 +64,17 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
 
   def start(self):
     while not self.do_quit:
-      self.newclient()
-      self.client.connect()
-      self.client.run()
+      self.connect()
+      self.run()
       if not self.autoReconnect:
         self.do_quit = True
+
+  def connect(self):
+    self.newclient()
+    self.client.connect()
+
+  def run(self):
+    self.client.run()
 
   def disconnect(self):
     self.do_quit = True
@@ -146,7 +152,7 @@ def main():
   from cli import repl
 
   """Parse the command-line arguments and run the bot."""
-  parser = argparse.ArgumentParser(description = 'XMPP echo bot',
+  parser = argparse.ArgumentParser(description = 'XMPP dev bot',
                   parents = [XMPPSettings.get_arg_parser()])
   parser.add_argument('jid', metavar = 'JID',
                     help = 'The bot JID')
@@ -178,12 +184,7 @@ def main():
     for logger in ("pyxmpp2.IN", "pyxmpp2.OUT"):
       logger = logging.getLogger(logger)
       logger.setLevel(logging.DEBUG)
-
   enable_pretty_logging(level=args.log_level)
-  root = logging.getLogger()
-  root.handlers[0].setFormatter(root.handlers[1].formatter)
-  del root.handlers[1]
-  del root
 
   bot = AutoAcceptBot(JID(args.jid), settings)
 
