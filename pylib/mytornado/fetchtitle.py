@@ -233,7 +233,10 @@ class TitleFetcher:
 
       ctype = self.headers.get('Content-Type', 'text/html')
       if ctype.find('html') == -1:
-        l = self.headers.get('Content-Length', None)
+        try:
+          l = int(self.headers.get('Content-Length', None))
+        except ValueError:
+          l = None
         self.run_callback(MediaType(ctype, l))
         return
       pos = ctype.find('charset=')
