@@ -32,12 +32,22 @@ Timeout = SingletonFactory('Timeout')
 
 logger = logging.getLogger(__name__)
 
+def _sharp2uni(code):
+  '''&#...; ==> unicode'''
+  s = code[1:-1]
+  if s.startswith('x'):
+    return chr(int('0'+s, 16))
+  else:
+    return chr(int(s))
+
 def _mapEntity(m):
   name = m.group()[1:]
+  if name.startswith('#'):
+    return _sharp2uni(name)
   try:
     return _entities[name]
   except KeyError:
-    return name
+    return '&' + name
 
 def replaceEntities(s):
   return re.sub(r'&[^;]+;', _mapEntity, s)
