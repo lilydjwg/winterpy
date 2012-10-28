@@ -68,10 +68,12 @@ class TitleFinder:
   pos = 0
 
   def __call__(self, data):
-    self.buf += data
-    self.pos += len(data)
-    if len(self.buf) < 100:
-      return
+    if data is not None:
+      self.buf += data
+      self.pos += len(data)
+      if len(self.buf) < 100:
+        return
+
     if self.found is None:
       m = self.title_begin.search(self.buf)
       if m:
@@ -249,18 +251,14 @@ class TitleFetcher:
 
     if p.is_partial_body():
       chunk = p.recv_body()
-      t = self.finder(chunk)
+      t = self.feed_finder(chunk)
       if t:
-        try:
-          title = replaceEntities(t.decode(self.charset))
-          self.run_callback(title)
-        except (UnicodeDecodeError, LookupError):
-          self.run_callback(t)
-        return
+        self.run_callback(t)
 
     if p.is_message_complete():
-      # title not found
-      self.run_callback(None)
+      t = self.feed_finder(None)
+      # if title not found, t is None
+      self.run_callback(t)
     elif close:
       self.run_callback(ConnectionClosed)
 
@@ -276,6 +274,16 @@ class TitleFetcher:
 
     cookies = [c.rsplit(None, 1)[-1] for c in setcookie.split('; expires')[:-1]]
     self._cookie = 'Cookie: ' + '; '.join(cookies)
+
+  def feed_finder(self, chunk):
+    '''feed data to TitleFinder, return the title if found'''
+    t = self.finder(chunk)
+    if t:
+      try:
+        title = replaceEntities(t.decode(self.charset))
+        return title
+      except (UnicodeDecodeError, LookupError):
+        return t
 
 def main(urls):
   class BatchFetcher:
