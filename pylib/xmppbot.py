@@ -64,6 +64,7 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
 
   def start(self):
     while not self.do_quit:
+      logging.info('XMPP connecting...')
       self.connect()
       self.run()
       if not self.autoReconnect:
