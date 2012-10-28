@@ -158,7 +158,7 @@ class path:
     return os.path.islink(self.value)
 
   def isdir(self):
-    return os.path.isdir(self.value)
+    return os.path.isdir(self.value) and not os.path.islink(self.value)
 
   def isfile(self):
     return os.path.isfile(self.value)
