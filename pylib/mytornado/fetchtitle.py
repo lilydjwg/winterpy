@@ -8,8 +8,12 @@ from collections import namedtuple
 try:
   # Python 3.3
   from html.entities import html5 as _entities
+  def _extract_entity_name(m):
+    return m.group()[1:]
 except ImportError:
   from html.entities import entitydefs as _entities
+  def _extract_entity_name(m):
+    return m.group()[1:-1]
 import logging
 
 import tornado.ioloop
@@ -45,7 +49,7 @@ def _sharp2uni(code):
     return chr(int(s))
 
 def _mapEntity(m):
-  name = m.group()[1:]
+  name = _extract_entity_name(m)
   if name.startswith('#'):
     return _sharp2uni(name)
   try:
