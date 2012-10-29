@@ -241,7 +241,7 @@ class TitleFetcher:
       if ctype.find('html') == -1:
         try:
           l = int(self.headers.get('Content-Length', None))
-        except ValueError:
+        except (ValueError, TypeError):
           l = None
         self.run_callback(MediaType(ctype, l))
         return
