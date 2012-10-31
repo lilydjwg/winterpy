@@ -267,11 +267,12 @@ class TitleFetcher:
           self.finder = PNGFinder(mt)
         else:
           self.run_callback(mt)
-        return
-      self.finder = TitleFinder()
-      pos = ctype.find('charset=')
-      if pos > 0:
-        self.charset = ctype[pos+8:]
+          return
+      else:
+        self.finder = TitleFinder()
+        pos = ctype.find('charset=')
+        if pos > 0:
+          self.charset = ctype[pos+8:]
 
     if p.is_partial_body():
       chunk = p.recv_body()
