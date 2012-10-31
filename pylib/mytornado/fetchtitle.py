@@ -5,6 +5,7 @@ import socket
 from urllib.parse import urlsplit, urljoin
 from functools import partial
 from collections import namedtuple
+import struct
 try:
   # Python 3.3
   from html.entities import html5 as _entities
@@ -31,7 +32,8 @@ class SingletonFactory:
   def __repr__(self):
     return '<%s>' % self.name
 
-MediaType = namedtuple('MediaType', 'type size')
+MediaType = namedtuple('MediaType', 'type size dimension')
+defaultMediaType = MediaType('application/octet-stream', None, None)
 
 ConnectionClosed = SingletonFactory('ConnectionClosed')
 ConnectionFailed = SingletonFactory('ConnectionFailed')
@@ -86,6 +88,24 @@ class TitleFinder:
         return raw_title
     if self.found is None:
       self.buf = self.buf[-100:]
+
+class PNGFinder:
+  buf = b''
+
+  def __init__(self, mediatype):
+    self._mt = mediatype
+
+  def __call__(self, data):
+    self.buf += data
+    if len(self.buf) < 24:
+      # can't decide yet
+      return
+    if self.buf[:16] != b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR':
+      logging.warn('Bad PNG signature and header: %r', self.buf[:16])
+      return self._mt._replace(dimension='Bad PNG')
+    else:
+      s = struct.unpack('!II', self.buf[16:24])
+      return self._mt._replace(dimension=s)
 
 class TitleFetcher:
   charset = 'UTF-8' # default charset
@@ -197,7 +217,6 @@ class TitleFetcher:
     self.stream.write(req.encode())
     self.headers_done = False
     self.parser = HttpParser(decompress=True)
-    self.finder = TitleFinder()
     if not nocallback:
       self.stream.read_until_close(
         # self.addr will have been changed when close callback is run
@@ -243,8 +262,13 @@ class TitleFetcher:
           l = int(self.headers.get('Content-Length', None))
         except (ValueError, TypeError):
           l = None
-        self.run_callback(MediaType(ctype, l))
+        mt = defaultMediaType._replace(type=ctype, size=l)
+        if ctype == 'image/png':
+          self.finder = PNGFinder(mt)
+        else:
+          self.run_callback(mt)
         return
+      self.finder = TitleFinder()
       pos = ctype.find('charset=')
       if pos > 0:
         self.charset = ctype[pos+8:]
@@ -280,10 +304,13 @@ class TitleFetcher:
     '''feed data to TitleFinder, return the title if found'''
     t = self.finder(chunk)
     if t:
-      try:
-        title = replaceEntities(t.decode(self.charset))
-        return title
-      except (UnicodeDecodeError, LookupError):
+      if isinstance(t, bytes):
+        try:
+          title = replaceEntities(t.decode(self.charset))
+          return title
+        except (UnicodeDecodeError, LookupError):
+          return t
+      else:
         return t
 
 def main(urls):
