@@ -372,6 +372,7 @@ def test():
     'http://www.wordpress.com', # reset
     'https://www.wordpress.com', # timeout
     'http://jquery-api-zh-cn.googlecode.com/svn/trunk/xml/jqueryapi.xml', # xml
+    'http://lilydjwg.is-programmer.com/user_files/lilydjwg/config/avatar.png', # PNG
   )
   main(urls)
 
