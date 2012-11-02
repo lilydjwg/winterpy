@@ -243,38 +243,8 @@ class TitleFetcher:
     nparsed = p.execute(data, recved)
 
     if not self.headers_done and p.is_headers_complete():
-      self.headers_done = True
-      self.headers = p.get_headers()
-
-      self.status_code = p.get_status_code()
-      if self.status_code in (301, 302):
-        self.process_cookie() # or we may be redirecting to a loop
-        logger.debug('%s: redirect to %s', self.fullurl, self.headers['Location'])
-        self.followed_times += 1
-        if self.followed_times > self.max_follows:
-          self.run_callback(TooManyRedirection)
-        else:
-          newurl = urljoin(self.fullurl, self.headers['Location'])
-          self.new_url(newurl)
+      if not self.on_headers_done():
         return
-
-      ctype = self.headers.get('Content-Type', 'text/html')
-      if ctype.find('html') == -1:
-        try:
-          l = int(self.headers.get('Content-Length', None))
-        except (ValueError, TypeError):
-          l = None
-        mt = defaultMediaType._replace(type=ctype, size=l)
-        if ctype == 'image/png':
-          self.finder = PNGFinder(mt)
-        else:
-          self.run_callback(mt)
-          return
-      else:
-        self.finder = TitleFinder()
-        pos = ctype.find('charset=')
-        if pos > 0:
-          self.charset = ctype[pos+8:]
 
     if p.is_partial_body():
       chunk = p.recv_body()
@@ -306,6 +276,43 @@ class TitleFetcher:
 
     cookies = [c.rsplit(None, 1)[-1] for c in setcookie.split('; expires')[:-1]]
     self._cookie = 'Cookie: ' + '; '.join(cookies)
+
+  def on_headers_done(self):
+    '''returns True if should proceed, None if should stop for current chunk'''
+    self.headers_done = True
+    self.headers = self.parser.get_headers()
+
+    self.status_code = self.parser.get_status_code()
+    if self.status_code in (301, 302):
+      self.process_cookie() # or we may be redirecting to a loop
+      logger.debug('%s: redirect to %s', self.fullurl, self.headers['Location'])
+      self.followed_times += 1
+      if self.followed_times > self.max_follows:
+        self.run_callback(TooManyRedirection)
+      else:
+        newurl = urljoin(self.fullurl, self.headers['Location'])
+        self.new_url(newurl)
+      return
+
+    ctype = self.headers.get('Content-Type', 'text/html')
+    if ctype.find('html') == -1:
+      try:
+        l = int(self.headers.get('Content-Length', None))
+      except (ValueError, TypeError):
+        l = None
+      mt = defaultMediaType._replace(type=ctype, size=l)
+      if ctype == 'image/png':
+        self.finder = PNGFinder(mt)
+      else:
+        self.run_callback(mt)
+        return
+    else:
+      self.finder = TitleFinder()
+      pos = ctype.find('charset=')
+      if pos > 0:
+        self.charset = ctype[pos+8:]
+
+    return True
 
   def feed_finder(self, chunk):
     '''feed data to TitleFinder, return the title if found'''
