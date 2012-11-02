@@ -108,7 +108,9 @@ class PNGFinder:
       return self._mt._replace(dimension=s)
 
 class TitleFetcher:
-  charset = 'UTF-8' # default charset
+  default_charset = 'UTF-8'
+  meta_charset = re.compile(br'<meta\s+http-equiv="?content-type"?\s+content="?[^;]+;\s*charset=([^">]+)"?\s*>|<meta\s+charset="?([^">/"]+)"?\s*/?>', re.IGNORECASE)
+  charset = None
   status_code = 0
   followed_times = 0 # 301, 302
   addr = None
@@ -276,6 +278,10 @@ class TitleFetcher:
 
     if p.is_partial_body():
       chunk = p.recv_body()
+      if not self.charset:
+        m = self.meta_charset.search(chunk)
+        if m:
+          self.charset = (m.group(1) or m.group(2)).decode('latin1')
       t = self.feed_finder(chunk)
       if t:
         self.run_callback(t)
@@ -305,6 +311,8 @@ class TitleFetcher:
     '''feed data to TitleFinder, return the title if found'''
     t = self.finder(chunk)
     if t:
+      if self.charset is None:
+        self.charset = self.default_charset
       if isinstance(t, bytes):
         try:
           title = replaceEntities(t.decode(self.charset))
