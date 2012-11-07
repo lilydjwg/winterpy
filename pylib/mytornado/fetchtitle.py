@@ -160,6 +160,27 @@ class JPEGFinder:
         self.state = 1
         self(b'')
 
+class GIFFinder:
+  buf = b''
+
+  def __init__(self, mediatype):
+    self._mt = mediatype
+
+  def __call__(self, data):
+    if data is None:
+      return self._mt
+
+    self.buf += data
+    if len(self.buf) < 10:
+      # can't decide yet
+      return
+    if self.buf[:3] != b'GIF':
+      logging.warn('Bad GIF signature: %r', self.buf[:3])
+      return self._mt._replace(dimension='Bad GIF')
+    else:
+      s = struct.unpack('<HH', self.buf[6:10])
+      return self._mt._replace(dimension=s)
+
 class TitleFetcher:
   default_charset = 'UTF-8'
   meta_charset = re.compile(br'<meta\s+http-equiv="?content-type"?\s+content="?[^;]+;\s*charset=([^">]+)"?\s*>|<meta\s+charset="?([^">/"]+)"?\s*/?>', re.IGNORECASE)
@@ -354,10 +375,13 @@ class TitleFetcher:
       except (ValueError, TypeError):
         l = None
       mt = defaultMediaType._replace(type=ctype, size=l)
+      ctype = ctype.split(';', 1)[0]
       if ctype == 'image/png':
         self.finder = PNGFinder(mt)
       elif ctype == 'image/jpeg':
         self.finder = JPEGFinder(mt)
+      elif ctype == 'image/gif':
+        self.finder = GIFFinder(mt)
       else:
         self.run_callback(mt)
         return
