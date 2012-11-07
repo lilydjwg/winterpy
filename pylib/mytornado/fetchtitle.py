@@ -96,6 +96,9 @@ class PNGFinder:
     self._mt = mediatype
 
   def __call__(self, data):
+    if data is None:
+      return self._mt
+
     self.buf += data
     if len(self.buf) < 24:
       # can't decide yet
@@ -106,6 +109,56 @@ class PNGFinder:
     else:
       s = struct.unpack('!II', self.buf[16:24])
       return self._mt._replace(dimension=s)
+
+class JPEGFinder:
+  buf = b''
+  state = 0
+
+  def __init__(self, mediatype):
+    self._mt = mediatype
+
+  def __call__(self, data):
+    if data is None:
+      return self._mt
+
+    # http://www.64lines.com/jpeg-width-height
+    if data:
+      self.buf += data
+
+    if self.state == 0:
+      # finding header
+      if len(self.buf) < 5:
+        return
+      if self.buf[:3] != b'\xff\xd8\xff':
+        logging.warn('Bad JPEG signature: %r', self.buf[:3])
+        return self._mt._replace(dimension='Bad JPEG')
+      else:
+        self.blocklen = self.buf[4] * 256 + self.buf[5] + 2
+        self.buf = self.buf[2:]
+        self.state += 1
+
+    if self.state == 1:
+      # receiving a block
+      if len(self.buf) < self.blocklen:
+        return
+      self.buf = self.buf[self.blocklen:]
+      self.state += 1
+
+    if self.state == 2:
+      # parse block
+      if len(self.buf) < 9:
+        return
+      buf = self.buf
+      if buf[0] != 0xff:
+        logging.warn('Bad JPEG: %r', self.buf[:self.blocklen])
+        return self._mt._replace(dimension='Bad JPEG')
+      if buf[1] == 0xc0:
+        s = buf[7] * 256 + buf[8], buf[5] * 256 + buf[6]
+        return self._mt._replace(dimension=s)
+      else:
+        self.blocklen = buf[2] * 256 + buf[3] + 2
+        self.state = 1
+        self(b'')
 
 class TitleFetcher:
   default_charset = 'UTF-8'
@@ -303,6 +356,8 @@ class TitleFetcher:
       mt = defaultMediaType._replace(type=ctype, size=l)
       if ctype == 'image/png':
         self.finder = PNGFinder(mt)
+      elif ctype == 'image/jpeg':
+        self.finder = JPEGFinder(mt)
       else:
         self.run_callback(mt)
         return
