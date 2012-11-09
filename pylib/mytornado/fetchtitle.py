@@ -158,7 +158,7 @@ class JPEGFinder:
       else:
         self.blocklen = buf[2] * 256 + buf[3] + 2
         self.state = 1
-        self(b'')
+        return self(b'')
 
 class GIFFinder:
   buf = b''
