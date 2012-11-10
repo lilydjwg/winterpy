@@ -152,7 +152,7 @@ class JPEGFinder:
       if buf[0] != 0xff:
         logging.warn('Bad JPEG: %r', self.buf[:self.blocklen])
         return self._mt._replace(dimension='Bad JPEG')
-      if buf[1] == 0xc0:
+      if buf[1] == 0xc0 or buf[1] == 0xc2:
         s = buf[7] * 256 + buf[8], buf[5] * 256 + buf[6]
         return self._mt._replace(dimension=s)
       else:
