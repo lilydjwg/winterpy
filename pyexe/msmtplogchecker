@@ -26,9 +26,10 @@ def getLastMailTime():
     return
 
 def setLastMailTime(t):
-  open(datafile + '.tmp', 'w').write(t)
-  # if the above write failed (because disk is full), the old data should be
-  # kept
+  # if not using "with", write can fail without exception
+  with open(datafile + '.tmp', 'w') as f:
+    f.write(t)
+  # if the above write failed (because disk is full), the old data should be kept
   os.rename(datafile + '.tmp', datafile)
 
 def getMailTime(l):
