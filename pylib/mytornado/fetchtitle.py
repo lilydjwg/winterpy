@@ -36,7 +36,6 @@ MediaType = namedtuple('MediaType', 'type size dimension')
 defaultMediaType = MediaType('application/octet-stream', None, None)
 
 ConnectionClosed = SingletonFactory('ConnectionClosed')
-ConnectionFailed = SingletonFactory('ConnectionFailed')
 TooManyRedirection = SingletonFactory('TooManyRedirection')
 Timeout = SingletonFactory('Timeout')
 
@@ -336,12 +335,12 @@ class TitleFetcher:
       # if title not found, t is None
       self.run_callback(t)
     elif close:
-      self.run_callback(ConnectionClosed)
+      self.run_callback(self.stream.error or ConnectionClosed)
 
   def before_connected(self):
     '''check if something wrong before connected'''
     if not self._connected and not self._finished:
-      self.run_callback(ConnectionFailed)
+      self.run_callback(self.stream.error)
 
   def process_cookie(self):
     setcookie = self.headers.get('Set-Cookie', None)
