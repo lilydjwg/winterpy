@@ -43,6 +43,7 @@ def onepage(url, f):
       if el.tail:
         d += el.tail
       f.write(d)
+  f.write('\n\n')
 
 def gettext4img(url):
   burl = url.encode()
