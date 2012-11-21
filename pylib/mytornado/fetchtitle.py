@@ -271,6 +271,8 @@ class TitleFetcher:
 
   def send_request(self, nocallback=False):
     self._connected = True
+    # FIXME: t.co will return 200 and use js/meta to redirect using the
+    #        following :-(
     req = ('GET %s HTTP/1.1',
            'Host: %s',
            'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0',
