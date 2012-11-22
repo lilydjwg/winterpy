@@ -193,6 +193,7 @@ class TitleFetcher:
   _finished = False
   _cookie = None
   _connected = False
+  _redirecting = False
 
   def __init__(self, url, callback,
                timeout=None, max_follows=None, io_loop=None):
@@ -215,7 +216,7 @@ class TitleFetcher:
       self.timeout + self.start_time,
       self.on_timeout,
     )
-    self.fullurl = url
+    self.origurl = url
     self.new_url(url)
 
   def on_timeout(self):
@@ -242,23 +243,23 @@ class TitleFetcher:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.addr = addr
     self.stream = StreamClass(s)
-    logger.debug('%s: connecting to %s...', self.fullurl, addr)
+    logger.debug('%s: connecting to %s...', self.origurl, addr)
     self.stream.set_close_callback(self.before_connected)
     self.stream.connect(addr, self.send_request)
 
   def new_url(self, url):
+    self.fullurl = url
     addr, StreamClass = self.parse_url(url)
     if addr != self.addr:
       if self.stream:
-        self._finished = True
         self.stream.close()
       self.new_connection(addr, StreamClass)
     else:
-      logger.debug('%s: try to reuse existing connection to %s', self.fullurl, self.addr)
+      logger.debug('%s: try to reuse existing connection to %s', self.origurl, self.addr)
       try:
         self.send_request(nocallback=True)
       except tornado.iostream.StreamClosedError:
-        logger.debug('%s: server at %s doesn\'t like keep-alive, will reconnect.', self.fullurl, self.addr)
+        logger.debug('%s: server at %s doesn\'t like keep-alive, will reconnect.', self.origurl, self.addr)
         # The close callback should have already run
         self.stream.close()
         self.new_connection(addr, StreamClass)
@@ -271,11 +272,11 @@ class TitleFetcher:
 
   def send_request(self, nocallback=False):
     self._connected = True
-    # FIXME: t.co will return 200 and use js/meta to redirect using the
-    #        following :-(
     req = ('GET %s HTTP/1.1',
            'Host: %s',
-           'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0',
+           # t.co will return 200 and use js/meta to redirect using the following :-(
+           # 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0',
+           'User-Agent: FetchTitle/1.0',
            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.7',
            'Accept-Language: zh-cn,zh;q=0.7,en;q=0.3',
            'Accept-Charset: utf-8,gb18030;q=0.7,*;q=0.7',
@@ -303,16 +304,15 @@ class TitleFetcher:
 
   def on_data(self, data, close=False, addr=None):
     if close:
-      logger.debug('%s: connection to %s closed.', self.fullurl, addr)
+      logger.debug('%s: connection to %s closed.', self.origurl, addr)
 
-    if self._finished:
-      self._finished = False
-      # The connection is closing, and we haven't run the callback because of
-      # redirection.
+    if (close and self._redirecting) or self._finished:
+      # The connection is closing, and we are being redirected or we're done.
+      self._redirecting = False
       return
 
     recved = len(data)
-    logger.debug('%s: received data: %d bytes', self.fullurl, recved)
+    logger.debug('%s: received data: %d bytes', self.origurl, recved)
 
     p = self.parser
     nparsed = p.execute(data, recved)
@@ -360,12 +360,13 @@ class TitleFetcher:
     self.status_code = self.parser.get_status_code()
     if self.status_code in (301, 302):
       self.process_cookie() # or we may be redirecting to a loop
-      logger.debug('%s: redirect to %s', self.fullurl, self.headers['Location'])
+      logger.debug('%s: redirect to %s', self.origurl, self.headers['Location'])
       self.followed_times += 1
       if self.followed_times > self.max_follows:
         self.run_callback(TooManyRedirection)
       else:
         newurl = urljoin(self.fullurl, self.headers['Location'])
+        self._redirecting = True
         self.new_url(newurl)
       return
 
@@ -418,7 +419,11 @@ def main(urls):
           title = title.decode('gb18030')
         except UnicodeDecodeError:
           pass
-      logger.info('done: [%d] %s <- %s' % (fetcher.status_code, title, fetcher.fullurl))
+      if fetcher.origurl == fetcher.fullurl:
+        url = fetcher.origurl
+      else:
+        url = fetcher.fullurl + ' <- ' + fetcher.origurl
+      logger.info('done: [%d] %s <- %s' % (fetcher.status_code, title, url))
       self.n -= 1
       if not self.n:
         tornado.ioloop.IOLoop.instance().stop()
