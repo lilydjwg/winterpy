@@ -25,8 +25,9 @@ def stripSeq(input):
       s = subject[9:]
       h = header.decode_header(s)
       assert len(h) == 1, 'unexpected subject line: ' + s
-      b, enc = h[0]
-      s = b.decode(enc)
+      s, enc = h[0]
+      if isinstance(s, bytes):
+        s = s.decode(enc)
       m = subject_seq.match(s)
       if not m:
         yield subject
