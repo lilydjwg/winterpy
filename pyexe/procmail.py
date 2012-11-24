@@ -5,9 +5,9 @@ import sys
 import re
 from email import header
 
-subject_seq = re.compile(r'''(..[:：]\s?  # Re、回复等
+subject_seq = re.compile(r'''((?:..[:：]\s?)?  # Re、回复等
                              \[[^:]+)
-                             :\d+         # 要删除的序号''', re.X)
+                             :\d+              # 要删除的序号''', re.X)
 
 def stripSeq(input):
   subject = None
@@ -35,6 +35,7 @@ def stripSeq(input):
         s = m.group(1) + s[m.end():]
         yield 'Subject: ' + header.Header(s, 'utf-8').encode() + '\n'
       subject = None
+      yield l
     elif l.strip() == '':
       # mail body
       yield from input
