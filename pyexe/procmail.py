@@ -19,13 +19,17 @@ def reformat(s):
   isre = False
   tag = None
   ot = False
+  usertag = []
   for tok in tokens:
     if tok.idtype == 're':
       isre = True
     elif tok.idtype == 'ot':
       ot = True
     elif tok.idtype == 'tag':
-      tag = '[%s] ' % tok.match.group(1)
+      if tag and tok.match.group(1) != tag[1:-2]:
+        usertag.append(tok.data)
+      else:
+        tag = '[%s] ' % tok.match.group(1)
     else:
       sys.exit('error: unknown idtype: %s' % tok.idtype)
 
@@ -37,7 +41,7 @@ def reformat(s):
     ret += tag
   if ot:
     ret += '[OT]'
-  ret += left
+  ret += ''.join(usertag) + left
   return ret
 
 def stripSeq(input):
