@@ -36,7 +36,7 @@ def reformat(s):
   if tag:
     ret += tag
   if ot:
-    ret += '[OT] '
+    ret += '[OT]'
   ret += left
   return ret
 
