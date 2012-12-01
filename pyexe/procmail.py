@@ -4,10 +4,41 @@
 import sys
 import re
 from email import header
+from simplelex import Token, Lex
 
-subject_seq = re.compile(r'''((?:..[:：]\s?)?  # Re、回复等
-                             \[[^:]+)
-                             :\d+              # 要删除的序号''', re.X)
+reply = Token(r'R[Ee]:\s?|[回答]复[：:]\s?', 're')
+ottag = Token(r'\[OT\]\s?', 'ot', flags=re.I)
+tag = Token(r'\[([\w._-]+)[^]]*\]\s?', 'tag')
+lex = Lex((reply, ottag, tag))
+
+def reformat(s):
+  tokens, left = lex.parse(s)
+  if not tokens:
+    return
+
+  isre = False
+  tag = None
+  ot = False
+  for tok in tokens:
+    if tok.idtype == 're':
+      isre = True
+    elif tok.idtype == 'ot':
+      ot = True
+    elif tok.idtype == 'tag':
+      tag = '[%s] ' % tok.match.group(1)
+    else:
+      sys.exit('error: unknown idtype: %s' % tok.idtype)
+
+  if isre:
+    ret = 'Re: '
+  else:
+    ret = ''
+  if tag:
+    ret += tag
+  if ot:
+    ret += '[OT] '
+  ret += left
+  return ret
 
 def stripSeq(input):
   subject = None
@@ -28,12 +59,11 @@ def stripSeq(input):
       s, enc = h[0]
       if isinstance(s, bytes):
         s = s.decode(enc)
-      m = subject_seq.match(s)
-      if not m:
+      reformatted = reformat(s)
+      if not reformatted:
         yield subject
       else:
-        s = m.group(1) + s[m.end():]
-        yield 'Subject: ' + header.Header(s, 'utf-8').encode() + '\n'
+        yield 'Subject: ' + header.Header(reformatted, 'utf-8').encode() + '\n'
       subject = None
       yield l
     elif l.strip() == '':
