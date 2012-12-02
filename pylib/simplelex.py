@@ -1,3 +1,6 @@
+# modified version, originally from 风间星魂 <fengjianxinghun AT gmail>
+# BSD Lisence
+
 import re
 from collections import UserString
 
