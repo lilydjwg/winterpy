@@ -10,6 +10,7 @@ import sys
 sys.path.append(os.path.expanduser('~/scripts/python/pylib'))
 
 import X
+from myutils import safe_overwrite
 
 datafile = os.path.expanduser('~/scripts/python/pydata/msmtplogchecker')
 
@@ -26,11 +27,7 @@ def getLastMailTime():
     return
 
 def setLastMailTime(t):
-  # if not using "with", write can fail without exception
-  with open(datafile + '.tmp', 'w') as f:
-    f.write(t)
-  # if the above write failed (because disk is full), the old data should be kept
-  os.rename(datafile + '.tmp', datafile)
+  safe_overwrite(datafile, t)
 
 def getMailTime(l):
   host = l.find('host')

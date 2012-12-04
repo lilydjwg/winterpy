@@ -21,8 +21,10 @@ def safe_overwrite(fname, data, *, method='write', mode='w', encoding=None):
   # FIXME: directory has no read perm
   # FIXME: symlinks and hard links
   tmpname = fname + '.tmp'
+  # if not using "with", write can fail without exception
   with open(tmpname, mode, encoding=encoding) as f:
     getattr(f, method)(data)
+  # if the above write failed (because disk is full etc), the old data should be kept
   os.rename(tmpname, fname)
 
 def filesize(size):
