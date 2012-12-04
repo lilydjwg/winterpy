@@ -17,6 +17,14 @@ def path_import(path):
     del sys.path[0]
     return ret
 
+def safe_overwrite(fname, data, *, method='write', mode='w', encoding=None):
+  # FIXME: directory has no read perm
+  # FIXME: symlinks and hard links
+  tmpname = fname + '.tmp'
+  with open(tmpname, mode, encoding=encoding) as f:
+    getattr(f, method)(data)
+  os.rename(tmpname, fname)
+
 def filesize(size):
   '''将 数字 转化为 xxKiB 的形式'''
   units = 'KMGT'
