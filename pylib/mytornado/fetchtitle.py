@@ -320,6 +320,9 @@ class TitleFetcher:
     if not self.headers_done and p.is_headers_complete():
       if not self.on_headers_done():
         return
+    elif close:
+      # feed EOF
+      p.execute(b'', 0)
 
     if p.is_partial_body():
       chunk = p.recv_body()
