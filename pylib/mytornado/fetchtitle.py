@@ -182,7 +182,7 @@ class GIFFinder:
 
 class TitleFetcher:
   default_charset = 'UTF-8'
-  meta_charset = re.compile(br'<meta\s+http-equiv="?content-type"?\s+content="?[^;]+;\s*charset=([^">]+)"?\s*>|<meta\s+charset="?([^">/"]+)"?\s*/?>', re.IGNORECASE)
+  meta_charset = re.compile(br'<meta\s+http-equiv="?content-type"?\s+content="?[^;]+;\s*charset=([^">]+)"?\s*/?>|<meta\s+charset="?([^">/"]+)"?\s*/?>', re.IGNORECASE)
   charset = None
   status_code = 0
   followed_times = 0 # 301, 302
