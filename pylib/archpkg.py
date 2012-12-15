@@ -15,6 +15,10 @@ class PkgNameInfo(namedtuple('PkgNameInfo', 'name, version, release, arch')):
     # No, try the other side please.
     return NotImplemented
 
+  @property
+  def fullversion(self):
+    return '%s-%s' % (self.version, self.release)
+
   @classmethod
   def parseFilename(cls, filename):
     return cls(*trimext(filename, 3).rsplit('-', 3))
