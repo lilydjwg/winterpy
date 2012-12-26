@@ -111,7 +111,7 @@ class PNGFinder:
 
 class JPEGFinder:
   buf = b''
-  state = 0
+  isfirst = True
 
   def __init__(self, mediatype):
     self._mt = mediatype
@@ -124,7 +124,7 @@ class JPEGFinder:
     if data:
       self.buf += data
 
-    if self.state == 0:
+    if self.isfirst is True:
       # finding header
       if len(self.buf) < 5:
         return
@@ -134,18 +134,11 @@ class JPEGFinder:
       else:
         self.blocklen = self.buf[4] * 256 + self.buf[5] + 2
         self.buf = self.buf[2:]
-        self.state += 1
+        self.isfirst = False
 
-    if self.state == 1:
+    if self.isfirst is False:
       # receiving a block
       if len(self.buf) < self.blocklen:
-        return
-      self.buf = self.buf[self.blocklen:]
-      self.state += 1
-
-    if self.state == 2:
-      # parse block
-      if len(self.buf) < 9:
         return
       buf = self.buf
       if buf[0] != 0xff:
@@ -155,8 +148,9 @@ class JPEGFinder:
         s = buf[7] * 256 + buf[8], buf[5] * 256 + buf[6]
         return self._mt._replace(dimension=s)
       else:
+        # not Start Of Frame, retry with next block
         self.blocklen = buf[2] * 256 + buf[3] + 2
-        self.state = 1
+        self.buf = buf[self.blocklen:]
         return self(b'')
 
 class GIFFinder:
@@ -461,6 +455,7 @@ def test():
     'https://www.wordpress.com', # timeout
     'http://jquery-api-zh-cn.googlecode.com/svn/trunk/xml/jqueryapi.xml', # xml
     'http://lilydjwg.is-programmer.com/user_files/lilydjwg/config/avatar.png', # PNG
+    'http://img01.taobaocdn.com/bao/uploaded/i1/110928240/T2okG7XaRbXXXXXXXX_!!110928240.jpg', # JPEG with Start Of Frame as the second block
   )
   main(urls)
 
