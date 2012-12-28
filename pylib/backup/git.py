@@ -14,7 +14,7 @@ __all__ = ['push', 'fetch']
 
 logger = logging.getLogger(__name__)
 
-def push(name, directory, remote='origin', force=False):
+def push(name, directory, remote='origin', branch=None, *, force=False):
   cmd = [
     'git',
     '--work-tree='+directory,
@@ -22,6 +22,8 @@ def push(name, directory, remote='origin', force=False):
     'push',
     remote
   ]
+  if branch:
+    cmd.append(branch)
   if force:
     cmd.append('-f')
   retcode = base.run_command(cmd)
