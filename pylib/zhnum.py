@@ -7,7 +7,7 @@ numdict = {'零':0, '一':1, '二':2, '三':3, '四':4, '五':5, '六':6, '七':
         '壹':1, '贰':2, '叁':3, '肆':4, '伍':5, '陆':6, '柒':7, '捌':8, '玖':9, '拾':10, '佰':100, '仟':1000, '萬':10000,
        }
 
-def getResultForDigit(a):
+def zhnum2int(a):
   count = 0
   result = 0
   tmp = 0
@@ -131,4 +131,4 @@ if __name__ == "__main__":
   }
 
   for each in test_map:
-    assert(test_map[each] == getResultForDigit(each))
+    assert(test_map[each] == zhnum2int(each))
