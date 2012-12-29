@@ -18,4 +18,3 @@ makeaso () {
 
 makeaso ard.c
 makeaso wchar.c
-makeaso xlib.c -lX11
