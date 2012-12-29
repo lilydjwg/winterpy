@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 from getpass import getpass
 from collections import defaultdict
 
-from lxml.html import parse, submit_form
+from lxml.html import fromstring
 
 from httpsession import Session
 
@@ -22,12 +22,12 @@ class WingDNSError(Exception): pass
 class WingDNS(Session):
   UserAgent = 'IP updater'
   def login(self, username, password):
-    doc = parse(self.request('http://www.wingdns.com/')).getroot()
-    form = doc.forms[0]
-    form.fields['username'] = username.encode()
-    form.fields['pwd'] = password.encode()
-    form.fields['checkbox'] = b'checkbox'
-    r = submit_form(form, open_http=self.http_open).read().decode()
+    self.request('http://www.wingdns.com/').read()
+    form = {}
+    form['username'] = username
+    form['pwd'] = password
+    form['checkbox'] = 'checkbox'
+    r = self.request('http://www.wingdns.com/login.php?step=2', form).read().decode('gb18030')
     for u in authCookiePageURL.findall(r):
       self.request(u).read()
 
@@ -35,7 +35,7 @@ class WingDNS(Session):
     res = self.request('http://www.wingdns.com/records.php?id=%s' % id).read().decode('cp936')
     if res.startswith('0|'):
       raise WingDNSError(res.split('|', 1)[-1])
-    doc = parse(res).getroot()
+    doc = fromstring(res)
     zone = doc.cssselect('#domain_name')[0].text
     self.records = defaultdict(list)
     self.records['zone'] = zone
