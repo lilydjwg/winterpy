@@ -7,13 +7,6 @@
 import datetime
 import collections
 
-class Config(dict):
-  '''
-  配置用，dict 的子类，但对于不存在的键返回空值
-  '''
-  def __missing__(self, key):
-    return ''
-
 class StringWithTime(str):
   '''包含时间信息的字符串'''
   def __init__(self, value, time=None):
