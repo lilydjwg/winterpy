@@ -6,7 +6,7 @@ import re
 from email import header
 from simplelex import Token, Lex
 
-reply = Token(r'R[Ee]:\s?|[回答]复[：:]\s?', 're')
+reply = Token(r'R[Ee]:\s?|[回答][复覆][：:]\s?', 're')
 ottag = Token(r'\[OT\]\s?', 'ot', flags=re.I)
 tag = Token(r'\[([\w._-]+)[^]]*\]\s?', 'tag')
 lex = Lex((reply, ottag, tag))
