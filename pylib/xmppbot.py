@@ -189,7 +189,12 @@ def main():
 
   bot = AutoAcceptBot(JID(args.jid), settings)
 
-  q = sys.exit
+  class Q:
+    def __call__(self):
+      sys.exit()
+    __repr__ = __call__
+
+  q = Q()
   self = bot
 
   try:
