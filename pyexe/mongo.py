@@ -82,9 +82,11 @@ if __name__ == '__main__':
     dburl = args.dburl
     if '/' in dburl:
       host, db = dburl.split('/', 1)
-    if ':' in host:
-      host, port = host.split(':', 1)
-      port = int(port)
+      if ':' in host:
+        host, port = host.split(':', 1)
+        port = int(port)
+    else:
+      db = dburl
   if args.slaveok:
     kwargs['slave_okay'] = True
 
