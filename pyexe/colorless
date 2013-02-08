@@ -41,7 +41,8 @@ def main(fname, lang):
   else:
     p = None
     output = sys.stdout
-  formatter = Terminal256Formatter if os.environ.get('TERM', '').find('256') != -1 else TerminalFormatter
+  # formatter = Terminal256Formatter if os.environ.get('TERM', '').find('256') != -1 else TerminalFormatter
+  formatter = TerminalFormatter
   try:
     print(highlight(code, lexer, formatter()), file=output, end='')
   except IOError: # SIGPIPE
