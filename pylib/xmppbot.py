@@ -1,6 +1,7 @@
 import sys
 import logging
 from xml.etree import ElementTree as ET
+from collections import defaultdict
 
 from pyxmpp2.jid import JID
 from pyxmpp2.message import Message
@@ -43,6 +44,44 @@ class AutoAcceptMixin:
                           .format(stanza.from_jid))
     return True
 
+class TracePresenceMixin:
+  presence = None
+  @presence_stanza_handler()
+  def handle_presence_available(self, stanza):
+    if stanza.stanza_type not in ('available', None):
+      return False
+
+    jid = stanza.from_jid
+    plainjid = str(jid.bare())
+    logging.info('%s[%s]', jid, stanza.show or 'available')
+
+    if self.presence is None:
+      self.presence = defaultdict(dict)
+    self.presence[plainjid][jid.resource] = {
+      'show': stanza.show,
+      'status': stanza.status,
+      'priority': stanza.priority,
+    }
+
+    return True
+
+  @presence_stanza_handler('unavailable')
+  def handle_presence_unavailable(self, stanza):
+    jid = stanza.from_jid
+    plainjid = str(jid.bare())
+    if self.presence is None:
+      self.presence = defaultdict(dict)
+    if plainjid in self.presence and plainjid != str(self.jid):
+      try:
+        del self.presence[plainjid][jid.resource]
+      except KeyError:
+        pass
+      if self.presence[plainjid]:
+        logging.info('%s[unavailable] (partly)', jid)
+      else:
+        del self.presence[plainjid]
+        logging.info('%s[unavailable] (totally)', jid)
+    return True
 
 class XMPPBot(EventHandler, XMPPFeatureHandler):
   autoReconnect = False
