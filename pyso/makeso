@@ -13,7 +13,7 @@ makeaso () {
   fi
   shift
   setopt -x
-  "$CC" $@ -O2 -shared -fPIC "$infile" -o "$outfile"
+  $CC $@ -O2 -shared -fPIC $infile -o $outfile
 }
 
 makeaso ard.c
