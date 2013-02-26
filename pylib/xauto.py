@@ -91,3 +91,6 @@ class XAuto:
     except OSError:
       pass
 
+  def monitor_size(self, *args, **kwargs):
+      return gdkutils.get_moniter_size(*args, **kwargs)
+

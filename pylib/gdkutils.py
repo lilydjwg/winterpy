@@ -10,6 +10,11 @@ def get_screen_size():
   screen = Gdk.Screen.get_default()
   return screen.width(), screen.height()
 
+def get_moniter_size(n=0, screen=None):
+    if screen is None:
+        screen = Gdk.Screen.get_default()
+    return Gdk.Screen.get_monitor_workarea(screen, n)
+
 def screenshot(filename, rect=None, filetype=None):
   screen = Gdk.Screen.get_default()
   if rect is None:
