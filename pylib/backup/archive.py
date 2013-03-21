@@ -1,4 +1,6 @@
+import os
 import logging
+import subprocess
 
 from . import base
 
@@ -48,3 +50,32 @@ def tarxz(name, dstfile, sources, sudo=True):
     logger.error('tar job %s failed with code %d',
                  base.bold(name), retcode)
   return not retcode
+
+def tar7z(name, dstfile, sources, password=None):
+  '''use tar & 7z to archive, mainly for encrypted config files'''
+  if isinstance(sources, str):
+    sources = [sources]
+  cmd = ['tar', 'cv']
+  cmd.extend(global_exclude_tar)
+  cmd.extend(sources)
+
+  try:
+    os.unlink(dstfile) # or 7z will throw errors
+  except FileNotFoundError:
+    pass
+  tar = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+  cmd = ['7z', 'a', dstfile, '-si', '-t7z']
+  if password is not None:
+    cmd.append('-p' + password)
+    cmd.append('-mhe')
+  p7z = subprocess.Popen(cmd, stdin=tar.stdout, stdout=subprocess.DEVNULL)
+  ret1 = tar.wait()
+  ret2 = p7z.wait()
+
+  ok = ret1 == ret2 == 0
+  if ok:
+    logger.info('tar.7z job %s succeeded', base.bold(name))
+  else:
+    logger.error('tar.7z job %s failed with codes %s',
+                 base.bold(name), (ret1, ret2))
+  return ok
