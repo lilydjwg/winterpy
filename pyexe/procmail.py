@@ -11,6 +11,9 @@ ottag = Token(r'\[OT\]\s?', 'ot', flags=re.I)
 tag = Token(r'\[([\w._-]+)[^]]*\]\s?', 'tag')
 lex = Lex((reply, ottag, tag))
 
+def decode_multiline_header(s):
+  return ''.join(b.decode(e or 'ascii') for b, e in header.decode_header(re.sub(r'\n\s+', ' ', s)))
+
 def reformat(s):
   tokens, left = lex.parse(s)
   if not tokens:
@@ -58,11 +61,7 @@ def stripSeq(input):
     elif subject:
       # Subject ends
       s = subject[9:]
-      h = header.decode_header(s)
-      assert len(h) == 1, 'unexpected subject line: ' + s
-      s, enc = h[0]
-      if isinstance(s, bytes):
-        s = s.decode(enc)
+      s = decode_multiline_header(s)
       reformatted = reformat(s)
       if not reformatted:
         yield subject
