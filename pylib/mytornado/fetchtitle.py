@@ -137,8 +137,8 @@ class JPEGFinder:
         self.isfirst = False
 
     if self.isfirst is False:
-      # receiving a block
-      if len(self.buf) < self.blocklen:
+      # receiving a block. 4 is for next block size
+      if len(self.buf) < self.blocklen + 4:
         return
       buf = self.buf
       if buf[0] != 0xff:
@@ -149,8 +149,8 @@ class JPEGFinder:
         return self._mt._replace(dimension=s)
       else:
         # not Start Of Frame, retry with next block
+        self.buf = buf = buf[self.blocklen:]
         self.blocklen = buf[2] * 256 + buf[3] + 2
-        self.buf = buf[self.blocklen:]
         return self(b'')
 
 class GIFFinder:
@@ -460,6 +460,7 @@ def test():
     'http://jquery-api-zh-cn.googlecode.com/svn/trunk/xml/jqueryapi.xml', # xml
     'http://lilydjwg.is-programmer.com/user_files/lilydjwg/config/avatar.png', # PNG
     'http://img01.taobaocdn.com/bao/uploaded/i1/110928240/T2okG7XaRbXXXXXXXX_!!110928240.jpg', # JPEG with Start Of Frame as the second block
+    'http://file3.u148.net/2013/1/images/1357536246993.jpg', # JPEG that failed previous code
   )
   main(urls)
 
