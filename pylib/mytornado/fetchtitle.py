@@ -203,7 +203,11 @@ class TitleFetcher:
 
     if timeout is not None:
       self.timeout = timeout
-    self.io_loop = io_loop or tornado.ioloop.IOLoop.instance()
+    if hasattr(tornado.ioloop, 'current'):
+        default_io_loop = tornado.ioloop.IOLoop.current
+    else:
+        default_io_loop = tornado.ioloop.IOLoop.instance
+    self.io_loop = io_loop or default_io_loop()
 
     self.start_time = self.io_loop.time()
     self._timeout = self.io_loop.add_timeout(
