@@ -6,6 +6,7 @@ from urllib.parse import urlsplit, urljoin
 from functools import partial
 from collections import namedtuple
 import struct
+import json
 try:
   # Python 3.3
   from html.entities import html5 as _entities
@@ -61,7 +62,7 @@ def _mapEntity(m):
 def replaceEntities(s):
   return re.sub(r'&[^;]+;', _mapEntity, s)
 
-class Finder:
+class ContentFinder:
   buf = b''
   def __init__(self, mediatype):
     self._mt = mediatype
@@ -69,13 +70,13 @@ class Finder:
   @classmethod
   def match_type(cls, mediatype):
     ctype = mediatype.type.split(';', 1)[0]
-    if hasattr(cls, '_match_type') and cls._match_type(ctype):
-      return cls(mediatype)
     if hasattr(cls, '_mime') and cls._mime == ctype:
+      return cls(mediatype)
+    if hasattr(cls, '_match_type') and cls._match_type(ctype):
       return cls(mediatype)
     return False
 
-class TitleFinder(Finder):
+class TitleFinder(ContentFinder):
   found = None
   title_begin = re.compile(b'<title[^>]*>', re.IGNORECASE)
   title_end = re.compile(b'</title>', re.IGNORECASE)
@@ -125,7 +126,7 @@ class TitleFinder(Finder):
   def get_charset(self):
     return self.charset or self.default_charset
 
-class PNGFinder(Finder):
+class PNGFinder(ContentFinder):
   _mime = 'image/png'
   def __call__(self, data):
     if data is None:
@@ -142,7 +143,7 @@ class PNGFinder(Finder):
       s = struct.unpack('!II', self.buf[16:24])
       return self._mt._replace(dimension=s)
 
-class JPEGFinder(Finder):
+class JPEGFinder(ContentFinder):
   _mime = 'image/jpeg'
   isfirst = True
   def __call__(self, data):
@@ -182,7 +183,7 @@ class JPEGFinder(Finder):
         self.blocklen = buf[2] * 256 + buf[3] + 2
         return self(b'')
 
-class GIFFinder(Finder):
+class GIFFinder(ContentFinder):
   _mime = 'image/gif'
   def __call__(self, data):
     if data is None:
@@ -210,10 +211,12 @@ class TitleFetcher:
   _cookie = None
   _connected = False
   _redirecting = False
+  _content_finders = (TitleFinder, PNGFinder, JPEGFinder, GIFFinder)
+  _url_finders = ()
 
   def __init__(self, url, callback,
                timeout=None, max_follows=None, io_loop=None,
-               finders=(TitleFinder, PNGFinder, JPEGFinder, GIFFinder),
+               content_finders=None, url_finders=None
               ):
     '''
     url: the (full) url to fetch
@@ -232,7 +235,11 @@ class TitleFetcher:
     else:
         default_io_loop = tornado.ioloop.IOLoop.instance
     self.io_loop = io_loop or default_io_loop()
-    self._finders = finders
+
+    if content_finders is not None:
+      self._content_finders = content_finders
+    if url_finders is not None:
+      self._url_finders = url_finders
 
     self.start_time = self.io_loop.time()
     self._timeout = self.io_loop.add_timeout(
@@ -272,6 +279,13 @@ class TitleFetcher:
 
   def new_url(self, url):
     self.fullurl = url
+
+    for finder in self._url_finders:
+      f = finder.match_url(url, self)
+      if f:
+        f()
+        return
+
     addr, StreamClass = self.parse_url(url)
     if addr != self.addr:
       if self.stream:
@@ -290,7 +304,8 @@ class TitleFetcher:
   def run_callback(self, arg):
     self.io_loop.remove_timeout(self._timeout)
     self._finished = True
-    self.stream.close()
+    if self.stream:
+      self.stream.close()
     self._callback(arg, self)
 
   def send_request(self, nocallback=False):
@@ -399,7 +414,7 @@ class TitleFetcher:
 
     ctype = self.headers.get('Content-Type', 'text/html')
     mt = defaultMediaType._replace(type=ctype, size=l)
-    for finder in self._finders:
+    for finder in self._content_finders:
       f = finder.match_type(mt)
       if f:
         self.finder = f
@@ -423,6 +438,44 @@ class TitleFetcher:
       else:
         return t
 
+class URLFinder:
+  def __init__(self, url, fetcher, match=None):
+    self.fullurl = url
+    self.match = match
+    self.fetcher = fetcher
+
+  @classmethod
+  def match_url(cls, url, origurl):
+    if hasattr(cls, '_url_pat'):
+      m = cls._url_pat.match(url)
+      if m is not None:
+        return cls(url, origurl, m)
+    if hasattr(cls, '_match_url') and cls._match_url(url, origurl):
+      return cls(url, origurl, m)
+
+  def done(self, info):
+    if hasattr(self, 'format_info'):
+      info = self.format_info(info)
+    self.fetcher.run_callback(info)
+
+class GithubFinder(URLFinder):
+  _url_pat = re.compile(r'https://github\.com(/[^/]+/[^/]+)$')
+  httpclient = None
+
+  def __call__(self):
+    if self.httpclient is None:
+      from tornado.httpclient import AsyncHTTPClient
+      httpclient = AsyncHTTPClient()
+    else:
+      httpclient = self.httpclient
+
+    m = self.match
+    httpclient.fetch('https://api.github.com/repos' + m.group(1), self.parse_info)
+
+  def parse_info(self, res):
+    repoinfo = json.loads(res.body.decode('utf-8'))
+    self.done(repoinfo)
+
 def main(urls):
   class BatchFetcher:
     n = 0
@@ -442,7 +495,7 @@ def main(urls):
         tornado.ioloop.IOLoop.instance().stop()
 
     def add(self, url):
-      TitleFetcher(url, self)
+      TitleFetcher(url, self, url_finders=(GithubFinder,))
       self.n += 1
 
   from myutils import enable_pretty_logging
@@ -474,6 +527,8 @@ def test():
     'http://img01.taobaocdn.com/bao/uploaded/i1/110928240/T2okG7XaRbXXXXXXXX_!!110928240.jpg', # JPEG with Start Of Frame as the second block
     'http://file3.u148.net/2013/1/images/1357536246993.jpg', # JPEG that failed previous code
     'http://gouwu.hao123.com/', # HTML5 GBK encoding
+    'https://github.com/lilydjwg/winterpy', # github url finder
+    'http://github.com/lilydjwg/winterpy', # github url finder with redirect
   )
   main(urls)
 
