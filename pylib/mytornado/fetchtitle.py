@@ -119,9 +119,16 @@ class TitleFinder(ContentFinder):
       if m:
         raw_title = buf[self.found:m.start()].strip()
         logger.debug('title found at %d', self.pos - len(buf) + m.start())
-        return raw_title
+        return self.decode_title(raw_title)
     if self.found is None:
       self.buf = buf[-100:]
+
+  def decode_title(self, raw_title):
+    try:
+      title = replaceEntities(raw_title.decode(self.get_charset()))
+      return title
+    except (UnicodeDecodeError, LookupError):
+      return t
 
   def get_charset(self):
     return self.charset or self.default_charset
@@ -203,6 +210,7 @@ class GIFFinder(ContentFinder):
 class TitleFetcher:
   status_code = 0
   followed_times = 0 # 301, 302
+  finder = None
   addr = None
   stream = None
   max_follows = 10
@@ -429,14 +437,7 @@ class TitleFetcher:
     '''feed data to TitleFinder, return the title if found'''
     t = self.finder(chunk)
     if t:
-      if isinstance(t, bytes):
-        try:
-          title = replaceEntities(t.decode(self.finder.get_charset()))
-          return title
-        except (UnicodeDecodeError, LookupError):
-          return t
-      else:
-        return t
+      return t
 
 class URLFinder:
   def __init__(self, url, fetcher, match=None):
@@ -454,8 +455,6 @@ class URLFinder:
       return cls(url, origurl, m)
 
   def done(self, info):
-    if hasattr(self, 'format_info'):
-      info = self.format_info(info)
     self.fetcher.run_callback(info)
 
 class GithubFinder(URLFinder):
