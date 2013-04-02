@@ -68,6 +68,10 @@ class TitleFinder:
   buf = b''
   pos = 0
 
+  default_charset = 'UTF-8'
+  meta_charset = re.compile(br'<meta\s+http-equiv="?content-type"?\s+content="?[^;]+;\s*charset=([^">]+)"?\s*/?>|<meta\s+charset="?([^">/"]+)"?\s*/?>', re.IGNORECASE)
+  charset = None
+
   def __call__(self, data):
     if data is not None:
       self.buf += data
@@ -75,18 +79,28 @@ class TitleFinder:
       if len(self.buf) < 100:
         return
 
+    buf = self.buf
+
+    if self.charset is None:
+      m = self.meta_charset.search(buf)
+      if m:
+        self.charset = (m.group(1) or m.group(2)).decode('latin1')
+
     if self.found is None:
-      m = self.title_begin.search(self.buf)
+      m = self.title_begin.search(buf)
       if m:
         self.found = m.end()
     if self.found is not None:
-      m = self.title_end.search(self.buf, self.found)
+      m = self.title_end.search(buf, self.found)
       if m:
-        raw_title = self.buf[self.found:m.start()].strip()
-        logger.debug('title found at %d', self.pos - len(self.buf) + m.start())
+        raw_title = buf[self.found:m.start()].strip()
+        logger.debug('title found at %d', self.pos - len(buf) + m.start())
         return raw_title
     if self.found is None:
-      self.buf = self.buf[-100:]
+      self.buf = buf[-100:]
+
+  def get_charset(self):
+    return self.charset or self.default_charset
 
 class PNGFinder:
   buf = b''
@@ -175,9 +189,6 @@ class GIFFinder:
       return self._mt._replace(dimension=s)
 
 class TitleFetcher:
-  default_charset = 'UTF-8'
-  meta_charset = re.compile(br'<meta\s+http-equiv="?content-type"?\s+content="?[^;]+;\s*charset=([^">]+)"?\s*/?>|<meta\s+charset="?([^">/"]+)"?\s*/?>', re.IGNORECASE)
-  charset = None
   status_code = 0
   followed_times = 0 # 301, 302
   addr = None
@@ -324,10 +335,6 @@ class TitleFetcher:
 
     if p.is_partial_body():
       chunk = p.recv_body()
-      if not self.charset:
-        m = self.meta_charset.search(chunk)
-        if m:
-          self.charset = (m.group(1) or m.group(2)).decode('latin1')
       t = self.feed_finder(chunk)
       if t:
         self.run_callback(t)
@@ -392,7 +399,7 @@ class TitleFetcher:
       self.finder = TitleFinder()
       pos = ctype.find('charset=')
       if pos > 0:
-        self.charset = ctype[pos+8:]
+        self.finder.charset = ctype[pos+8:]
 
     return True
 
@@ -400,11 +407,9 @@ class TitleFetcher:
     '''feed data to TitleFinder, return the title if found'''
     t = self.finder(chunk)
     if t:
-      if self.charset is None:
-        self.charset = self.default_charset
       if isinstance(t, bytes):
         try:
-          title = replaceEntities(t.decode(self.charset))
+          title = replaceEntities(t.decode(self.finder.get_charset()))
           return title
         except (UnicodeDecodeError, LookupError):
           return t
@@ -461,6 +466,7 @@ def test():
     'http://lilydjwg.is-programmer.com/user_files/lilydjwg/config/avatar.png', # PNG
     'http://img01.taobaocdn.com/bao/uploaded/i1/110928240/T2okG7XaRbXXXXXXXX_!!110928240.jpg', # JPEG with Start Of Frame as the second block
     'http://file3.u148.net/2013/1/images/1357536246993.jpg', # JPEG that failed previous code
+    'http://gouwu.hao123.com/', # HTML5 GBK encoding
   )
   main(urls)
 
