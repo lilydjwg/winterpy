@@ -61,16 +61,39 @@ def _mapEntity(m):
 def replaceEntities(s):
   return re.sub(r'&[^;]+;', _mapEntity, s)
 
-class TitleFinder:
+class Finder:
+  buf = b''
+  def __init__(self, mediatype):
+    self._mt = mediatype
+
+  @classmethod
+  def match_type(cls, mediatype):
+    ctype = mediatype.type.split(';', 1)[0]
+    if hasattr(cls, '_match_type') and cls._match_type(ctype):
+      return cls(mediatype)
+    if hasattr(cls, '_mime') and cls._mime == ctype:
+      return cls(mediatype)
+    return False
+
+class TitleFinder(Finder):
   found = None
   title_begin = re.compile(b'<title[^>]*>', re.IGNORECASE)
   title_end = re.compile(b'</title>', re.IGNORECASE)
-  buf = b''
   pos = 0
 
   default_charset = 'UTF-8'
   meta_charset = re.compile(br'<meta\s+http-equiv="?content-type"?\s+content="?[^;]+;\s*charset=([^">]+)"?\s*/?>|<meta\s+charset="?([^">/"]+)"?\s*/?>', re.IGNORECASE)
   charset = None
+
+  @staticmethod
+  def _match_type(ctype):
+    return ctype.find('html') != -1
+
+  def __init__(self, mediatype):
+    ctype = mediatype.type
+    pos = ctype.find('charset=')
+    if pos > 0:
+      self.charset = ctype[pos+8:]
 
   def __call__(self, data):
     if data is not None:
@@ -102,12 +125,8 @@ class TitleFinder:
   def get_charset(self):
     return self.charset or self.default_charset
 
-class PNGFinder:
-  buf = b''
-
-  def __init__(self, mediatype):
-    self._mt = mediatype
-
+class PNGFinder(Finder):
+  _mime = 'image/png'
   def __call__(self, data):
     if data is None:
       return self._mt
@@ -123,13 +142,9 @@ class PNGFinder:
       s = struct.unpack('!II', self.buf[16:24])
       return self._mt._replace(dimension=s)
 
-class JPEGFinder:
-  buf = b''
+class JPEGFinder(Finder):
+  _mime = 'image/jpeg'
   isfirst = True
-
-  def __init__(self, mediatype):
-    self._mt = mediatype
-
   def __call__(self, data):
     if data is None:
       return self._mt
@@ -167,12 +182,8 @@ class JPEGFinder:
         self.blocklen = buf[2] * 256 + buf[3] + 2
         return self(b'')
 
-class GIFFinder:
-  buf = b''
-
-  def __init__(self, mediatype):
-    self._mt = mediatype
-
+class GIFFinder(Finder):
+  _mime = 'image/gif'
   def __call__(self, data):
     if data is None:
       return self._mt
@@ -201,7 +212,9 @@ class TitleFetcher:
   _redirecting = False
 
   def __init__(self, url, callback,
-               timeout=None, max_follows=None, io_loop=None):
+               timeout=None, max_follows=None, io_loop=None,
+               finders=(TitleFinder, PNGFinder, JPEGFinder, GIFFinder),
+              ):
     '''
     url: the (full) url to fetch
     callback: called with title or MediaType or an instance of SingletonFactory
@@ -219,6 +232,7 @@ class TitleFetcher:
     else:
         default_io_loop = tornado.ioloop.IOLoop.instance
     self.io_loop = io_loop or default_io_loop()
+    self._finders = finders
 
     self.start_time = self.io_loop.time()
     self._timeout = self.io_loop.add_timeout(
@@ -378,28 +392,21 @@ class TitleFetcher:
         self.new_url(newurl)
       return
 
+    try:
+      l = int(self.headers.get('Content-Length', None))
+    except (ValueError, TypeError):
+      l = None
+
     ctype = self.headers.get('Content-Type', 'text/html')
-    if ctype.find('html') == -1:
-      try:
-        l = int(self.headers.get('Content-Length', None))
-      except (ValueError, TypeError):
-        l = None
-      mt = defaultMediaType._replace(type=ctype, size=l)
-      ctype = ctype.split(';', 1)[0]
-      if ctype == 'image/png':
-        self.finder = PNGFinder(mt)
-      elif ctype == 'image/jpeg':
-        self.finder = JPEGFinder(mt)
-      elif ctype == 'image/gif':
-        self.finder = GIFFinder(mt)
-      else:
-        self.run_callback(mt)
-        return
+    mt = defaultMediaType._replace(type=ctype, size=l)
+    for finder in self._finders:
+      f = finder.match_type(mt)
+      if f:
+        self.finder = f
+        break
     else:
-      self.finder = TitleFinder()
-      pos = ctype.find('charset=')
-      if pos > 0:
-        self.finder.charset = ctype[pos+8:]
+      self.run_callback(mt)
+      return
 
     return True
 
