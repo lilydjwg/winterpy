@@ -95,6 +95,9 @@ class TitleFinder(ContentFinder):
     pos = ctype.find('charset=')
     if pos > 0:
       self.charset = ctype[pos+8:]
+      if self.charset.lower() == 'gb2312':
+        # Windows misleadingly uses gb2312 when it's gbk or gb18030
+        self.charset = 'gb18030'
 
   def __call__(self, data):
     if data is not None:
@@ -128,7 +131,7 @@ class TitleFinder(ContentFinder):
       title = replaceEntities(raw_title.decode(self.get_charset()))
       return title
     except (UnicodeDecodeError, LookupError):
-      return t
+      return raw_title
 
   def get_charset(self):
     return self.charset or self.default_charset
