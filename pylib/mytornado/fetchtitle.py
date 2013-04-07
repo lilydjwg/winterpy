@@ -294,6 +294,7 @@ class TitleFetcher:
     for finder in self._url_finders:
       f = finder.match_url(url, self)
       if f:
+        self.finder = f
         f()
         return
 
@@ -461,7 +462,8 @@ class URLFinder:
     self.fetcher.run_callback(info)
 
 class GithubFinder(URLFinder):
-  _url_pat = re.compile(r'https://github\.com(/[^/]+/[^/]+)$')
+  _url_pat = re.compile(r'https://github\.com/(?P<repo_path>[^/]+/[^/]+)$')
+  _api_pat = 'https://api.github.com/repos/{repo_path}'
   httpclient = None
 
   def __call__(self):
@@ -472,11 +474,15 @@ class GithubFinder(URLFinder):
       httpclient = self.httpclient
 
     m = self.match
-    httpclient.fetch('https://api.github.com/repos' + m.group(1), self.parse_info)
+    httpclient.fetch(self._api_pat.format(**m.groupdict()), self.parse_info)
 
   def parse_info(self, res):
     repoinfo = json.loads(res.body.decode('utf-8'))
     self.done(repoinfo)
+
+class GithubUserFinder(GithubFinder):
+  _url_pat = re.compile(r'https://github\.com/(?P<user>[^/]+)$')
+  _api_pat = 'https://api.github.com/users/{user}'
 
 def main(urls):
   class BatchFetcher:
