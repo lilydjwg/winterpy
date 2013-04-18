@@ -377,7 +377,7 @@ class TitleFetcher:
     if p.is_partial_body():
       chunk = p.recv_body()
       t = self.feed_finder(chunk)
-      if t:
+      if t is not None:
         self.run_callback(t)
         return
 
@@ -440,7 +440,7 @@ class TitleFetcher:
   def feed_finder(self, chunk):
     '''feed data to TitleFinder, return the title if found'''
     t = self.finder(chunk)
-    if t:
+    if t is not None:
       return t
 
 class URLFinder:
