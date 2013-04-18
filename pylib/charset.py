@@ -74,19 +74,19 @@ Constellation = 星座
 
 生肖 = '鼠牛虎兔龙蛇马羊猴鸡狗猪'
 
-def 宽度_py(字符串, ambiwidth=2):
+def strwidth_py(s, ambiwidth=2):
   '''ambiwidth: 宽度不定的字符算几个，取值为 1, 2'''
   if ambiwidth == 2:
-    双宽度 = ('W', 'A')
+    dwidth = 'WA'
   elif ambiwidth == 1:
-    双宽度 = ('W',)
+    dwidth = 'W'
   else:
     raise ValueError('ambiwidth 取值为 1 或者 2')
 
   import unicodedata
   count = 0
-  for i in 字符串:
-    if unicodedata.east_asian_width(i) in 双宽度:
+  for i in s:
+    if unicodedata.east_asian_width(i) in dwidth:
       count += 2
       continue
     count += 1
@@ -97,17 +97,15 @@ try:
   _w = myutils.loadso('_wchar.so')
   _w.width.argtypes = (c_wchar_p,)
   _w.width.restype = c_size_t
-  def 宽度(字符串, ambiwidth=1):
+  def strwidth(s, ambiwidth=1):
     '''
-    ambiwidth 被忽略
+    ambiwidth is ignored
 
-    这样比纯 Python 的 `宽度_py' 速度要快一倍以上
+    This is over one time quicker than `strwidth_py' in Python
     '''
-    return _w.width(字符串)
+    return _w.width(s)
 except ImportError:
-  宽度 = 宽度_py
-
-width = 宽度
+  strwidth = strwidth_py
 
 def _CJK_align(字符串, 对齐宽度, 方向='左', 填充=' '):
   '''对齐字符串，考虑字符宽度，不检测是否是ASCII字符串'''
