@@ -40,16 +40,21 @@ class Session:
     else:
       raise ValueError('unexpected proxy value')
 
-  def request(self, url, data=None, timeout=None, headers={}):
+  def request(self, url, data=None, timeout=None, headers={}, method=None):
     '''
     发送请求，返回 response 对象
 
     url 为字符串，data 会传给 PostData
     '''
+    kwargs = {}
+    # only Python 3.3+ support the method keyword
+    if method is not None:
+      kwargs['method'] = method
+
     if data:
-      request = urllib.request.Request(url, PostData(data).data)
+      request = urllib.request.Request(url, PostData(data).data, **kwargs)
     else:
-      request = urllib.request.Request(url)
+      request = urllib.request.Request(url, **kwargs)
 
     if self.UserAgent:
       request.add_header('User-Agent', self.UserAgent)
