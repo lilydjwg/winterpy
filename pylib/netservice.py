@@ -1,6 +1,10 @@
 '''
 提供网络信息获取服务
 '''
+from functools import lru_cache
+import json
+import urllib.request
+
 from url import *
 
 def getTitle(url, headers={}, timeout=5):
@@ -101,3 +105,9 @@ def ubuntuPaste(poster='', screenshot='', code2='',
   })
   return r.geturl()
 
+@lru_cache(maxsize=100)
+def taobaoip(ip):
+  res = urllib.request.urlopen('http://ip.taobao.com/service/getIpInfo.php?ip=' + ip)
+  data = json.loads(res.read().decode('utf-8'))['data']
+  ret = ' '.join(data[x] for x in ("country", "city", "county", "isp")).strip()
+  return ret
