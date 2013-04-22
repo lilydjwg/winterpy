@@ -1,7 +1,5 @@
 '''
 HTTP 会话，主要针对需要登录的服务
-
-2010年10月22日
 '''
 
 import urllib.request
@@ -25,18 +23,18 @@ class Session:
 
     if proxy is True:
       self.urlopener = urllib.request.build_opener(
-          urllib.request.HTTPCookieProcessor(self.cookie),
-          urllib.request.ProxyHandler(),
-        )
+        urllib.request.HTTPCookieProcessor(self.cookie),
+        urllib.request.ProxyHandler(),
+      )
     elif isinstance(proxy, dict):
       self.urlopener = urllib.request.build_opener(
-          urllib.request.HTTPCookieProcessor(self.cookie),
-          urllib.request.ProxyHandler(proxy),
-        )
+        urllib.request.HTTPCookieProcessor(self.cookie),
+        urllib.request.ProxyHandler(proxy),
+      )
     elif not proxy:
       self.urlopener = urllib.request.build_opener(
-          urllib.request.HTTPCookieProcessor(self.cookie),
-        )
+        urllib.request.HTTPCookieProcessor(self.cookie),
+      )
     else:
       raise ValueError('unexpected proxy value')
 
@@ -85,3 +83,16 @@ class Operation:
     '''删除 cookie 好了'''
     os.unlink(self.cookie.filename)
 
+def make_cookie(name, value, expires=None, domain='', path='/'):
+  '''
+  returns a Cookie instance that you can add to a cookiejar
+
+  expires: the time in seconds since epoch of time
+  '''
+  return http.cookiejar.Cookie(
+    version=0, name=name, value=value, port=None, port_specified=False,
+    domain=domain, domain_specified=False, domain_initial_dot=False,
+    path=path, path_specified=True, secure=False, expires=expires,
+    discard=None, comment=None, comment_url=None, rest={'HttpOnly': None},
+    rfc2109=False
+  )
