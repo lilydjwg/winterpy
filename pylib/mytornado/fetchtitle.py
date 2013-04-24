@@ -27,6 +27,7 @@ try:
 except ImportError:
   from http_parser.pyparser import HttpParser
 
+UserAgent =  'FetchTitle/1.1 (lilydjwg@gmail.com)'
 class SingletonFactory:
   def __init__(self, name):
     self.name = name
@@ -326,7 +327,7 @@ class TitleFetcher:
            'Host: %s',
            # t.co will return 200 and use js/meta to redirect using the following :-(
            # 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0',
-           'User-Agent: FetchTitle/1.0',
+           'User-Agent: %s' % UserAgent,
            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.7',
            'Accept-Language: zh-cn,zh;q=0.7,en;q=0.3',
            'Accept-Charset: utf-8,gb18030;q=0.7,*;q=0.7',
@@ -474,7 +475,10 @@ class GithubFinder(URLFinder):
       httpclient = self.httpclient
 
     m = self.match
-    httpclient.fetch(self._api_pat.format(**m.groupdict()), self.parse_info)
+    httpclient.fetch(self._api_pat.format(**m.groupdict()), self.parse_info,
+                     headers={
+                       'User-Agent': UserAgent,
+                     })
 
   def parse_info(self, res):
     repoinfo = json.loads(res.body.decode('utf-8'))
