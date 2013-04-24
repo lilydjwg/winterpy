@@ -54,12 +54,26 @@ def input_t(timeout, prompt=''):
   if select([sys.stdin.fileno()], [], [], timeout)[0]:
     return input()
 
-def getchar(prompt, hidden=False, end='\n'):
+def _timed_read(fd, n, timeout):
+  from select import select
+  if select([fd], [], [], timeout)[0]:
+    return os.read(fd, n)
+
+def getchar(prompt, hidden=False, end='\n', timeout=None):
   '''读取一个字符'''
   import termios
   sys.stdout.write(prompt)
   sys.stdout.flush()
   fd = sys.stdin.fileno()
+
+  def _read():
+    # FIXME: will read too many; try to read a whole Unicode character or
+    #        a byte instead?
+    if timeout is None:
+      ch = os.read(fd, 7)
+    else:
+      ch = _timed_read(fd, 7, timeout)
+    return ch
 
   if os.isatty(fd):
     old = termios.tcgetattr(fd)
@@ -73,14 +87,15 @@ def getchar(prompt, hidden=False, end='\n'):
     try:
       termios.tcsetattr(fd, termios.TCSANOW, new)
       termios.tcsendbreak(fd, 0)
-      ch = os.read(fd, 7)
+      ch = _read()
     finally:
       termios.tcsetattr(fd, termios.TCSAFLUSH, old)
   else:
-    ch = os.read(fd, 7)
+    ch = _read()
 
   sys.stdout.write(end)
-  return(ch.decode())
+  if ch is not None:
+    return ch.decode()
 
 def loadso(fname):
   '''ctypes.CDLL 的 wrapper，从 sys.path 中搜索文件'''
@@ -204,4 +219,19 @@ def debugfunc(logger=logging, *, _id=[0]):
       return ret
     return wrapper
   return w
+
+# The following three are learnt from makepkg
+
+def user_choose(prompt, timeout=None):
+  # XXX: hard-coded term characters are ok?
+  prompt = '\x1b[1;34m::\x1b[1;37m %s\x1b[0m ' % prompt
+  return getchar(prompt, timeout=timeout)
+
+def msg(msg):
+  # XXX: hard-coded term characters are ok?
+  print('\x1b[1;32m==>\x1b[1;37m %s\x1b[0m' % msg)
+
+def msg2(msg):
+  # XXX: hard-coded term characters are ok?
+  print('\x1b[1;34m  ->\x1b[1;37m %s\x1b[0m' % msg)
 
