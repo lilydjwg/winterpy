@@ -54,10 +54,10 @@ def input_t(timeout, prompt=''):
   if select([sys.stdin.fileno()], [], [], timeout)[0]:
     return input()
 
-def _timed_read(fd, n, timeout):
+def _timed_read(file, timeout):
   from select import select
-  if select([fd], [], [], timeout)[0]:
-    return os.read(fd, n)
+  if select([file], [], [], timeout)[0]:
+    return file.read(1)
 
 def getchar(prompt, hidden=False, end='\n', timeout=None):
   '''读取一个字符'''
@@ -67,12 +67,10 @@ def getchar(prompt, hidden=False, end='\n', timeout=None):
   fd = sys.stdin.fileno()
 
   def _read():
-    # FIXME: will read too many; try to read a whole Unicode character or
-    #        a byte instead?
     if timeout is None:
-      ch = os.read(fd, 7)
+      ch = sys.stdin.read(1)
     else:
-      ch = _timed_read(fd, 7, timeout)
+      ch = _timed_read(sys.stdin, timeout)
     return ch
 
   if os.isatty(fd):
@@ -94,8 +92,7 @@ def getchar(prompt, hidden=False, end='\n', timeout=None):
     ch = _read()
 
   sys.stdout.write(end)
-  if ch is not None:
-    return ch.decode()
+  return ch
 
 def loadso(fname):
   '''ctypes.CDLL 的 wrapper，从 sys.path 中搜索文件'''
