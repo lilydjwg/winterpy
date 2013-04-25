@@ -27,7 +27,7 @@ try:
 except ImportError:
   from http_parser.pyparser import HttpParser
 
-UserAgent =  'FetchTitle/1.1 (lilydjwg@gmail.com)'
+UserAgent = 'FetchTitle/1.1 (lilydjwg@gmail.com)'
 class SingletonFactory:
   def __init__(self, name):
     self.name = name
