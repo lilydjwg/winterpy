@@ -7,6 +7,8 @@ from functools import partial
 from collections import namedtuple
 import struct
 import json
+import logging
+import encodings.idna
 try:
   # Python 3.3
   from html.entities import html5 as _entities
@@ -16,7 +18,6 @@ except ImportError:
   from html.entities import entitydefs as _entities
   def _extract_entity_name(m):
     return m.group()[1:-1]
-import logging
 
 import tornado.ioloop
 import tornado.iostream
@@ -327,8 +328,8 @@ class TitleFetcher:
            'Host: %s',
            # t.co will return 200 and use js/meta to redirect using the following :-(
            # 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0',
-           'User-Agent: %s' % UserAgent,
-           'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.7',
+           'User-Agent: %s' % UserAgent.encode,
+           'Accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.7',
            'Accept-Language: zh-cn,zh;q=0.7,en;q=0.3',
            'Accept-Charset: utf-8,gb18030;q=0.7,*;q=0.7',
            'Accept-Encoding: gzip, deflate',
@@ -338,7 +339,7 @@ class TitleFetcher:
     if self.url.query:
       path += '?' + self.url.query
     req = '\r\n'.join(req) % (
-      path, self.host,
+      path, self._prepare_host(self.host),
     )
     if self._cookie:
       req += '\r\n' + self._cookie
@@ -352,6 +353,10 @@ class TitleFetcher:
         partial(self.on_data, close=True, addr=self.addr),
         streaming_callback=self.on_data,
       )
+
+  def _prepare_host(self, host):
+    host = encodings.idna.nameprep(host)
+    return b'.'.join(encodings.idna.ToASCII(x) for x in host.split('.')).decode('ascii')
 
   def on_data(self, data, close=False, addr=None):
     if close:
@@ -541,6 +546,7 @@ def test():
     'http://gouwu.hao123.com/', # HTML5 GBK encoding
     'https://github.com/lilydjwg/winterpy', # github url finder
     'http://github.com/lilydjwg/winterpy', # github url finder with redirect
+    'http://导航.中国/', # Punycode. This should not be redirected
   )
   main(urls)
 
