@@ -468,7 +468,7 @@ class URLFinder:
     self.fetcher.run_callback(info)
 
 class GithubFinder(URLFinder):
-  _url_pat = re.compile(r'https://github\.com/(?P<repo_path>[^/]+/[^/]+)$')
+  _url_pat = re.compile(r'https://github\.com/(?P<repo_path>[^/]+/[^/]+)/?$')
   _api_pat = 'https://api.github.com/repos/{repo_path}'
   httpclient = None
 
