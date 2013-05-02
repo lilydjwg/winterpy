@@ -461,13 +461,13 @@ class URLFinder:
     self.fetcher = fetcher
 
   @classmethod
-  def match_url(cls, url, origurl):
+  def match_url(cls, url, fetcher):
     if hasattr(cls, '_url_pat'):
       m = cls._url_pat.match(url)
       if m is not None:
-        return cls(url, origurl, m)
-    if hasattr(cls, '_match_url') and cls._match_url(url, origurl):
-      return cls(url, origurl, m)
+        return cls(url, fetcher, m)
+    if hasattr(cls, '_match_url') and cls._match_url(url, fetcher):
+      return cls(url, fetcher, m)
 
   def done(self, info):
     self.fetcher.run_callback(info)
