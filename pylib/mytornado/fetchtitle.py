@@ -260,6 +260,7 @@ class TitleFetcher:
       self.on_timeout,
     )
     self.origurl = url
+    self.url_visited = []
     self.new_url(url)
 
   def on_timeout(self):
@@ -291,6 +292,7 @@ class TitleFetcher:
     self.stream.connect(addr, self.send_request)
 
   def new_url(self, url):
+    self.url_visited.append(url)
     self.fullurl = url
 
     for finder in self._url_finders:
@@ -502,10 +504,7 @@ def main(urls):
           title = title.decode('gb18030')
         except UnicodeDecodeError:
           pass
-      if fetcher.origurl == fetcher.fullurl:
-        url = fetcher.origurl
-      else:
-        url = fetcher.fullurl + ' <- ' + fetcher.origurl
+      url = ' <- '.join(reversed(fetcher.url_visited))
       logger.info('done: [%d] %s <- %s' % (fetcher.status_code, title, url))
       self.n -= 1
       if not self.n:
