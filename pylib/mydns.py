@@ -206,16 +206,16 @@ def mkquery(*ntlist):
   for name, type in ntlist: rec.quiz.append((name, type, CLASS.IN))
   return rec
 
-def query_by_udp(q, server, sock=None):
+def query_by_udp(q, server, port=53, sock=None):
   if sock is None: sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-  sock.sendto(q, (server, 53))
+  sock.sendto(q, (server, port))
   return sock.recvfrom(1024)[0]
 
-def query_by_tcp(q, server, stream=None):
+def query_by_tcp(q, server, port=53, stream=None):
   sock = None
   if stream is None:
     sock = socket.socket()
-    sock.connect((server, 53))
+    sock.connect((server, port))
     stream = sock.makefile()
   try:
     stream.write(struct.pack('>H', len(q)) + q)
@@ -228,11 +228,12 @@ def query_by_tcp(q, server, stream=None):
   finally:
     if sock is not None: sock.close()
 
-def query(name, type=TYPE.A, server='127.0.0.1', protocol='udp'):
+def query(name, type=TYPE.A, server='127.0.0.1', port=53, protocol='udp'):
   q = mkquery((name, type)).pack()
   func = globals().get('query_by_%s' % protocol)
-  if not func: raise Exception('protocol not found')
-  return Record.unpack(func(q, server))
+  if not func:
+    raise LookupError('protocol %r not supported' % protocol)
+  return Record.unpack(func(q, server,  port))
 
 def nslookup(name):
   r = query(name)
