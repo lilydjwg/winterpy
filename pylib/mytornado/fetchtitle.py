@@ -328,7 +328,7 @@ class TitleFetcher:
            'Host: %s',
            # t.co will return 200 and use js/meta to redirect using the following :-(
            # 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0',
-           'User-Agent: %s' % UserAgent.encode,
+           'User-Agent: %s' % UserAgent,
            'Accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.7',
            'Accept-Language: zh-cn,zh;q=0.7,en;q=0.3',
            'Accept-Charset: utf-8,gb18030;q=0.7,*;q=0.7',
