@@ -223,7 +223,7 @@ class TitleFetcher:
   _finished = False
   _cookie = None
   _connected = False
-  _redirecting = False
+  _redirected_stream = None
   _content_finders = (TitleFinder, PNGFinder, JPEGFinder, GIFFinder)
   _url_finders = ()
 
@@ -364,9 +364,9 @@ class TitleFetcher:
     if close:
       logger.debug('%s: connection to %s closed.', self.origurl, addr)
 
-    if (close and self._redirecting) or self._finished:
+    if (close and self._redirected_stream is self.stream) or self._finished:
       # The connection is closing, and we are being redirected or we're done.
-      self._redirecting = False
+      self._redirected_stream = None
       return
 
     recved = len(data)
@@ -384,6 +384,9 @@ class TitleFetcher:
 
     if p.is_partial_body():
       chunk = p.recv_body()
+      if self.finder is None:
+        # redirected but has body received
+        return
       t = self.feed_finder(chunk)
       if t is not None:
         self.run_callback(t)
@@ -423,7 +426,7 @@ class TitleFetcher:
         self.run_callback(TooManyRedirection)
       else:
         newurl = urljoin(self.fullurl, self.headers['Location'])
-        self._redirecting = True
+        self._redirected_stream = self.stream
         self.new_url(newurl)
       return
 
@@ -546,6 +549,7 @@ def test():
     'https://github.com/lilydjwg/winterpy', # github url finder
     'http://github.com/lilydjwg/winterpy', # github url finder with redirect
     'http://导航.中国/', # Punycode. This should not be redirected
+    'http://t.cn/zTOgr1n', # multiple redirections
   )
   main(urls)
 
