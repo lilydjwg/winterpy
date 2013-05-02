@@ -467,7 +467,7 @@ class URLFinder:
       if m is not None:
         return cls(url, fetcher, m)
     if hasattr(cls, '_match_url') and cls._match_url(url, fetcher):
-      return cls(url, fetcher, m)
+      return cls(url, fetcher)
 
   def done(self, info):
     self.fetcher.run_callback(info)
