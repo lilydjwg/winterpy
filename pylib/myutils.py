@@ -7,6 +7,11 @@ import datetime
 from functools import lru_cache, wraps
 import logging
 import time
+try:
+  import ipaddress
+except ImportError:
+  # Python 3.2-
+  ipaddress = None
 
 def path_import(path):
   '''指定路径来 import'''
@@ -218,7 +223,6 @@ def debugfunc(logger=logging, *, _id=[0]):
   return w
 
 # The following three are learnt from makepkg
-
 def user_choose(prompt, timeout=None):
   # XXX: hard-coded term characters are ok?
   prompt = '\x1b[1;34m::\x1b[1;37m %s\x1b[0m ' % prompt
@@ -232,3 +236,9 @@ def msg2(msg):
   # XXX: hard-coded term characters are ok?
   print('\x1b[1;34m  ->\x1b[1;37m %s\x1b[0m' % msg)
 
+def is_internal_ip(ip):
+  if ipaddress is None:
+    return False
+
+  ip = ipaddress.ip_address(ip)
+  return ip.is_loopback or ip.is_private or ip.is_reserved
