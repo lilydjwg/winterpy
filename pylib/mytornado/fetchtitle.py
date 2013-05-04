@@ -393,6 +393,9 @@ class TitleFetcher:
         return
 
     if p.is_message_complete():
+      if self.finder is None:
+        # redirected but has body received
+        return
       t = self.feed_finder(None)
       # if title not found, t is None
       self.run_callback(t)
