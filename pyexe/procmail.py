@@ -12,7 +12,7 @@ tag = Token(r'\[([\w._-]+)[^]]*\]\s?', 'tag')
 lex = Lex((reply, ottag, tag))
 
 def decode_multiline_header(s):
-  return ''.join(b.decode(e) if e else b for b, e in header.decode_header(re.sub(r'\n\s+', ' ', s)))
+  return ''.join(b.decode(e.lower() == 'gb2312' and 'gb18030' or e) if e else b for b, e in header.decode_header(re.sub(r'\n\s+', ' ', s)))
 
 def reformat(s):
   tokens, left = lex.parse(s)

@@ -393,6 +393,9 @@ class TitleFetcher:
         return
 
     if p.is_message_complete():
+      if self.finder is None:
+        # redirected but has body received
+        return
       t = self.feed_finder(None)
       # if title not found, t is None
       self.run_callback(t)
@@ -467,7 +470,7 @@ class URLFinder:
       if m is not None:
         return cls(url, fetcher, m)
     if hasattr(cls, '_match_url') and cls._match_url(url, fetcher):
-      return cls(url, fetcher, m)
+      return cls(url, fetcher)
 
   def done(self, info):
     self.fetcher.run_callback(info)
