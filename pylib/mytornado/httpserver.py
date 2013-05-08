@@ -9,7 +9,7 @@ import mimetypes
 import threading
 import email.utils
 import time
-import logging
+import socket
 try:
   import http.client as httpclient
 except ImportError:
@@ -21,10 +21,10 @@ from functools import partial
 from tornado.web import HTTPError, RequestHandler, asynchronous, GZipContentEncoding
 import tornado.escape
 import tornado.httpserver
+from tornado.log import app_log, gen_log
 
 from .util import FileEntry
 
-logger = logging.getLogger(__name__)
 _legal_range = re.compile(r'bytes=(\d*)-(\d*)$')
 
 class ErrorHandlerMixin:
@@ -75,7 +75,7 @@ call in its ``__init__`` method.
 class StaticFileHandler(RequestHandler):
   """A simple handler that can serve static content from a directory.
 
-  To map a path to this handler for a static data directory /var/www,
+  To map a path to this handler for a static data directory ``/var/www``,
   you would add a line to your application like::
 
     application = web.Application([
@@ -86,7 +86,7 @@ class StaticFileHandler(RequestHandler):
       }),
     ])
 
-  The local root directory of the content should be passed as the "path"
+  The local root directory of the content should be passed as the ``path``
   argument to the handler.
 
   The `dirindex` template will receive the following parameters:
@@ -95,13 +95,13 @@ class StaticFileHandler(RequestHandler):
       customize (it must be comparable)
     - `decodeURIComponent`, a decoding function
 
-  To support aggressive browser caching, if the argument "v" is given
+  To support aggressive browser caching, if the argument ``v`` is given
   with the path, we set an infinite HTTP expiration header. So, if you
   want browsers to cache a file indefinitely, send them to, e.g.,
-  /static/images/myimage.png?v=xxx. Override ``get_cache_time`` method for
+  ``/static/images/myimage.png?v=xxx``. Override `get_cache_time` method for
   more fine-grained cache control.
   """
-  CACHE_MAX_AGE = 86400*365*10 #10 years
+  CACHE_MAX_AGE = 86400 * 365 * 10  # 10 years
   BLOCK_SIZE = 40960 # 4096 is too slow; this value works great here
   FileEntry = FileEntry
 
@@ -186,7 +186,7 @@ class StaticFileHandler(RequestHandler):
       # failed to figure out the file to send
       raise HTTPError(404)
     if not os.path.isfile(abspath):
-      raise HTTPError(403, "%s is not a file" % self.request.path)
+      raise HTTPError(403, "%s is not a file", self.request.path)
 
     if download is not False:
       if download is True:
@@ -224,11 +224,9 @@ class StaticFileHandler(RequestHandler):
     cache_time = self.get_cache_time(path, modified, mime_type)
 
     if cache_time > 0:
-      self.set_header("Expires", datetime.datetime.utcnow() + \
-                     datetime.timedelta(seconds=cache_time))
+      self.set_header("Expires", datetime.datetime.utcnow() +
+                      datetime.timedelta(seconds=cache_time))
       self.set_header("Cache-Control", "max-age=" + str(cache_time))
-    else:
-      self.set_header("Cache-Control", "public")
 
     self.set_extra_headers(path)
 
@@ -299,7 +297,7 @@ class StaticFileHandler(RequestHandler):
     self.flush(callback=cb)
 
   def _close_on_error(self, file):
-    logger.info('closing %d on connection close.', file.fileno())
+    gen_log.info('closing %d on connection close.', file.fileno())
     file.close()
 
   def set_extra_headers(self, path):
@@ -309,11 +307,13 @@ class StaticFileHandler(RequestHandler):
   def get_cache_time(self, path, modified, mime_type):
     """Override to customize cache control behavior.
 
-    Return a positive number of seconds to trigger aggressive caching or 0
-    to mark resource as cacheable, only.
+    Return a positive number of seconds to make the result
+    cacheable for that amount of time or 0 to mark resource as
+    cacheable for an unspecified amount of time (subject to
+    browser heuristics).
 
     By default returns cache expiry of 10 years for resources requested
-    with "v" argument.
+    with ``v`` argument.
     """
     return self.CACHE_MAX_AGE if "v" in self.request.arguments else 0
 
@@ -337,7 +337,7 @@ class StaticFileHandler(RequestHandler):
           hashes[abs_path] = hashlib.md5(f.read()).hexdigest()
           f.close()
         except Exception:
-          logging.error("Could not open static file %r", path)
+          gen_log.error("Could not open static file %r", path)
           hashes[abs_path] = None
       hsh = hashes.get(abs_path)
     static_url_prefix = settings.get('static_url_prefix', '/static/')
@@ -376,9 +376,17 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
       if not version.startswith("HTTP/"):
         raise tornado.httpserver._BadRequestException("Malformed HTTP version in HTTP Request-Line")
       headers = tornado.httputil.HTTPHeaders.parse(data[eol:])
+
+      # HTTPRequest wants an IP, not a full socket address
+      if self.address_family in (socket.AF_INET, socket.AF_INET6):
+        remote_ip = self.address[0]
+      else:
+        # Unix (or other) socket; fake the remote address
+        remote_ip = '0.0.0.0'
+
       self._request = tornado.httpserver.HTTPRequest(
         connection=self, method=method, uri=uri, version=version,
-        headers=headers, remote_ip=self.address[0])
+        headers=headers, remote_ip=remote_ip, protocol=self.protocol)
 
       content_length = headers.get("Content-Length")
       if content_length:
@@ -389,18 +397,18 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
         if headers.get("Expect") == "100-continue":
           self.stream.write(b"HTTP/1.1 100 (Continue)\r\n\r\n")
         if use_tmp_files:
-          logging.debug('using temporary files for uploading')
+          gen_log.debug('using temporary files for uploading')
           self._receive_content(content_length)
         else:
-          logging.debug('using memory for uploading')
+          gen_log.debug('using memory for uploading')
           self.stream.read_bytes(content_length, self._on_request_body)
         return
 
       self.request_callback(self._request)
     except tornado.httpserver._BadRequestException as e:
-      logging.info("Malformed HTTP request from %s: %s",
+      gen_log.info("Malformed HTTP request from %s: %s",
              self.address[0], e)
-      self.stream.close()
+      self.close()
       return
 
   def _receive_content(self, content_length):
@@ -425,17 +433,17 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
   def _on_content_headers(self, data, buf=b''):
     self._content_length_left -= len(data)
     data = self._boundary_buffer + data
-    logging.debug('file header is %r', data)
+    gen_log.debug('file header is %r', data)
     self._boundary_buffer = buf
     header_data = data[self._boundary_len+2:].decode('utf-8')
     headers = tornado.httputil.HTTPHeaders.parse(header_data)
     disp_header = headers.get("Content-Disposition", "")
     disposition, disp_params = tornado.httputil._parse_header(disp_header)
     if disposition != "form-data":
-      logging.warning("Invalid multipart/form-data")
+      gen_log.warning("Invalid multipart/form-data")
       self._read_content_body(None)
     if not disp_params.get("name"):
-      logging.warning("multipart/form-data value missing name")
+      gen_log.warning("multipart/form-data value missing name")
       self._read_content_body(None)
     name = disp_params["name"]
     if disp_params.get("filename"):
@@ -450,7 +458,7 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
       )
       self._read_content_body(os.fdopen(fd, 'wb'))
     else:
-      logging.warning("multipart/form-data is not file upload, skipping...")
+      gen_log.warning("multipart/form-data is not file upload, skipping...")
       self._read_content_body(None)
 
   def _read_content_body(self, fp):
