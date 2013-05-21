@@ -3,19 +3,27 @@
 
 '''
 解压 zip 文件，其中的文件名是 GB18030 编码，但系统是 Unicode 编码
-
-2010年8月14日
 '''
 
 import sys
 import os
 from gbzip import ZipFile
+from getpass import getpass
 
-if __name__ == '__main__':
+def main():
   try:
-    ZipFile(sys.argv[1]).extractall()
+    z = ZipFile(sys.argv[1])
+    while True:
+      try:
+        z.extractall()
+      except RuntimeError: # encrypted zipfile
+        passwd = getpass('Enter correct password: ').encode()
+        z.setpassword(passwd)
+      else:
+        break
     print('Everything is ok.')
   except IndexError:
-    print('请给出一个并且仅一个 zip 文件。', file=sys.stderr)
-    sys.exit(1)
+    sys.exit('give me exactly one zipfile to extract.')
 
+if __name__ == '__main__':
+  main()
