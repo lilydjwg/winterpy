@@ -12,6 +12,8 @@ try:
 except ImportError:
   # Python 3.2-
   ipaddress = None
+import contextlib
+import signal
 
 def path_import(path):
   '''指定路径来 import'''
@@ -136,6 +138,7 @@ def daterange(start, stop=datetime.date.today(), step=datetime.timedelta(days=1)
   while d < stop:
     yield d
     d += step
+
 def enable_pretty_logging(level=logging.DEBUG):
   logger = logging.getLogger()
   h = logging.StreamHandler()
@@ -221,6 +224,17 @@ def debugfunc(logger=logging, *, _id=[0]):
       return ret
     return wrapper
   return w
+
+@contextlib.contextmanager
+def execution_timeout(timeout):
+  def timed_out(signum, sigframe):
+    raise TimeoutError
+
+  old_hdl = signal.signal(signal.SIGALRM, timed_out)
+  old_itimer = signal.setitimer(signal.ITIMER_REAL, timeout, 0)
+  yield
+  signal.setitimer(signal.ITIMER_REAL, *old_itimer)
+  signal.signal(signal.SIGALRM, old_hdl)
 
 # The following three are learnt from makepkg
 def user_choose(prompt, timeout=None):
