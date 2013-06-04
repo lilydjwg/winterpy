@@ -65,7 +65,7 @@ class ErrorHandlerMixin:
   def patchHandler(cls, RequestHandler):
     '''patch a RequestHandler without subclassing
 
-    In this way we can change all ``tornado.web.RedirectHandler``. Simply
+    In this way we can change all ``tornado.web.RequestHandler``. Simply
 subclassing and replacing won't work due to the Python 2-style ``super()``
 call in its ``__init__`` method.
     '''
