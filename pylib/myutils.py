@@ -236,6 +236,16 @@ def execution_timeout(timeout):
   signal.setitimer(signal.ITIMER_REAL, *old_itimer)
   signal.signal(signal.SIGALRM, old_hdl)
 
+def find_executables(name, path=None):
+  '''find all matching executables with specific name in path'''
+  if path is None:
+    path = os.environ['PATH'].split(os.pathsep)
+  elif isinstance(path, str):
+    path = path.split(os.pathsep)
+  path = [p for p in path if os.path.isdir(p)]
+
+  return [os.path.join(p, f) for p in path for f in os.listdir(p) if f == name]
+
 # The following three are learnt from makepkg
 def user_choose(prompt, timeout=None):
   # XXX: hard-coded term characters are ok?
