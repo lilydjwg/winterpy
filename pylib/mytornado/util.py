@@ -1,6 +1,7 @@
 import os
 import stat
 import datetime
+import re
 
 class FileEntry:
   '''For ``StaticFileHandler`` with directory index enabled'''
@@ -21,3 +22,7 @@ class FileEntry:
     if not self.isdir and another.isdir:
       return False
     return self.name < another.name
+
+def routes_adjust_prefix(routers, prefix):
+  p = re.escape(prefix)
+  return [tuple([p+r] + list(args)) for r, *args in routers]
