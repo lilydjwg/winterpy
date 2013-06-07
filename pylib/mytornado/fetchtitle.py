@@ -81,7 +81,7 @@ class ContentFinder:
 class TitleFinder(ContentFinder):
   found = None
   title_begin = re.compile(b'<title[^>]*>', re.IGNORECASE)
-  title_end = re.compile(b'</title>', re.IGNORECASE)
+  title_end = re.compile(b'</title\s*>', re.IGNORECASE)
   pos = 0
 
   default_charset = 'UTF-8'
@@ -557,6 +557,7 @@ def test():
     'http://github.com/lilydjwg/winterpy', # github url finder with redirect
     'http://导航.中国/', # Punycode. This should not be redirected
     'http://t.cn/zTOgr1n', # multiple redirections
+    'http://www.galago-project.org/specs/notification/0.9/x408.html', # </TITLE\n>
   )
   main(urls)
 
