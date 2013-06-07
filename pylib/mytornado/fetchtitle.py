@@ -229,7 +229,7 @@ class TitleFetcher:
 
   def __init__(self, url, callback,
                timeout=None, max_follows=None, io_loop=None,
-               content_finders=None, url_finders=None
+               content_finders=None, url_finders=None, referrer=None,
               ):
     '''
     url: the (full) url to fetch
@@ -238,6 +238,7 @@ class TitleFetcher:
     max_follows: max redirections
     '''
     self._callback = callback
+    self.referrer = referrer
     if max_follows is not None:
       self.max_follows = max_follows
 
@@ -326,7 +327,7 @@ class TitleFetcher:
 
   def send_request(self, nocallback=False):
     self._connected = True
-    req = ('GET %s HTTP/1.1',
+    req = ['GET %s HTTP/1.1',
            'Host: %s',
            # t.co will return 200 and use js/meta to redirect using the following :-(
            # 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0',
@@ -336,7 +337,9 @@ class TitleFetcher:
            'Accept-Charset: utf-8,gb18030;q=0.7,*;q=0.7',
            'Accept-Encoding: gzip, deflate',
            'Connection: keep-alive',
-          )
+          ]
+    if self.referrer is not None:
+      req.append('Referer: ' + self.referrer.replace('%', '%%'))
     path = self.url.path or '/'
     if self.url.query:
       path += '?' + self.url.query
