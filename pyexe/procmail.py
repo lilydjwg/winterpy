@@ -45,7 +45,8 @@ def reformat(s):
   if ot:
     ret += '[OT]'
   ret += ''.join(usertag) + left
-  return ret
+  if ret != s:
+    return ret
 
 def stripSeq(input):
   subject = None
@@ -60,7 +61,7 @@ def stripSeq(input):
       subject += l
     elif subject:
       # Subject ends
-      s = subject[9:]
+      s = subject[10:]
       s = decode_multiline_header(s)
       reformatted = reformat(s)
       if not reformatted:
@@ -70,6 +71,7 @@ def stripSeq(input):
       subject = None
       yield l
     elif l.strip() == '':
+      yield l
       # mail body
       yield from input
     else:
