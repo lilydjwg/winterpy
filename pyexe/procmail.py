@@ -29,10 +29,11 @@ def reformat(s):
     elif tok.idtype == 'ot':
       ot = True
     elif tok.idtype == 'tag':
-      if tag and tok.match.group(1) != tag[1:-2]:
+      tag_text = tok.match.group(1)
+      if tag and tag_text != tag[1:-2] or tag_text.lower() == 'bug':
         usertag.append(tok.data)
       else:
-        tag = '[%s] ' % tok.match.group(1)
+        tag = '[%s] ' % tag_text
     else:
       sys.exit('error: unknown idtype: %s' % tok.idtype)
 
@@ -61,7 +62,7 @@ def stripSeq(input):
       subject += l
     elif subject:
       # Subject ends
-      s = subject[10:]
+      s = subject[9:]
       s = decode_multiline_header(s)
       reformatted = reformat(s)
       if not reformatted:
