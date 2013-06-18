@@ -479,7 +479,7 @@ class URLFinder:
     self.fetcher.run_callback(info)
 
 class GithubFinder(URLFinder):
-  _url_pat = re.compile(r'https://github\.com/(?P<repo_path>[^/]+/[^/]+)/?$')
+  _url_pat = re.compile(r'https://github\.com/(?!blog/)(?P<repo_path>[^/]+/[^/]+)/?$')
   _api_pat = 'https://api.github.com/repos/{repo_path}'
   httpclient = None
 
@@ -502,7 +502,7 @@ class GithubFinder(URLFinder):
     self.done(repoinfo)
 
 class GithubUserFinder(GithubFinder):
-  _url_pat = re.compile(r'https://github\.com/(?P<user>[^/]+)$')
+  _url_pat = re.compile(r'https://github\.com/(?!blog(?:$|/)(?P<user>[^/]+)$')
   _api_pat = 'https://api.github.com/users/{user}'
 
 def main(urls):
