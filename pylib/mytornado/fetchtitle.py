@@ -536,15 +536,12 @@ def test():
     'http://lilydjwg.is-programmer.com/',
     'http://www.baidu.com',
     'https://zh.wikipedia.org', # redirection
-    'http://blog.binux.me/yaaw/demo/###',
     'http://redis.io/',
     'http://kernel.org',
     'http://lilydjwg.is-programmer.com/2012/10/27/streaming-gzip-decompression-in-python.36130.html', # maybe timeout
-    'http://www.vim.org',
     'http://img.vim-cn.com/22/cd42b4c776c588b6e69051a22e42dabf28f436', # image with length
     'https://github.com/m13253/titlebot/blob/master/titlebot.py_', # 404
     'http://lilydjwg.is-programmer.com/admin', # redirection
-    'http://p.vim-cn.com/ddV', # plain text without length
     'http://twitter.com', # timeout
     'http://www.wordpress.com', # reset
     'https://www.wordpress.com', # timeout
