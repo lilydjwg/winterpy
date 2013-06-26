@@ -354,8 +354,8 @@ class TitleFetcher:
     self.parser = HttpParser(decompress=True)
     if not nocallback:
       self.stream.read_until_close(
-        # self.addr will have been changed when close callback is run
-        partial(self.on_data, close=True, addr=self.addr),
+        # self.addr and self.stream may have been changed when close callback is run
+        partial(self.on_data, close=True, addr=self.addr, stream=self.stream),
         streaming_callback=self.on_data,
       )
 
@@ -363,11 +363,11 @@ class TitleFetcher:
     host = encodings.idna.nameprep(host)
     return b'.'.join(encodings.idna.ToASCII(x) for x in host.split('.')).decode('ascii')
 
-  def on_data(self, data, close=False, addr=None):
+  def on_data(self, data, close=False, addr=None, stream=None):
     if close:
       logger.debug('%s: connection to %s closed.', self.origurl, addr)
 
-    if (close and self._redirected_stream is self.stream) or self._finished:
+    if (close and stream and self._redirected_stream is stream) or self._finished:
       # The connection is closing, and we are being redirected or we're done.
       self._redirected_stream = None
       return
@@ -558,6 +558,7 @@ def test():
     'http://导航.中国/', # Punycode. This should not be redirected
     'http://t.cn/zTOgr1n', # multiple redirections
     'http://www.galago-project.org/specs/notification/0.9/x408.html', # </TITLE\n>
+    'http://x.co/dreamz', # redirection caused false ConnectionClosed error
   )
   main(urls)
 
