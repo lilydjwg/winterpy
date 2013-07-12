@@ -502,7 +502,7 @@ class GithubFinder(URLFinder):
     self.done(repoinfo)
 
 class GithubUserFinder(GithubFinder):
-  _url_pat = re.compile(r'https://github\.com/(?!blog(?:$|/))(?P<user>[^/]+)$')
+  _url_pat = re.compile(r'https://github\.com/(?!blog(?:$|/))(?P<user>[^/]+)/?$')
   _api_pat = 'https://api.github.com/users/{user}'
 
 def main(urls):
