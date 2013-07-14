@@ -113,9 +113,9 @@ def _CJK_align(字符串, 对齐宽度, 方向='左', 填充=' '):
     raise ValueError('填充字符只能是一个字符')
 
   if 方向 == '右':
-    return 填充 * round(((对齐宽度 - 宽度(字符串)) / 宽度(填充))) + 字符串
+    return 填充 * round(((对齐宽度 - strwidth(字符串)) / strwidth(填充))) + 字符串
   elif 方向 == '左':
-    return 字符串 + 填充 * round(((对齐宽度 - 宽度(字符串)) / 宽度(填充)))
+    return 字符串 + 填充 * round(((对齐宽度 - strwidth(字符串)) / strwidth(填充)))
   else:
     raise ValueError("`方向' 可选为 '左' 或者 '右'")
 
