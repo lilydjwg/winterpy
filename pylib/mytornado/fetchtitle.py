@@ -236,6 +236,9 @@ class TitleFetcher:
     callback: called with title or MediaType or an instance of SingletonFactory
     timeout: total time including redirection before giving up
     max_follows: max redirections
+
+    may raise:
+    <UnicodeError: label empty or too long> in host preparation
     '''
     self._callback = callback
     self.referrer = referrer
