@@ -393,7 +393,7 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
         content_length = int(content_length)
         use_tmp_files = self._get_handler_info()
         if not use_tmp_files and content_length > self.stream.max_buffer_size:
-          raise _BadRequestException("Content-Length too long")
+          raise tornado.httpserver._BadRequestException("Content-Length too long")
         if headers.get("Expect") == "100-continue":
           self.stream.write(b"HTTP/1.1 100 (Continue)\r\n\r\n")
         if use_tmp_files:
