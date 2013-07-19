@@ -1,21 +1,9 @@
 # vim:fileencoding=utf-8
+# This file is in the Public Domain
 
 '''一些在命令行上使用的便捷函数'''
 
 import os
-from lilypath import path
-
-def findbroken(p):
-  '''递归寻找断掉的软链接'''
-  ret = []
-
-  for i in p.list():
-    if i.isdir():
-      ret.extend(findbroken(i))
-    elif not i.exists():
-      ret.append(i)
-
-  return ret
 
 def repl(local, histfile=None, banner=None):
   import readline
