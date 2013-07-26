@@ -17,10 +17,9 @@ from termutils import foreach
 session = requests.Session()
 
 def main(index, filename='$name-$author.txt', start=0):
-  url = 'http://www.feisuzw.com/Html/2747/Index.html'
-  r = session.get(url)
+  r = session.get(index)
   r.encoding = 'gb18030'
-  doc = fromstring(r.text, base_url=url)
+  doc = fromstring(r.text, base_url=index)
   doc.make_links_absolute()
   name = doc.xpath('//div[@class="info"]/p[1]/a/text()')[0]
   author = doc.xpath('//div[@class="info"]/p[1]/span/text()')[0].split()[-1]
