@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+import sys
+from functools import partial
+from string import Template
+import argparse
+import base64
+from urllib.parse import unquote
+
+from lxml.html import fromstring
+import requests
+
+from htmlutils import extractText
+from termutils import foreach
+
+session = requests.Session()
+
+def main(index, filename='$name-$author.txt', start=0):
+  url = 'http://www.feisuzw.com/Html/2747/Index.html'
+  r = session.get(url)
+  r.encoding = 'gb18030'
+  doc = fromstring(r.text, base_url=url)
+  doc.make_links_absolute()
+  name = doc.xpath('//div[@class="info"]/p[1]/a/text()')[0]
+  author = doc.xpath('//div[@class="info"]/p[1]/span/text()')[0].split()[-1]
+
+  nametmpl = Template(filename)
+  fname = nametmpl.substitute(name=name, author=author)
+  with open(fname, 'w') as f:
+    sys.stderr.write('下载到文件 %s。\n' % fname)
+    links = doc.xpath('//div[@class="chapterlist"]/ul/li/a')
+    try:
+      foreach(links, partial(gather_content, f.write), start=start)
+    except KeyboardInterrupt:
+      sys.stderr.write('\n')
+      sys.exit(130)
+
+  sys.stderr.write('\n')
+  return True
+
+def gather_content(write, i, l):
+  # curl -XPOST -F bookid=2747 -F chapterid=2098547 'http://www.feisuzw.com/skin/hongxiu/include/fe1sushow.php'
+  #      --referer http://www.feisuzw.com/Html/2747/2098547.html
+  # tail +4
+  # base64 -d
+  # sed 's/&#&/u/g'
+  # ascii2uni -qaF
+  # ascii2uni -qaJ
+  # <p> paragraphs
+  url = l.get('href')
+  _, _, _, _, bookid, chapterid = url.split('/')
+  chapterid = chapterid.split('.', 1)[0]
+  r = session.post('http://www.feisuzw.com/skin/hongxiu/include/fe1sushow.php', data={
+    'bookid': bookid, 'chapterid': chapterid,
+  }, headers={'Referer': url})
+
+  text = r.content[3:] # strip BOM
+  text = base64.decodebytes(text).replace(b'&#&', br'\u')
+  text = text.decode('unicode_escape')
+  text = unquote(text)
+  text = text.replace('<p>', '').replace('</p>', '\n\n')
+
+  title = l.text
+  write(title)
+  write('\n\n')
+  write(text)
+  write('\n')
+  return title
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='下载飞速中文网小说')
+  parser.add_argument('url',
+                      help='小说首页链接')
+  parser.add_argument('name', default='$name-$author.txt', nargs='?',
+                      help='保存文件名模板（支持 $name 和 $author')
+  parser.add_argument('-s', '--start', default=1, type=int, metavar='N',
+                      help='下载起始页位置（以 1 开始）')
+  args = parser.parse_args()
+  main(args.url, args.name, args.start-1)
