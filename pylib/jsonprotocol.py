@@ -42,7 +42,7 @@ def read_response(sock):
     return
 
   length = parse_netint(r)
-  data = recvbytes(sock, length)
+  data = recvbytes(sock, length).decode('utf-8')
   if data is None:
     raise Exception('client disappeared suddenly')
   return fromjson(data)
