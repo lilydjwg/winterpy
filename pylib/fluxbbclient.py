@@ -31,7 +31,7 @@ class FluxBB(httpsession.Session):
     else:
       return True
 
-  def delete_unverified_users(self, doc=None):
+  def delete_unverified_users(self, doc=None, *, msg=None):
     '''delete inverified users in first page
     
     doc can be given if you have that page's parsed content alread.
@@ -51,7 +51,7 @@ class FluxBB(httpsession.Session):
     post = {
       'ban_expire': '',
       'ban_users_comply': 'save',
-      'ban_message': 'spam',
+      'ban_message': msg or 'not verified. Ask admin if you are not a spammer.',
       'ban_the_ip': '1',
       'users': users,
     }
