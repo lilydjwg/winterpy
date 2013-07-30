@@ -31,14 +31,17 @@ class FluxBB(httpsession.Session):
     else:
       return True
 
-  def delete_unverified_users(self, doc=None, *, msg=None):
+  def delete_unverified_users(self, doc=None, *, msg=None, since=None):
     '''delete inverified users in first page
     
     doc can be given if you have that page's parsed content alread.
     return False if no such users are found.
     '''
     if doc is None:
-      res = self.bbsrequest('/admin_users.php?find_user=&order_by=username&direction=ASC&user_group=0&p=1')
+      url = '/admin_users.php?find_user=&order_by=username&direction=ASC&user_group=0&p=1'
+      if since:
+        url += '&registered_before=' + since.strftime('%Y-%m-%d %H:%M:%s')
+      res = self.bbsrequest(url)
       body = res.read().decode('utf-8')
       doc = fromstring(body)
     trs = doc.xpath('//div[@id="users2"]//tbody/tr')
