@@ -109,5 +109,5 @@ def ubuntuPaste(poster='', screenshot='', code2='',
 def taobaoip(ip):
   res = urllib.request.urlopen('http://ip.taobao.com/service/getIpInfo.php?ip=' + ip)
   data = json.loads(res.read().decode('utf-8'))['data']
-  ret = ' '.join(data[x] for x in ("country", "city", "county", "isp")).strip()
+  ret = ' '.join(data[x] for x in ("country", "region", "city", "county", "isp")).strip()
   return ret
