@@ -4,15 +4,14 @@
 import sys
 import re
 from email import header
+
 from simplelex import Token, Lex
+from mailutils import decode_multiline_header
 
 reply = Token(r'R[Ee]:\s?|[回答][复覆][：:]\s?', 're')
 ottag = Token(r'\[OT\]\s?', 'ot', flags=re.I)
 tag = Token(r'\[([\w._-]+)[^]]*\]\s?', 'tag')
 lex = Lex((reply, ottag, tag))
-
-def decode_multiline_header(s):
-  return ''.join(b.decode(e.lower() == 'gb2312' and 'gb18030' or e) if e else b for b, e in header.decode_header(re.sub(r'\n\s+', ' ', s)))
 
 def reformat(s):
   tokens, left = lex.parse(s)
