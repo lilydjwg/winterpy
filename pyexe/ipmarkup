@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+import sys
+import re
+
+from cmdutils import lookupip
+from myutils import is_internal_ip
+
+ip_re = re.compile(r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')
+
+def transformline(l):
+  shift = 0
+  for m in ip_re.finditer(l):
+    try:
+      ip = m.group(0)
+      if is_internal_ip(ip):
+        continue
+      addr = lookupip(ip)
+      inspos = m.end() + shift
+      l = '%s(%s)%s' % (l[:inspos], addr, l[inspos:])
+      shift += len(addr) + 2
+    except:
+      pass
+  return l
+
+def main():
+  for l in sys.stdin:
+    sys.stdout.write(transformline(l))
+
+if __name__ == '__main__':
+  try:
+    main()
+  except (KeyboardInterrupt, IOError):
+    pass
