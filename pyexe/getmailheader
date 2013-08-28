@@ -7,7 +7,7 @@ import email
 from mailutils import decode_multiline_header
 
 def main(header):
-  msg = email.message_from_file(sys.stdin)
+  msg = email.message_from_binary_file(sys.stdin.buffer)
   h = msg.get(header, '')
   h = decode_multiline_header(h)
   sys.stdout.write(h)
