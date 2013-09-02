@@ -11,6 +11,8 @@ def decode_multiline_header(s):
       if e.lower() == 'gb2312':
         e = 'gb18030'
       b = b.decode(e)
+    elif isinstance(b, bytes):
+      b = b.decode('ascii')
     ret.append(b)
 
   return ''.join(ret)
