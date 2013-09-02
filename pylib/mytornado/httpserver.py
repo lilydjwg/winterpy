@@ -49,11 +49,14 @@ class ErrorHandlerMixin:
         self.write(line)
       self.finish()
     else:
-      err_msg = kwargs.get('exc_info', '  ')[1].log_message
-      if err_msg is None:
+      err_exc = kwargs.get('exc_info', '  ')[1]
+      if err_exc in (None, ' '):
         err_msg = ''
       else:
-        err_msg += '.'
+        if isinstance(err_exc, HTTPError):
+          err_msg = err_exc.log_message + '.'
+        else:
+          err_msg = str(err_exc) + '.'
 
       self.finish(self.error_page % {
         "code": status_code,
