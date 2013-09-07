@@ -3,6 +3,7 @@
 
 import sys
 import re
+import io
 from email import header
 
 from simplelex import Token, Lex
@@ -78,4 +79,8 @@ def stripSeq(input):
       yield l
 
 if __name__ == '__main__':
-  sys.stdout.writelines(stripSeq(iter(sys.stdin)))
+  stdout = io.TextIOWrapper(sys.stdout.buffer,
+                            encoding='utf-8', errors='surrogateescape')
+  stdin = io.TextIOWrapper(sys.stdin.buffer,
+                           encoding='utf-8', errors='surrogateescape')
+  stdout.writelines(stripSeq(iter(stdin)))
