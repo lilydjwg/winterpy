@@ -70,7 +70,7 @@ if __name__ == '__main__':
   parser.add_argument('url',
                       help='小说首页链接')
   parser.add_argument('name', default='$name-$author.txt', nargs='?',
-                      help='保存文件名模板（支持 $name 和 $author')
+                      help='保存文件名模板（支持 $name 和 $author）')
   parser.add_argument('-s', '--start', default=1, type=int, metavar='N',
                       help='下载起始页位置（以 1 开始）')
   args = parser.parse_args()
