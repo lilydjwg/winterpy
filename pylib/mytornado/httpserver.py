@@ -54,7 +54,7 @@ class ErrorHandlerMixin:
         err_msg = ''
       else:
         if isinstance(err_exc, HTTPError):
-          err_msg = err_exc.log_message + '.'
+          err_msg = str(err_exc.log_message) + '.'
         else:
           err_msg = str(err_exc) + '.'
 
