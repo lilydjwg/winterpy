@@ -79,6 +79,9 @@ def printLuaList(v, indent=0):
   return ''.join(ret)
 
 if __name__ == '__main__':
+  # Package archlinux-xdg-menu is required.
+  # To get default menus beside arch-*:
+  # ln -s applications-merged arch-applications-merged
   d = []
   parseMenu(parse('/etc/xdg/menus/arch-applications.menu'), d)
   outputAwesome(d)
