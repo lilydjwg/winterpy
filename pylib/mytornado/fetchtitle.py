@@ -28,7 +28,7 @@ try:
 except ImportError:
   from http_parser.pyparser import HttpParser
 
-UserAgent = 'FetchTitle/1.1 (lilydjwg@gmail.com)'
+UserAgent = 'FetchTitle/1.2 (lilydjwg@gmail.com)'
 class SingletonFactory:
   def __init__(self, name):
     self.name = name
@@ -79,7 +79,7 @@ class ContentFinder:
     return False
 
 class TitleFinder(ContentFinder):
-  found = None
+  found = False
   title_begin = re.compile(b'<title[^>]*>', re.IGNORECASE)
   title_end = re.compile(b'</title\s*>', re.IGNORECASE)
   pos = 0
@@ -115,17 +115,27 @@ class TitleFinder(ContentFinder):
       if m:
         self.charset = (m.group(1) or m.group(2)).decode('latin1')
 
-    if self.found is None:
+    if not self.found:
       m = self.title_begin.search(buf)
       if m:
-        self.found = m.end()
-    if self.found is not None:
-      m = self.title_end.search(buf, self.found)
+        buf = self.buf = buf[m.end():]
+        self.found = True
+
+    if self.found:
+      m = self.title_end.search(buf)
       if m:
-        raw_title = buf[self.found:m.start()].strip()
+        raw_title = buf[:m.start()].strip()
         logger.debug('title found at %d', self.pos - len(buf) + m.start())
+      elif len(buf) > 200: # when title goes too long
+        raw_title = buf[:200] + b'...'
+        logger.warn('title too long, starting at %d', self.pos - len(buf))
+      else:
+        raw_title = False
+
+      if raw_title:
         return self.decode_title(raw_title)
-    if self.found is None:
+
+    if not self.found:
       self.buf = buf[-100:]
 
   def decode_title(self, raw_title):
@@ -559,6 +569,7 @@ def test():
     'http://t.cn/zTOgr1n', # multiple redirections
     'http://www.galago-project.org/specs/notification/0.9/x408.html', # </TITLE\n>
     'http://x.co/dreamz', # redirection caused false ConnectionClosed error
+    'http://m8y.org/tmp/zipbomb/zipbomb_light_nonzero.html', # very long title
   )
   main(urls)
 
