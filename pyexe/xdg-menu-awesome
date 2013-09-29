@@ -72,10 +72,11 @@ def printLuaList(v, indent=0):
       ret.append(printLuaList(v[1], indent+1))
       ret.append('  ' * indent + '}, \n')
     elif len(v) == 3:
+      cmd = repr(v[1]).replace(r'\\', '\\')
       if v[2]:
-        ret.append('  ' * indent + '{%r, %r, %r},\n' % (v[0], v[1], v[2]))
+        ret.append('  ' * indent + '{%r, %s, %r},\n' % (v[0], cmd, v[2]))
       else:
-        ret.append('  ' * indent + '{%r, %r},\n' % (v[0], v[1]))
+        ret.append('  ' * indent + '{%r, %s},\n' % (v[0], cmd))
   return ''.join(ret)
 
 if __name__ == '__main__':
