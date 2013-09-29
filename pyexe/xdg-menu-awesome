@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+
+from string import Template
+from collections import defaultdict
+import re
+
+import xdg.IconTheme
+from xdg.Menu import parse, Menu, MenuEntry
+
+class ExecTempate(Template):
+  delimiter = '%'
+  idpattern = '[A-Za-z%]'
+  flags = 0
+
+def prepExec(entry):
+  # http://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
+  exec_t = ExecTempate(entry.getExec())
+  d = defaultdict(lambda: '')
+  d['%'] = '%'
+  d['c'] = entry.getName()
+  icon = entry.getIcon()
+  if icon:
+    d['i'] = '--icon "%s"' % icon
+  d['k'] = entry.filename
+  return exec_t.substitute(d).rstrip()
+
+class inTerminal:
+  def __init__(self, cmd):
+    self.cmd = cmd
+
+  def __repr__(self):
+    return '(terminal or "xterm") .. " -e %s"' % repr(self.cmd).replace('"', r'\"')
+
+def getIconPath(name):
+  # FIXME: use a user-preferred theme?
+  return xdg.IconTheme.getIconPath(name, size=16, theme='gnome')
+
+def parseMenu(menu, data, indent=0):
+  for submenu in menu.Entries:
+    if isinstance(submenu, Menu):
+      if not submenu.Entries:
+        continue
+      d = []
+      data.append((submenu.getName(), d))
+      parseMenu(submenu, d, indent+1)
+    elif isinstance(submenu, MenuEntry):
+      entry = submenu.DesktopEntry
+      icon = getIconPath(entry.getIcon())
+      name = entry.getName()
+      exe = prepExec(entry)
+      if entry.get('Terminal').lower() in ('1', 'true'):
+        exe = inTerminal(exe)
+      data.append((name, exe, icon))
+
+def outputAwesome(d):
+  print('xdgmenu = function(terminal)\n  return ', end='')
+  content = printLuaList(d, indent=1)
+  content = re.sub(r'}, \n\s*{', '}, {', content).replace('}, \n', '}\n')
+  print(content, end='')
+  print('end')
+
+def printLuaList(v, indent=0):
+  ret = []
+  if isinstance(v, list):
+    ret.append('{\n')
+    for i in v:
+      ret.append(printLuaList(i, indent+1))
+    ret.append('  ' * indent + '}\n')
+  elif isinstance(v, tuple):
+    if len(v) == 2:
+      ret.append('  ' * indent + '{%r, ' % v[0])
+      ret.append(printLuaList(v[1], indent+1))
+      ret.append('  ' * indent + '}, \n')
+    elif len(v) == 3:
+      if v[2]:
+        ret.append('  ' * indent + '{%r, %r, %r},\n' % (v[0], v[1], v[2]))
+      else:
+        ret.append('  ' * indent + '{%r, %r},\n' % (v[0], v[1]))
+  return ''.join(ret)
+
+if __name__ == '__main__':
+  d = []
+  parseMenu(parse('/etc/xdg/menus/arch-applications.menu'), d)
+  outputAwesome(d)
