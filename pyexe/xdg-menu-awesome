@@ -24,7 +24,7 @@ def parseMenu(menu, data, indent=0):
       if not submenu.Entries:
         continue
       d = []
-      data.append((submenu.getName(), d))
+      data.append((submenu.getName(), d, submenu.Directory.DesktopEntry.filename))
       parseMenu(submenu, d, indent+1)
     elif isinstance(submenu, MenuEntry):
       entry = submenu.DesktopEntry
@@ -50,8 +50,8 @@ def printLuaList(v, indent=0):
       ret.append(printLuaList(i, indent+1))
     ret.append('  ' * indent + '}\n')
   elif isinstance(v, tuple):
-    if len(v) == 2:
-      ret.append('  ' * indent + '{%r, ' % v[0])
+    if len(v) == 3:
+      ret.append('  ' * indent + '{%r, --[[%s]] ' % (v[0], v[2]))
       ret.append(printLuaList(v[1], indent+1))
       ret.append('  ' * indent + '}, \n')
     elif len(v) == 4:
