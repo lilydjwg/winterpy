@@ -33,7 +33,7 @@ def parseMenu(menu, data, indent=0):
       exe = prepExec(entry)
       if entry.get('Terminal').lower() in ('1', 'true'):
         exe = inTerminal(exe)
-      data.append((name, exe, icon))
+      data.append((name, exe, icon, entry.filename))
 
 def outputAwesome(d):
   print('xdgmenu = function(terminal)\n  return ', end='')
@@ -54,12 +54,12 @@ def printLuaList(v, indent=0):
       ret.append('  ' * indent + '{%r, ' % v[0])
       ret.append(printLuaList(v[1], indent+1))
       ret.append('  ' * indent + '}, \n')
-    elif len(v) == 3:
+    elif len(v) == 4:
       cmd = repr(v[1]).replace(r'\\', '\\')
       if v[2]:
-        ret.append('  ' * indent + '{%r, %s, %r},\n' % (v[0], cmd, v[2]))
+        ret.append('  ' * indent + '{%r, %s, %r --[[%s]]},\n' % (v[0], cmd, v[2], v[3]))
       else:
-        ret.append('  ' * indent + '{%r, %s},\n' % (v[0], cmd))
+        ret.append('  ' * indent + '{%r, %s --[[%s]]},\n' % (v[0], cmd, v[3]))
   return ''.join(ret)
 
 if __name__ == '__main__':
