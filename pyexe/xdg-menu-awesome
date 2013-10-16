@@ -21,7 +21,7 @@ def getIconPath(name):
 def parseMenu(menu, data, indent=0):
   for submenu in menu.Entries:
     if isinstance(submenu, Menu):
-      if not submenu.Entries:
+      if not submenu.Entries or not submenu.Directory:
         continue
       d = []
       data.append((submenu.getName(), d, submenu.Directory.DesktopEntry.filename))
