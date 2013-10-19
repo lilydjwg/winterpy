@@ -201,4 +201,4 @@ def is_internal_ip(ip):
     return False
 
   ip = ipaddress.ip_address(ip)
-  return ip.is_loopback or ip.is_private or ip.is_reserved
+  return ip.is_loopback or ip.is_private or ip.is_reserved or ip.is_link_local
