@@ -6,6 +6,7 @@ from functools import partial
 from string import Template
 import argparse
 import base64
+import binascii
 from urllib.parse import unquote
 
 from lxml.html import fromstring
@@ -53,7 +54,11 @@ def gather_content(write, i, l):
   }, headers={'Referer': url})
 
   text = r.content[3:] # strip BOM
-  text = base64.decodebytes(text).replace(b'&#&', br'\u')
+  try:
+    text = base64.decodebytes(text).replace(b'&#&', br'\u')
+  except binascii.Error:
+    # not encoded?
+    pass
   text = text.decode('unicode_escape')
   text = unquote(text)
   text = text.replace('<p>', '').replace('</p>', '\n\n')
