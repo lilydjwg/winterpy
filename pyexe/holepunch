@@ -112,8 +112,9 @@ route 10.7.0.0 255.255.255.0
   ).encode()
   print('sending client-side config to %s:%d...' % (p_ip, p_port))
 
+  sock.settimeout(1)
+  sock.connect((p_ip, p_port))
   for i in range(5):
-    sock.settimeout(1)
     try:
       sock.sendto(s, (p_ip, p_port))
       msg, addr = sock.recvfrom(1024)
