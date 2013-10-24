@@ -56,11 +56,11 @@ def gather_content(write, i, l):
   text = r.content[3:] # strip BOM
   try:
     text = base64.decodebytes(text).replace(b'&#&', br'\u')
+    text = text.decode('unicode_escape')
+    text = unquote(text)
   except binascii.Error:
     # not encoded?
-    pass
-  text = text.decode('unicode_escape')
-  text = unquote(text)
+    text = text.decode('utf-8')
   text = text.replace('<p>', '').replace('</p>', '\n\n')
 
   title = l.text
