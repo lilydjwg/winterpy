@@ -53,14 +53,7 @@ def gather_content(write, i, l):
     'bookid': bookid, 'chapterid': chapterid,
   }, headers={'Referer': url})
 
-  text = r.content[3:] # strip BOM
-  try:
-    text = base64.decodebytes(text).replace(b'&#&', br'\u')
-    text = text.decode('unicode_escape')
-    text = unquote(text)
-  except binascii.Error:
-    # not encoded?
-    text = text.decode('utf-8')
+  text = r.content.decode('utf-8-sig')
   text = text.replace('<p>', '').replace('</p>', '\n\n')
 
   title = l.text
