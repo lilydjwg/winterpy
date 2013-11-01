@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+
+DBName = 'ping'
+Host = 'baidu.com'
+
+import os
+import time
+import logging
+import socket
+from functools import partial
+
+from tornado import ioloop
+from pymongo import MongoClient
+DB = None
+
+import icmplib
+from nicelogger import enable_pretty_logging
+enable_pretty_logging()
+
+def setup_sync():
+  global DB, Host
+
+  DB = MongoClient()[DBName]
+  logging.info('MongoDB connected')
+  if 'ping' not in DB.collection_names():
+    DB.create_collection('ping', capped=True, size=1024 * 1024 * 256)
+  DB.ping.ensure_index('stime')
+  logging.info('database setup done')
+
+  ip = socket.gethostbyname(Host)
+  logging.info('Host %s resolved to %s', Host, ip)
+  Host = ip
+
+class Pinger:
+  seq = 0
+  acked = 0
+
+  def __init__(self, sock, io_loop=None):
+    self.sock = sock
+    self.io_loop = io_loop = io_loop or ioloop.IOLoop().instance()
+
+    self.p = ioloop.PeriodicCallback(self.ping_host, 1000, io_loop=io_loop)
+    self.p.start()
+    self.stime = time.time()
+    self.ping_host()
+    io_loop.add_handler(sock.fileno(), self.pong_received, ioloop.IOLoop.READ)
+
+  def ping_host(self):
+    self.seq = (self.seq + 1) & 0x7fff
+    data = icmplib.pack_packet_with_time(self.seq)
+    self.sock.send(data)
+
+  def pong_received(self, sockfd, event):
+    data = self.sock.recv(1024)
+    seq, t = icmplib.parse_packet_with_time(data)
+    self.acknowledge(seq)
+    interval = (time.time() - t) * 1000
+    self.save_ping_result(t, interval)
+    logging.debug('PONG %4d %9.3fms from %.3f', seq, interval, t)
+
+  def save_ping_result(self, t, interval):
+    DB.ping.save({
+      'stime': t,
+      'i': interval,
+    })
+
+  def acknowledge(self, seq):
+    diff = self.seq - self.acked
+    if diff < 0:
+      diff += 0x7fff
+
+    if diff > 1:
+      for i in range(self.acked + 1, seq, 1):
+        t = self.stime + i - 1
+        logging.warn('PONG %4d        LOST from %.3f', i, t)
+        self.save_ping_result(t, float('inf'))
+
+    if seq > self.acked or self.seq < self.acked:
+      self.acked = seq
+
+  def __del__(self):
+    self.p.stop()
+
+def main():
+  setup_sync()
+  loop = ioloop.IOLoop().instance()
+
+  sock = icmplib.socket()
+  sock.connect((Host, 0))
+  pinger = Pinger(sock)
+
+  loop.start()
+
+if __name__ == '__main__':
+  try:
+    main()
+  except KeyboardInterrupt:
+    print()
