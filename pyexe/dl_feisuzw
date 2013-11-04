@@ -17,9 +17,12 @@ from termutils import foreach
 
 session = requests.Session()
 
-def main(index, filename='$name-$author.txt', start=0):
+def main(index, filename='$name-$author.txt', start=0, start_title=None):
+  sys.stdout.write('获取目录页...')
+  sys.stdout.flush()
   doc = htmlutils.parse_document_from_requests(index, session,
                                                encoding='gb18030')
+  print('完成。')
   name = doc.xpath('//div[@class="info"]/p[1]/a/text()')[0]
   author = doc.xpath('//div[@class="info"]/p[1]/span/text()')[0].split()[-1]
 
@@ -29,7 +32,16 @@ def main(index, filename='$name-$author.txt', start=0):
     sys.stderr.write('下载到文件 %s。\n' % fname)
     links = doc.xpath('//div[@class="chapterlist"]/ul/li/a')
     try:
-      foreach(links, partial(gather_content, f.write), start=start)
+      if start_title:
+        for i, l in enumerate(links):
+          if l.text_content().strip().startswith(start_title):
+            start = i
+            break
+        else:
+          sys.exit('指定的开始下载位置没有找到。')
+      if start:
+        links = links[start:]
+      foreach(links, partial(gather_content, f.write))
     except KeyboardInterrupt:
       sys.stderr.write('\n')
       sys.exit(130)
@@ -69,7 +81,10 @@ if __name__ == '__main__':
                       help='小说首页链接')
   parser.add_argument('name', default='$name-$author.txt', nargs='?',
                       help='保存文件名模板（支持 $name 和 $author）')
-  parser.add_argument('-s', '--start', default=1, type=int, metavar='N',
+  group = parser.add_mutually_exclusive_group()
+  group.add_argument('-s', '--start', default=1, type=int, metavar='N',
                       help='下载起始页位置（以 1 开始）')
+  group.add_argument('-t', '--title', metavar='TITLE',
+                      help='下载起始页标题')
   args = parser.parse_args()
-  main(args.url, args.name, args.start-1)
+  main(args.url, args.name, args.start-1, args.title)
