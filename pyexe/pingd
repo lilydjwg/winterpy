@@ -93,6 +93,13 @@ def main():
 
 if __name__ == '__main__':
   try:
+    import setproctitle
+    setproctitle.setproctitle('pingd')
+    del setproctitle
+  except ImportError:
+    pass
+
+  try:
     main()
   except KeyboardInterrupt:
     print()
