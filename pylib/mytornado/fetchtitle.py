@@ -140,7 +140,7 @@ class TitleFinder(ContentFinder):
 
   def decode_title(self, raw_title):
     try:
-      title = replaceEntities(raw_title.decode(self.get_charset()))
+      title = replaceEntities(raw_title.decode(self.get_charset(), errors='replace'))
       return title
     except (UnicodeDecodeError, LookupError):
       return raw_title
