@@ -1,3 +1,9 @@
+'''
+A Tornado-inspired logging formatter, with displayed time with millisecond accuracy
+
+FYI: pyftpdlib also has a Tornado-style logger.
+'''
+
 import sys
 import time
 import logging
