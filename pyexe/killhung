@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+
+'''wait and kill subprocess if it doesn't response (from network)'''
+
+import os
+import sys
+import select
+import tempfile
+import subprocess
+
+timeout = 60
+
+def new_group():
+  os.setpgrp()
+
+def main(args):
+  path = os.path.join('/dev/shm', '_'.join(args).replace('/', '-'))
+  if not os.path.exists(path):
+    os.mkfifo(path, 0o600)
+  pipe = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+  p = subprocess.Popen(['strace', '-o', path, '-e', 'trace=network'] + args, preexec_fn=new_group)
+
+  try:
+    while True:
+      ret = p.poll()
+      if ret is not None:
+        return ret
+      rs, ws, xs = select.select([pipe], (), (), timeout)
+      if not rs:
+        print('subprocess met network problem, killing...', file=sys.stderr)
+        os.kill(-p.pid, 15)
+      else:
+        os.read(pipe, 1024)
+  except KeyboardInterrupt:
+    os.kill(-p.pid, 15)
+
+  return -1
+
+if __name__ == '__main__':
+  try:
+    import setproctitle
+    setproctitle.setproctitle('killhung')
+    del setproctitle
+  except ImportError:
+    pass
+  sys.exit(main(sys.argv[1:]))
