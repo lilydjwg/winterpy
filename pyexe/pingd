@@ -3,7 +3,6 @@
 DBName = 'ping'
 Host = 'baidu.com'
 
-import os
 import time
 import logging
 import socket
@@ -24,7 +23,7 @@ def setup_sync():
   logging.info('MongoDB connected')
   if 'ping' not in DB.collection_names():
     DB.create_collection('ping', capped=True, size=1024 * 1024 * 256)
-  DB.ping.ensure_index('stime')
+  DB.ping.ensure_index('t')
   logging.info('database setup done')
 
   ip = socket.gethostbyname(Host)
@@ -33,50 +32,49 @@ def setup_sync():
 
 class Pinger:
   seq = 0
-  acked = 0
+  wait_timeout = 10 # 10s or never
+  payload = b'L' * 56
 
   def __init__(self, sock, io_loop=None):
     self.sock = sock
-    self.io_loop = io_loop = io_loop or ioloop.IOLoop().instance()
+    self.io_loop = io_loop = io_loop or ioloop.IOLoop().current()
 
+    self.flying = {}
     self.p = ioloop.PeriodicCallback(self.ping_host, 1000, io_loop=io_loop)
     self.p.start()
-    self.stime = time.time()
     self.ping_host()
     io_loop.add_handler(sock.fileno(), self.pong_received, ioloop.IOLoop.READ)
 
   def ping_host(self):
     self.seq = (self.seq + 1) & 0x7fff
-    data = icmplib.pack_packet_with_time(self.seq)
+    data = icmplib.pack_packet(self.seq, self.payload)
+    t = time.time()
+    self.flying[self.seq] = (t, self.io_loop.add_timeout(
+      t + self.wait_timeout,
+      partial(self.pong_never, self.seq),
+    ))
     self.sock.send(data)
 
   def pong_received(self, sockfd, event):
     data = self.sock.recv(1024)
-    seq, t = icmplib.parse_packet_with_time(data)
-    self.acknowledge(seq)
+    seq = icmplib.parse_packet(data)[0]
+    t, timeout = self.flying[seq]
+    self.io_loop.remove_timeout(timeout)
     interval = (time.time() - t) * 1000
     self.save_ping_result(t, interval)
     logging.debug('PONG %4d %9.3fms from %.3f', seq, interval, t)
 
   def save_ping_result(self, t, interval):
     DB.ping.save({
-      'stime': t,
+      't': t,
       'i': interval,
     })
 
-  def acknowledge(self, seq):
-    diff = self.seq - self.acked
-    if diff < 0:
-      diff += 0x7fff
-
-    if diff > 1:
-      for i in range(self.acked + 1, seq, 1):
-        t = self.stime + i - 1
-        logging.warn('PONG %4d        LOST from %.3f', i, t)
-        self.save_ping_result(t, float('inf'))
-
-    if seq > self.acked or self.seq < self.acked:
-      self.acked = seq
+  def pong_never(self, seq):
+    t, _ = self.flying[seq]
+    logging.warn('PONG %4d        LOST from %.3f', seq, t)
+    self.save_ping_result(t, float('inf'))
+    del self.flying[seq]
 
   def __del__(self):
     self.p.stop()
