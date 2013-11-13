@@ -269,11 +269,6 @@ class TitleFetcher:
     if url_finders is not None:
       self._url_finders = url_finders
 
-    self.start_time = self.io_loop.time()
-    self._timeout = self.io_loop.add_timeout(
-      self.timeout + self.start_time,
-      self.on_timeout,
-    )
     self.origurl = url
     self.url_visited = []
     if run_at_init:
@@ -283,7 +278,15 @@ class TitleFetcher:
     if self.url_visited:
       raise Exception("can't run again")
     else:
-      self.new_url(self.origurl)
+      self.start_time = self.io_loop.time()
+      self._timeout = self.io_loop.add_timeout(
+        self.timeout + self.start_time,
+        self.on_timeout,
+      )
+      try:
+        self.new_url(self.origurl)
+      finally:
+        self.io_loop.remove_timeout(self._timeout)
 
   def on_timeout(self):
     self.run_callback(Timeout)
