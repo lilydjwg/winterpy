@@ -240,6 +240,7 @@ class TitleFetcher:
   def __init__(self, url, callback,
                timeout=None, max_follows=None, io_loop=None,
                content_finders=None, url_finders=None, referrer=None,
+               run_at_init=True,
               ):
     '''
     url: the (full) url to fetch
@@ -275,7 +276,14 @@ class TitleFetcher:
     )
     self.origurl = url
     self.url_visited = []
-    self.new_url(url)
+    if run_at_init:
+      self.run()
+
+  def run(self):
+    if self.url_visited:
+      raise Exception("can't run again")
+    else:
+      self.new_url(self.origurl)
 
   def on_timeout(self):
     self.run_callback(Timeout)
