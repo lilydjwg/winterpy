@@ -7,15 +7,45 @@ import sys
 import time
 import socket
 
+registry = []
+
+def get_peer(name, addr):
+  now = time.time()
+  for t, k, a in reversed(registry):
+    if now - t > 500:
+      ret = None
+      break
+    if k == name and addr != a:
+      ret = a
+      break
+  else:
+    ret = None
+
+  registry.append((now, name, addr))
+  del registry[:-50]
+
+  return ret
+
 def main(port):
   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
   s.bind(('', port))
   try:
     while True:
       data, addr = s.recvfrom(4096)
-      back = 'Your address is %r\n' % (addr,)
+      msg = data.decode('utf-8', 'replace').rstrip('\n')
+      cmd, *rest = msg.split()
+      cmd = cmd.upper()
+      if cmd == 'REG' and len(rest):
+        name = rest[0]
+        back = 'ADDR %s %d' % addr
+        peer_addr = get_peer(name, addr)
+        if peer_addr:
+          back += ' %s %d' % peer_addr
+        back += '\n'
+      else:
+        back = 'Your address is %r\n' % (addr,)
       s.sendto(back.encode(), addr)
-      print(time.strftime('%Y-%m-%d %H:%M:%S'), addr, 'just sent us a message:', data.decode('utf-8', 'replace'), end='')
+      print(time.strftime('%Y-%m-%d %H:%M:%S'), addr, msg)
   except KeyboardInterrupt:
     print()
 
