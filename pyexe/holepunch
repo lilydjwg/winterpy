@@ -9,58 +9,73 @@ import subprocess
 import argparse
 
 udp_server = ('xmpp.vim-cn.com', 2727)
-addr_re = re.compile(r"\('(?P<ip>[^']+)', (?P<port>\d+)")
 
-def parse_addr(s, start=0):
-  m = addr_re.search(s, start)
-  if not m:
-    print("Error: can't parse address:", s)
-    sys.exit(2)
-  return m.group('ip'), int(m.group('port')), m.end()
+# For the address variable names, pe is 'peer external', sl is 'self local', etc
 
-def main(server, prog):
+def main(server, prog, name):
   sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
   sock.settimeout(2)
-  print('Send message...')
-  # for self ip
+
+  # connect for self local ip
   sock.connect(udp_server)
-  sock.send(b'req from holepunch.py\n')
-  msg, addr = sock.recvfrom(1024)
-  m_ip, m_port, _ = parse_addr(msg.decode())
-  ip, port = sock.getsockname()
-  print('Got my IP and Port: (%r, %s), (%r, %s).' % (m_ip, m_port, ip, port))
-  # this seems to not work
-  # http://stackoverflow.com/a/16830591/296473
-  sock.connect(('0.0.0.0', 0))
+  print('registering my name %s and finding peer...' % name)
+  pe_ip = None
+  sock.send(b'reg ' + name.encode('utf-8'))
+  for i in range(1, 5):
+    try:
+      msg, addr = sock.recvfrom(1024)
+      _, *items = msg.decode('utf-8', errors='replace').split()
 
-  msg = input('> Peer address: ')
-  p_ip, p_port, e = parse_addr(msg)
-  c_ip, c_port, _ = parse_addr(msg, e)
+      print('got addresses: %s' % items)
+      if len(items) == 2:
+        se_ip, se_port = items[0], int(items[1])
+      elif len(items) == 4:
+        se_ip, se_port = items[0], int(items[1])
+        pe_ip, pe_port = items[2], int(items[3])
+        break
+    except socket.timeout:
+      sock.send(b'reg ' + name.encode('utf-8'))
+  if pe_ip is None:
+    sys.exit("failed to get peer's address.")
 
-  print('send initial packet and wait for answer...')
-  sock.sendto(b'HELO\n', (p_ip, p_port))
-  try:
-    msg = sock.recvfrom(1024)
-    print('Received:', msg)
-  except socket.timeout:
-    print("Timed out (it's normal).")
+  sl_ip, sl_port = sock.getsockname()
+  print('Got my IP and Port: (%r, %s), (%r, %s).' % (se_ip, se_port, sl_ip, sl_port))
+
+  sock.connect((pe_ip, pe_port))
+  print('send and receive local ip...')
+  pl_ip = None
+  for i in range(1, 5):
+    # TODO: require ACK before stop
+    try:
+      sock.send(('%s %d' % (sl_ip, sl_port)).encode('utf-8'))
+      msg, addr = sock.recvfrom(1024)
+      msg = msg.decode('utf-8', errors='replace')
+      pl_ip, pl_port = msg.split()
+      pl_port = int(pl_port)
+    except (socket.timeout, ValueError):
+      pass
+    except ConnectionRefusedError:
+      # peer not ready
+      time.sleep(2)
+  if pl_ip is None:
+    sys.exit("failed to get peer's address.")
 
   if server:
-    globals()['sprog_' + prog](sock, port, c_ip, c_port, m_ip, m_port, p_ip, p_port)
+    globals()['sprog_' + prog](sock, sl_port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port)
   else:
-    globals()['cprog_' + prog](sock, port, c_ip, c_port, m_ip, m_port, p_ip, p_port)
+    globals()['cprog_' + prog](sock, sl_port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port)
 
-def sprog_mosh(sock, port, c_ip, c_port, m_ip, m_port, p_ip, p_port):
+def sprog_mosh(sock, port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port):
   sock.close()
   print('Starting mosh server...')
   msg = subprocess.check_output(['mosh-server', 'new', '-p', str(port)])
   secret = msg.split()[3].decode()
-  print('Connect with:\nMOSH_KEY=%s MOSH_CPORT=%s mosh-client %s %s' % (secret, c_port, m_ip, m_port))
+  print('Connect with:\nMOSH_KEY=%s MOSH_CPORT=%s mosh-client %s %s' % (secret, pl_port, se_ip, se_port))
 
 def cprog_mosh(*args):
   print('done.')
 
-def sprog_openvpn(sock, port, c_ip, c_port, m_ip, m_port, p_ip, p_port):
+def sprog_openvpn(sock, port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port):
   stmpl = '''\
 dev tun
 proto udp
@@ -87,10 +102,10 @@ comp-lzo
 client
 max-routes 2048
 dev tun
-remote {m_ip} {m_port} udp
+remote {se_ip} {se_port} udp
 resolv-retry infinite
-local {c_ip}
-port {c_port}
+local {pl_ip}
+port {pl_port}
 mssfix 1400
 keepalive 10 60
 persist-key
@@ -107,16 +122,16 @@ route 10.7.0.0 255.255.255.0
   sconfig = os.path.join(os.getcwd(), 'hole_s.ovpn')
 
   s = ctmpl.format(
-    m_ip=m_ip, m_port=m_port,
-    c_ip=c_ip, c_port=c_port
+    se_ip=se_ip, se_port=se_port,
+    pl_ip=pl_ip, pl_port=pl_port
   ).encode()
-  print('sending client-side config to %s:%d...' % (p_ip, p_port))
+  print('sending client-side config to %s:%d...' % (pe_ip, pe_port))
 
   sock.settimeout(1)
-  sock.connect((p_ip, p_port))
+  sock.connect((pe_ip, pe_port))
   for i in range(5):
     try:
-      sock.sendto(s, (p_ip, p_port))
+      sock.sendto(s, (pe_ip, pe_port))
       msg, addr = sock.recvfrom(1024)
       if msg == b'ok':
         break
@@ -133,10 +148,10 @@ route 10.7.0.0 255.255.255.0
   except KeyboardInterrupt:
     p.wait()
 
-def cprog_openvpn(sock, port, c_ip, c_port, m_ip, m_port, p_ip, p_port):
+def cprog_openvpn(sock, port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port):
   print('receiving config')
   sock.settimeout(20)
-  sock.connect((p_ip, p_port))
+  sock.connect((pe_ip, pe_port))
   while True:
     msg = sock.recv(1024)
     if not msg.strip().startswith(b'client'):
@@ -155,9 +170,10 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='permform UDP hole punching and run some program')
   parser.add_argument('-s', '--server', action='store_true', default=False,
                       help='server-side')
+  parser.add_argument('-n', '--name', required=True,
+                      help='set a name to identity peers')
   parser.add_argument('prog', metavar='PROG', default='mosh', nargs='?',
                       help='program to run via the hole')
-
   parser.add_argument('-a', '--auth', type=open,
                       help='OpenVPN auth info file (client)')
   args = parser.parse_args()
@@ -165,4 +181,7 @@ if __name__ == '__main__':
   if 'sprog_' + args.prog not in globals():
     sys.exit("don't know how to cope with program %r" % args.prog)
 
-  main(args.server, args.prog)
+  if args.prog == 'openvpn' and not args.server and not args.auth:
+    sys.exit('Auth file should be provided for OpenVPN client')
+
+  main(args.server, args.prog, args.name)
