@@ -15,7 +15,7 @@ def get_peer(name, addr):
     if now - t > 500:
       ret = None
       break
-    if k == name and addr != a:
+    if k == name and addr[0] != a[0]:
       ret = a
       break
   else:
