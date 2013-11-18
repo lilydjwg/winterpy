@@ -15,12 +15,13 @@ def getSession():
 def search(q, session=None):
   if session is None:
     session = getSession()
+
   url = 'http://www.xiami.com/search?key=' + q
   doc = parse_document_from_requests(url, session)
   rows = doc.xpath('//table[@class="track_list"]//tr')[1:]
   ret = []
   for tr in rows:
-    # 没有 title 属性的是用于展开的按钮
+    # 没有 target 属性的是用于展开的按钮
     names = tr.xpath('td[@class="song_name"]/a[@target]')
     if len(names) == 2:
       info = names[1].text_content()
@@ -37,11 +38,13 @@ def search(q, session=None):
     sid = href.rsplit('/', 1)[-1]
     song = SongInfo(sid, name, href, artist, album, info)
     ret.append(song)
+
   return ret
 
 def getLyricFor(sid, session=None):
   if session is None:
     session = getSession()
+
   url = 'http://www.xiami.com/song/playlist/id/%s/object_name/default/object_id/0' % sid
   r = session.get(url)
   doc = fromstring(r.content)
