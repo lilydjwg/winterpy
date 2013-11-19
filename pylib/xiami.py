@@ -1,4 +1,5 @@
 from collections import namedtuple
+import re
 
 import requests
 from lxml.etree import fromstring
@@ -6,9 +7,11 @@ from lxml.etree import fromstring
 from htmlutils import parse_document_from_requests
 
 SongInfo = namedtuple('SongInfo', 'sid name href artist album info')
+DEFAULT_BETTER_LRC_RE = re.compile(r'\[\d+:\d+[:.](?!00)\d+\]')
 
 class Xiami:
   _session = None
+  better_lrc_re = DEFAULT_BETTER_LRC_RE
 
   def __init__(self, session=None):
     self._session = session
@@ -64,7 +67,15 @@ class Xiami:
 
   def findBestLrc(self, q):
     results = self.search(q)
+    candidate = None
+    r = self.better_lrc_re
+
     for song in results:
       lyric = self.getLyricFor(song.sid)
       if lyric and lyric.count('[') > 5:
-        return lyric
+        if r.search(lyric):
+          return lyric
+        elif not candidate:
+          candidate = lyric
+
+    return candidate

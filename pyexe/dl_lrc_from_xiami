@@ -21,6 +21,7 @@ def main(startdir):
       continue
     lrcpath = (f.parent() + (f.rootname + '.lrc'))
     q = '%s %s' % (lrcpath.parent().basename, lrcpath.rootname)
+    q = q.replace('&', ' ')
     if lrcpath.exists():
       logging.info('lyric for %s already there.', q)
       continue
