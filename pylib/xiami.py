@@ -52,7 +52,11 @@ class Xiami:
     url = 'http://www.xiami.com/song/playlist/id/%s/object_name/default/object_id/0' % sid
     r = self.session.get(url)
     doc = fromstring(r.content)
-    lyric_url = doc.xpath('//xspf:lyric/text()', namespaces={'xspf': 'http://xspf.org/ns/0/'})[0]
+    try:
+      lyric_url = doc.xpath('//xspf:lyric/text()',
+                            namespaces={'xspf': 'http://xspf.org/ns/0/'})[0]
+    except IndexError:
+      return
     # pic_url = doc.xpath('//xspf:pic/text()', namespaces={'xspf': 'http://xspf.org/ns/0/'})[0]
 
     r = self.session.get(lyric_url)
@@ -62,6 +66,5 @@ class Xiami:
     results = self.search(q)
     for song in results:
       lyric = self.getLyricFor(song.sid)
-      if lyric.count('[') < 5:
-        continue
-      return lyric
+      if lyric and lyric.count('[') > 5:
+        return lyric
