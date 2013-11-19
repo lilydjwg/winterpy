@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+
+import sys
+import logging
+
+from lilypath import path
+from xiami import Xiami
+from nicelogger import enable_pretty_logging
+
+suffixes = ('.mp3', '.ogg')
+
+def main(startdir):
+  p = path(startdir)
+  x = Xiami()
+  enable_pretty_logging(logging.DEBUG)
+
+  for f in p.traverse(follow_links=False):
+    if f.isdir() or f.islink():
+      continue
+    if not str(f).endswith(suffixes):
+      continue
+    lrcpath = (f.parent() + (f.rootname + '.lrc'))
+    q = '%s %s' % (lrcpath.parent().basename, lrcpath.rootname)
+    if lrcpath.exists():
+      logging.info('lyric for %s already there.', q)
+      continue
+    lrc = x.findBestLrc(q)
+    if lrc:
+      lrc = lrc.replace('\r', '')
+      with lrcpath.open('w') as f:
+        f.write(lrc)
+      logging.info('lyric for %s written.', q)
+    else:
+      logging.warn('lyric for %s not found.', q)
+
+if __name__ == '__main__':
+  main(sys.argv[1]) if len(sys.argv) == 2 else \
+      sys.exit('which directory to start?')
