@@ -34,6 +34,7 @@ class Pinger:
   seq = 0
   wait_timeout = 10 # 10s or never
   payload = b'L' * 56
+  last_received = 0
 
   def __init__(self, sock, io_loop=None):
     self.sock = sock
@@ -58,6 +59,16 @@ class Pinger:
   def pong_received(self, sockfd, event):
     data = self.sock.recv(1024)
     seq = icmplib.parse_packet(data)[0]
+    if (seq - self.last_received) % 0x7ffff > 1:
+        for s in range(self.last_received+1, seq):
+            if s > 0x7fff:
+                s -= 0x7fff
+            try:
+                logging.warn('PONG %4d    NOT SEEN from %.3f', s, self.flying[s][0])
+            except KeyError:
+                # already printed lost
+                pass
+    self.last_received = seq
     t, timeout = self.flying[seq]
     self.io_loop.remove_timeout(timeout)
     interval = (time.time() - t) * 1000
