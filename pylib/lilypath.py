@@ -279,11 +279,11 @@ class path:
     #XXX 文档说buffering默认值为 None，但事实并非如此。使用full buffering好了
     return open(self.value, mode, buffering, encoding, errors, newline, closefd)
 
-  def traverse(self):
+  def traverse(self, follow_links=True):
     '''遍历目录'''
     for i in self.list():
       yield i
-      if i.isdir():
+      if i.isdir() and (follow_links or not i.islink()):
         for j in i.traverse():
           yield j
 
