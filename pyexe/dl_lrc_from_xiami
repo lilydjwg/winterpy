@@ -28,7 +28,8 @@ def main(startdir):
     if lrc:
       lrc = lrc.replace('\r', '')
       with lrcpath.open('w') as f:
-        f.write(lrc)
+        # add EOL at EOF if missing
+        f.write(lrc.rstrip() + '\n')
       logging.info('lyric for %s written.', q)
     else:
       logging.warn('lyric for %s not found.', q)
