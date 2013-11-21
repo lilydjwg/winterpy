@@ -32,7 +32,7 @@ def setup_sync():
 
 class Pinger:
   seq = 0
-  wait_timeout = 10 # 10s or never
+  wait_timeout = 30 # this long or never
   payload = b'L' * 56
   last_received = 0
 
@@ -69,7 +69,12 @@ class Pinger:
                 # already printed lost
                 pass
     self.last_received = seq
-    t, timeout = self.flying[seq]
+    try:
+        t, timeout = self.flying[seq]
+    except KeyError:
+        # finally arrived, but we thought it was lost
+        logging.info('PONG %4d finally arrived', seq)
+        return
     self.io_loop.remove_timeout(timeout)
     interval = (time.time() - t) * 1000
     self.save_ping_result(t, interval)
