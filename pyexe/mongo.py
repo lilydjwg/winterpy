@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
-# vim:fileencoding=utf-8
 
 import sys
 import os
-from pymongo import Connection
-import pymongo.cursor
-from cli import repl
 from pprint import pprint
 import subprocess
 import datetime
 import argparse
 
-import locale
-locale.setlocale(locale.LC_ALL, '')
-del locale
+from pymongo import Connection
+import pymongo.cursor
+
+from cli import repl
 
 host = 'localhost'
 port = 27017
 db = 'test'
+
+import locale
+locale.setlocale(locale.LC_ALL, '')
+del locale
 
 env = os.environ.copy()
 if env['TERM'].find('256') != -1:
