@@ -7,6 +7,10 @@ import socket
 import time
 import subprocess
 import argparse
+import logging
+
+from nicelogger import enable_pretty_logging
+enable_pretty_logging()
 
 udp_server = ('xmpp.vim-cn.com', 2727)
 
@@ -18,7 +22,7 @@ def main(server, prog, name):
 
   # connect for self local ip
   sock.connect(udp_server)
-  print('registering my name %s and finding peer...' % name)
+  logging.info('registering my name %s and finding peer...', name)
   pe_ip = None
   sock.send(b'reg ' + name.encode('utf-8'))
   for i in range(1, 5):
@@ -26,7 +30,7 @@ def main(server, prog, name):
       msg, addr = sock.recvfrom(1024)
       _, *items = msg.decode('utf-8', errors='replace').split()
 
-      print('got addresses: %s' % items)
+      logging.info('got addresses: %s', items)
       if len(items) == 2:
         se_ip, se_port = items[0], int(items[1])
       elif len(items) == 4:
@@ -36,13 +40,14 @@ def main(server, prog, name):
     except socket.timeout:
       sock.send(b'reg ' + name.encode('utf-8'))
   if pe_ip is None:
-    sys.exit("failed to get peer's address.")
+    loggin.fatal("failed to get peer's address.")
+    sys.exit(2)
 
   sl_ip, sl_port = sock.getsockname()
-  print('Got my IP and Port: (%r, %s), (%r, %s).' % (se_ip, se_port, sl_ip, sl_port))
+  logging.info('Got my IP and Port: (%r, %s), (%r, %s).', se_ip, se_port, sl_ip, sl_port)
 
   sock.connect((pe_ip, pe_port))
-  print('send and receive local ip...')
+  logging.info('send and receive local ip...')
   pl_ip = None
   for i in range(1, 5):
     # TODO: require ACK before stop
@@ -58,7 +63,8 @@ def main(server, prog, name):
       # peer not ready
       time.sleep(2)
   if pl_ip is None:
-    sys.exit("failed to get peer's address.")
+    logging.fatal("failed to get peer's address.")
+    sys.exit(2)
 
   if server:
     globals()['sprog_' + prog](sock, sl_port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port)
@@ -67,13 +73,13 @@ def main(server, prog, name):
 
 def sprog_mosh(sock, port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port):
   sock.close()
-  print('Starting mosh server...')
+  logging.info('Starting mosh server...')
   msg = subprocess.check_output(['mosh-server', 'new', '-p', str(port)])
   secret = msg.split()[3].decode()
   print('Connect with:\nMOSH_KEY=%s MOSH_CPORT=%s mosh-client %s %s' % (secret, pl_port, se_ip, se_port))
 
 def cprog_mosh(*args):
-  print('done.')
+  logging.info('done.')
 
 def sprog_openvpn(sock, port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port):
   stmpl = '''\
@@ -125,7 +131,7 @@ route 10.7.0.0 255.255.255.0
     se_ip=se_ip, se_port=se_port,
     pl_ip=pl_ip, pl_port=pl_port
   ).encode()
-  print('sending client-side config to %s:%d...' % (pe_ip, pe_port))
+  logging.info('sending client-side config to %s:%d...', pe_ip, pe_port)
 
   sock.settimeout(1)
   sock.connect((pe_ip, pe_port))
@@ -138,10 +144,10 @@ route 10.7.0.0 255.255.255.0
     except socket.timeout:
       pass
   else:
-    print('ACK not received, starting anyway...')
+    logging.warn('ACK not received, starting anyway...')
   sock.close()
 
-  print('client-side config sent. starting openvpn')
+  logging.info('client-side config sent. starting openvpn')
   p = subprocess.Popen(['sudo', '/usr/bin/openvpn', '--cd', '/etc/openvpn', '--config', sconfig])
   try:
     p.wait()
@@ -149,7 +155,7 @@ route 10.7.0.0 255.255.255.0
     p.wait()
 
 def cprog_openvpn(sock, port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port):
-  print('receiving config')
+  logging.info('receiving config')
   sock.settimeout(20)
   sock.connect((pe_ip, pe_port))
   while True:
@@ -163,7 +169,7 @@ def cprog_openvpn(sock, port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port):
     f.write(msg.decode())
     auth = args.auth.read()
     f.write(auth)
-  print('config received as hole.ovpn')
+  logging.info('config received as hole.ovpn')
   os.execvp('sudo', ['sudo', 'openvpn', 'hole.ovpn'])
 
 if __name__ == '__main__':
