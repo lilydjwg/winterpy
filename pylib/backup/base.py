@@ -29,7 +29,7 @@ def run_command(cmd):
   logger.debug('running command: %r', cmd)
 
   if cmd[0] == 'sudo':
-    print('sudo password may be request.')
+    print('sudo password may be requested.')
 
   retcode = subprocess.call(cmd)
   return retcode
