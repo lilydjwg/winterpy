@@ -40,7 +40,7 @@ def main(server, prog, name):
     except socket.timeout:
       sock.send(b'reg ' + name.encode('utf-8'))
   if pe_ip is None:
-    loggin.fatal("failed to get peer's address.")
+    logging.fatal("failed to get peer's address.")
     sys.exit(2)
 
   sl_ip, sl_port = sock.getsockname()
