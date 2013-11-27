@@ -36,8 +36,9 @@ class Pinger:
   payload = b'L' * 56
   last_received = 0
 
-  def __init__(self, sock, io_loop=None):
-    self.sock = sock
+  def __init__(self, addr, io_loop=None):
+    self.addr = addr
+    self.new_sock()
     self.io_loop = io_loop = io_loop or ioloop.IOLoop().current()
 
     self.flying = {}
@@ -45,7 +46,11 @@ class Pinger:
     self.p = ioloop.PeriodicCallback(self.ping_host, 1000, io_loop=io_loop)
     self.p.start()
     self.ping_host()
-    io_loop.add_handler(sock.fileno(), self.pong_received, ioloop.IOLoop.READ)
+    io_loop.add_handler(self.sock.fileno(), self.pong_received, ioloop.IOLoop.READ)
+
+  def new_sock(self):
+    self.sock = icmplib.socket()
+    self.sock.connect((self.addr, 0))
 
   def ping_host(self):
     self.seq = (self.seq + 1) & 0x7fff
@@ -55,7 +60,15 @@ class Pinger:
       t + self.wait_timeout,
       partial(self.pong_never, self.seq),
     ))
-    self.sock.send(data)
+    try:
+      self.sock.send(data)
+    except OSError as e:
+      logging.error('Error while sending data. Creating new socket.',
+                    exc_info=True)
+      if e.errno == 22: # Invalid argument
+        self.new_sock()
+      else:
+        raise
 
   def pong_received(self, sockfd, event):
     data = self.sock.recv(1024)
@@ -108,11 +121,7 @@ class Pinger:
 def main():
   setup_sync()
   loop = ioloop.IOLoop().instance()
-
-  sock = icmplib.socket()
-  sock.connect((Host, 0))
-  pinger = Pinger(sock)
-
+  Pinger(Host)
   loop.start()
 
 if __name__ == '__main__':
