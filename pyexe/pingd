@@ -41,6 +41,7 @@ class Pinger:
     self.io_loop = io_loop = io_loop or ioloop.IOLoop().current()
 
     self.flying = {}
+    self.maylost = set()
     self.p = ioloop.PeriodicCallback(self.ping_host, 1000, io_loop=io_loop)
     self.p.start()
     self.ping_host()
@@ -65,6 +66,7 @@ class Pinger:
                 s -= 0x7fff
             try:
                 logging.warn('PONG %4d    NOT SEEN from %.3f', s, self.flying[s][0])
+                self.maylost.add(s)
             except KeyError:
                 # already printed lost
                 pass
@@ -78,7 +80,12 @@ class Pinger:
     self.io_loop.remove_timeout(timeout)
     interval = (time.time() - t) * 1000
     self.save_ping_result(t, interval)
-    logging.debug('PONG %4d %9.3fms from %.3f', seq, interval, t)
+    if seq in self.maylost:
+        fmt = 'PONG %4d %9.3fms from %.3f (Out-of-Order)'
+        self.maylost.remove(seq)
+    else:
+        fmt = 'PONG %4d %9.3fms from %.3f'
+    logging.debug(fmt, seq, interval, t)
 
   def save_ping_result(self, t, interval):
     DB.ping.save({
@@ -88,7 +95,10 @@ class Pinger:
 
   def pong_never(self, seq):
     t, _ = self.flying[seq]
-    logging.warn('PONG %4d        LOST from %.3f', seq, t)
+    if seq in self.maylost:
+        self.maylost.remove(seq)
+    else:
+        logging.warn('PONG %4d        LOST from %.3f', seq, t)
     self.save_ping_result(t, float('inf'))
     del self.flying[seq]
 
