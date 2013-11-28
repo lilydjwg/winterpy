@@ -20,3 +20,8 @@ def repl(local, histfile=None, banner=None):
   if histfile is not None:
     readline.write_history_file(histfile)
 
+def repl_reset_stdin(*args, **kwargs):
+  fd = os.open('/dev/tty', os.O_RDONLY)
+  os.dup2(fd, 0)
+  os.close(fd)
+  repl(*args, **kwargs)
