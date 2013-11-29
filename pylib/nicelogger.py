@@ -29,6 +29,8 @@ class TornadoLogFormatter(logging.Formatter):
                      "ascii"),
         logging.ERROR: str(curses.tparm(fg_color, 1), # Red
                      "ascii"),
+        logging.CRITICAL: str(curses.tparm(fg_color, 9), # Bright Red
+                     "ascii"),
       }
       self._normal = str(curses.tigetstr("sgr0"), "ascii")
 
