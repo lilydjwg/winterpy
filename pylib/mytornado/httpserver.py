@@ -78,6 +78,11 @@ call in its ``__init__`` method.
 class StaticFileHandler(RequestHandler):
   """A simple handler that can serve static content from a directory.
 
+  Why prefer this than the one in Tornado 3.1?
+
+  1. Etag is not md5sum, so it's quick on large files;
+  2. Read file chunk by chunk, so it won't eat all your memory on huge files.
+
   To map a path to this handler for a static data directory ``/var/www``,
   you would add a line to your application like::
 
