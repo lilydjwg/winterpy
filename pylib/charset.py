@@ -132,9 +132,6 @@ def CJK_align(字符串, 对齐宽度, 方向='左', 填充=' '):
     return _CJK_align(字符串, 对齐宽度, 方向, 填充)
 
 def isascii(string):
-  for i in string:
-    if ord(i) > 255:
-      return False
-  return True
+  return all(ord(ch) < 256 for ch in string)
 
 # vim:tw=78:et:sts=2:fdm=expr:fde=getline(v\:lnum)=~'\\v^\\S.*\:(\\s*#.*)?$'?'>1'\:1
