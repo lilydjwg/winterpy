@@ -1,7 +1,11 @@
 '''Utilities for CLI programming'''
 
+import os
 import sys
 import time
+from unicodedata import east_asian_width
+
+from myutils import filesize, humantime
 
 def foreach(items, callable, *, process=True, timer=True):
   '''call callable for each item and optionally show a progressbar'''
@@ -28,3 +32,70 @@ def foreach(items, callable, *, process=True, timer=True):
       s = '\r' + s + '\x1b[K'
       sys.stderr.write(s)
 
+def download_process(name, startat, got, total, width=80):
+  '''Progressbar: [xx%] FileName: yKiB of zMiB, Ts left, sKiB/s'''
+  elapsed = time.time() - startat
+  speed = got / elapsed
+  if got == total:
+    # complete
+    s1 = 'DONE! '
+    fmt2 = ': %s total, %s elapsed, %s/s'
+    s2 = fmt2 % (filesize(got), humantime(elapsed), filesize(speed))
+  else:
+    fmt1 = '[%2d%%] '
+    p = got * 100 // total
+
+    fmt2 = ': %s'
+    size1 = filesize(got)
+    args2 = [size1]
+    if total > 0:
+      fmt2 += ' of %s'
+      args2.append(filesize(total))
+
+      fmt2 += ', %s left, %s/s'
+      left = (total - got) / speed
+      args2.append(humantime(left))
+      args2.append(filesize(speed))
+
+    s1 = fmt1 % p
+    s2 = fmt2 % tuple(args2)
+
+  avail = width - len(s1) - len(s2) - 1
+  if avail < 0:
+    # Sadly, we have too narrow a termial. Let's output something at least
+    avail = 2
+
+  name2 = ''
+  for ch in name:
+    w = east_asian_width(ch) in 'WF' and 2 or 1
+    if avail < w:
+      break
+    name2 += ch
+    avail -= w
+
+  sys.stdout.write('\r' + s1 + name2 + s2 + '\x1b[K')
+  if got == total:
+    sys.stdout.write('\n')
+  else:
+    sys.stdout.flush()
+
+def get_terminal_size(fd=1):
+  """
+  Returns height and width of current terminal. First tries to get
+  size via termios.TIOCGWINSZ, then from environment. Defaults to 25
+  lines x 80 columns if both methods fail.
+
+  :param fd: file descriptor (default: 1=stdout)
+
+  from: http://blog.taz.net.au/2012/04/09/getting-the-terminal-size-in-python/
+  """
+  try:
+    import fcntl, termios, struct
+    hw = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+  except Exception:
+    try:
+      hw = (os.environ['LINES'], os.environ['COLUMNS'])
+    except Exception:
+      hw = (25, 80)
+
+  return hw
