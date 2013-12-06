@@ -49,6 +49,23 @@ def filesize(size):
     if size < 0:
       left = -left
     return '%.1f%siB' % (left, units[unit])
+
+def humantime(t):
+  '''seconds -> XhYmZs'''
+  units = 'hms'
+  m = t // 60
+  s = t % 60
+  h = m // 60
+  m = m % 60
+  ret = ''
+  if h:
+    ret += '%dh' % h
+  if m:
+    ret += '%dm' % m
+  if s:
+    ret += '%ds' % s
+  return ret
+
 def input_t(timeout, prompt=''):
   '''带有超时的输入，使用 select() 实现
 
