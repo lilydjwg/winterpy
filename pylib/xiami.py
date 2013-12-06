@@ -1,29 +1,14 @@
-from collections import namedtuple
 import re
 
-import requests
 from lxml.etree import fromstring
 
 from htmlutils import parse_document_from_requests
+from musicsites import Base, SongInfo
 
-SongInfo = namedtuple('SongInfo', 'sid name href artist album info')
 DEFAULT_BETTER_LRC_RE = re.compile(r'\[\d+:\d+[:.](?!00)\d+\]')
 
-class Xiami:
-  _session = None
+class Xiami(Base):
   better_lrc_re = DEFAULT_BETTER_LRC_RE
-
-  def __init__(self, session=None):
-    self._session = session
-
-  @property
-  def session(self):
-    if not self._session:
-      s = requests.Session()
-      s.headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64; rv:20.0) ' \
-          'Gecko/20100101 Firefox/20.0'
-      self._session = s
-    return self._session
 
   def search(self, q):
     url = 'http://www.xiami.com/search?key=' + q
@@ -34,9 +19,9 @@ class Xiami:
       # 没有 target 属性的是用于展开的按钮
       names = tr.xpath('td[@class="song_name"]/a[@target]')
       if len(names) == 2:
-        info = names[1].text_content()
+        extra = names[1].text_content()
       else:
-        info = None
+        extra = None
       name = names[0].text_content()
       href = names[0].get('href')
 
@@ -46,7 +31,7 @@ class Xiami:
       album = album.lstrip('《').rstrip('》')
 
       sid = href.rsplit('/', 1)[-1]
-      song = SongInfo(sid, name, href, artist, album, info)
+      song = SongInfo(sid, name, href, (artist,), album, extra)
       ret.append(song)
 
     return ret
