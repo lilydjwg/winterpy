@@ -77,9 +77,9 @@ Constellation = 星座
 def strwidth_py(s, ambiwidth=2):
   '''ambiwidth: 宽度不定的字符算几个，取值为 1, 2'''
   if ambiwidth == 2:
-    dwidth = 'WA'
+    dwidth = 'WFA'
   elif ambiwidth == 1:
-    dwidth = 'W'
+    dwidth = 'WF'
   else:
     raise ValueError('ambiwidth 取值为 1 或者 2')
 
