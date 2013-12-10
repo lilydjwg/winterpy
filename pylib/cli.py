@@ -41,12 +41,12 @@ def repl_py27(local, *args, **kwargs):
       local['_'] = None
       return
 
-    value = repr(value)
-    if value.find(r'\x') != -1:
-      p.stdin.write(value+'\n')
+    r = repr(value)
+    if r.find(r'\x') != -1:
+      p.stdin.write(r+'\n')
       time.sleep(0.01)
     else:
-      print(value)
+      print(r)
     local['_'] = value
 
   sys.displayhook = displayfunc
