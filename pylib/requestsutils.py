@@ -19,9 +19,9 @@ def download_into_with_progressbar(url, dest):
   from termutils import download_process, get_terminal_size
 
   w = get_terminal_size()[1]
-  with open(argv[2], 'wb') as f:
-    download_into(requests, argv[1], f, partial(
-      download_process, argv[2], time.time(), width=w))
+  with open(dest, 'wb') as f:
+    download_into(requests, url, f, partial(
+      download_process, dest, time.time(), width=w))
 
 if __name__ == '__main__':
   from sys import argv, exit
