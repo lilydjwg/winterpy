@@ -24,8 +24,11 @@ class BaiduMusic(Base):
       artists = tuple(
         a.text_content() for a in
         tr.xpath('./span[@class="singer"]/span/a'))
-      album = tr.xpath('./span[@class="album-title"]/a')[0].text_content().strip()
-      album = album.lstrip('《').rstrip('》')
+      try:
+        album = tr.xpath('./span[@class="album-title"]/a')[0].text_content().strip()
+        album = album.lstrip('《').rstrip('》')
+      except IndexError:
+        album = None
       song = SongInfo(sid, title, href, artists, album, None)
       songs.append(song)
 
