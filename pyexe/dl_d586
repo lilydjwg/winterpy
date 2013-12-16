@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+# vim:fileencoding=utf-8
+
+import sys
+from functools import partial
+from string import Template
+import argparse
+import base64
+import binascii
+from urllib.parse import unquote
+
+from lxml.html import fromstring
+import requests
+
+import htmlutils
+from termutils import foreach
+
+session = requests.Session()
+
+def main(index, filename='$name-$author.txt', start=0, start_title=None):
+  sys.stdout.write('获取目录页...')
+  sys.stdout.flush()
+  doc = htmlutils.parse_document_from_requests(index, session,
+                                               encoding='gb18030')
+  print('完成。')
+  name = doc.xpath('//h1/a/text()')[0][1:-1]
+  author = doc.xpath('//h3/span[@class="author"]/a/text()')[0]
+
+  nametmpl = Template(filename)
+  fname = nametmpl.substitute(name=name, author=author)
+  with open(fname, 'w') as f:
+    sys.stderr.write('下载到文件 %s。\n' % fname)
+    links = doc.xpath('//div[@class="kuai"]//ul/ul/li/a')
+    try:
+      if start_title:
+        for i, l in enumerate(links):
+          if l.text_content().strip().startswith(start_title):
+            start = i
+            break
+        else:
+          sys.exit('指定的开始下载位置没有找到。')
+      if start:
+        links = links[start:]
+      foreach(links, partial(gather_content, f.write))
+    except KeyboardInterrupt:
+      sys.stderr.write('\n')
+      sys.exit(130)
+
+  sys.stderr.write('\n')
+  return True
+
+def gather_content(write, i, l):
+  url = l.get('href')
+  doc = htmlutils.parse_document_from_requests(url, session, encoding='gb18030')
+  content = doc.xpath("//div[contains(concat(' ', normalize-space(@class), ' '), ' content ')]")[0]
+  text = ''.join(htmlutils.iter_text_and_br(content)).replace('\n\n', '\n')
+  title = l.text
+  write(title)
+  write('\n\n')
+  write(text)
+  write('\n\n')
+  return title
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='下载D586网小说')
+  parser.add_argument('url',
+                      help='小说首页链接')
+  parser.add_argument('name', default='$name-$author.txt', nargs='?',
+                      help='保存文件名模板（支持 $name 和 $author）')
+  group = parser.add_mutually_exclusive_group()
+  group.add_argument('-s', '--start', default=1, type=int, metavar='N',
+                      help='下载起始页位置（以 1 开始）')
+  group.add_argument('-t', '--title', metavar='TITLE',
+                      help='下载起始页标题')
+  args = parser.parse_args()
+  main(args.url, args.name, args.start-1, args.title)

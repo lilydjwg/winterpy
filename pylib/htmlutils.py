@@ -16,6 +16,13 @@ def extractText(el):
   _br2span_inplace(el)
   return el.text_content()
 
+def iter_text_and_br(el):
+  for i in el.iterchildren():
+    if i.tag == 'br':
+      yield '\n'
+    if i.tail:
+      yield i.tail
+
 def parse_document_from_requests(url, session, *, encoding=None):
   '''
   ``encoding``: override detected encoding
