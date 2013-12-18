@@ -52,7 +52,7 @@ def main(index, filename='$name-$author.txt', start=0, start_title=None):
 def gather_content(write, i, l):
   url = l.get('href')
   doc = htmlutils.parse_document_from_requests(url, session, encoding='gb18030')
-  content = doc.xpath("//div[contains(concat(' ', normalize-space(@class), ' '), ' content ')]")[0]
+  content = doc.xpath("//div[contains(concat(' ', normalize-space(@class), ' '), ' yd_text2 ')]")[0]
   text = ''.join(htmlutils.iter_text_and_br(content)).replace('\n\n', '\n')
   title = l.text
   write(title)
