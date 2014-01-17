@@ -35,22 +35,33 @@ class Pinger:
   wait_timeout = 30 # this long or never
   payload = b'L' * 56
   last_received = 0
+  sock = None
 
   def __init__(self, addr, io_loop=None):
     self.addr = addr
+    self.io_loop = io_loop or ioloop.IOLoop().current()
     self.new_sock()
-    self.io_loop = io_loop = io_loop or ioloop.IOLoop().current()
 
     self.flying = {}
     self.maylost = set()
     self.p = ioloop.PeriodicCallback(self.ping_host, 1000, io_loop=io_loop)
     self.p.start()
     self.ping_host()
-    io_loop.add_handler(self.sock.fileno(), self.pong_received, ioloop.IOLoop.READ)
 
   def new_sock(self):
+    if self.sock:
+      self.io_loop.remove_handler(self.sock.fileno())
     self.sock = icmplib.socket()
-    self.sock.connect((self.addr, 0))
+    self.io_loop.add_handler(self.sock.fileno(), self.pong_received, ioloop.IOLoop.READ)
+    try:
+      self.sock.connect((self.addr, 0))
+    except OSError as e:
+      if e.errno == 101:
+        self.io_loop.remove_handler(self.sock.fileno())
+        logging.error('Network unreachable. Will try again later.')
+        self.sock = None
+      else:
+        raise
 
   def ping_host(self):
     self.seq = (self.seq + 1) & 0x7fff
@@ -62,9 +73,10 @@ class Pinger:
     ))
     try:
       self.sock.send(data)
+    except AttributeError:
+      self.new_sock()
     except OSError as e:
-      logging.error('Error while sending data. Creating new socket.',
-                    exc_info=True)
+      logging.error('Error while sending data. Creating new socket.')
       if e.errno == 22: # Invalid argument
         self.new_sock()
       else:
