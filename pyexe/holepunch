@@ -76,7 +76,7 @@ def sprog_mosh(sock, port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port):
   logging.info('Starting mosh server...')
   msg = subprocess.check_output(['mosh-server', 'new', '-p', str(port)])
   secret = msg.split()[3].decode()
-  print('Connect with:\nMOSH_KEY=%s MOSH_CPORT=%s mosh-client %s %s' % (secret, pl_port, se_ip, se_port))
+  print('Connect with:\nMOSH_KEY=%s MOSH_CPORT=%s mosh-client-lily %s %s' % (secret, pl_port, se_ip, se_port))
 
 def cprog_mosh(*args):
   logging.info('done.')
