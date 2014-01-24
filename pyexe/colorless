@@ -35,8 +35,8 @@ def main(fname, lang):
         lexer = get_lexer_by_name('text')
 
   if sys.stdout.isatty():
-    p = subprocess.Popen(['less', '-RFX'], stdin=subprocess.PIPE,
-                        universal_newlines=True)
+    p = subprocess.Popen(['less', '-RFXM'], stdin=subprocess.PIPE,
+                         universal_newlines=True)
     output = p.stdin
   else:
     p = None
