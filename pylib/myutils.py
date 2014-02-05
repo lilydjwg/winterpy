@@ -219,3 +219,16 @@ def is_internal_ip(ip):
 
   ip = ipaddress.ip_address(ip)
   return ip.is_loopback or ip.is_private or ip.is_reserved or ip.is_link_local
+
+@contextlib.contextmanager
+def at_dir(d):
+  old_dir = os.getcwd()
+  os.chdir(d)
+  yield
+  os.chdir(old_dir)
+
+def firstExistentPath(paths):
+  for p in paths:
+    if os.path.exists(p):
+      return p
+
