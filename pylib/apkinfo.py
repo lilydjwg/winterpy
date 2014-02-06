@@ -20,7 +20,7 @@ class ApktoolFailed(Exception): pass
 def apkinfo(apk):
   with tempfile.TemporaryDirectory('apk') as tempdir:
     try:
-      run(["apktool", "d", "-f", apk, tempdir])
+      run(["apktool", "d", "-f", "-s", apk, tempdir])
     except CalledProcessError:
       raise ApktoolFailed
 
