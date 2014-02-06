@@ -41,11 +41,12 @@ def apkinfo(apk):
             strings = ET.parse(os.path.join(d, 'strings.xml')).getroot()
             name = strings.findtext('string[@name="%s"]' % sid)
 
-          if icon and icon.startswith('@drawable/'):
-            iconname = icon.split('/', 1)[1]
+          if icon and icon.startswith('@'):
+            dirname, iconname = icon[1:].split('/', 1)
             iconfile = firstExistentPath(
               '%s/%s.png' % (d, iconname) for d in
-              ['drawable-xxhdpi', 'drawable-xhdpi', 'drawable-hdpi', 'drawable']
+              [dirname + x for x in
+               ['-xxhdpi', '-xhdpi', '-hdpi', '']]
             )
             with open(iconfile, 'rb') as f:
               icon = f.read()
