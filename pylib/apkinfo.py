@@ -37,16 +37,20 @@ def apkinfo(apk):
         with at_dir('res'):
           if name and name.startswith('@string/'):
             sid = name.split('/', 1)[1]
-            d = firstExistentPath(('values-zh-rCN', 'values-zh-rTM', 'values'))
-            strings = ET.parse(os.path.join(d, 'strings.xml')).getroot()
-            name = strings.findtext('string[@name="%s"]' % sid)
+            for d in ('values-zh-rCN', 'values-zh-rTW', 'values-zh-rHK', 'values'):
+              if not os.path.isdir(d):
+                continue
+              strings = ET.parse(os.path.join(d, 'strings.xml')).getroot()
+              name = strings.findtext('string[@name="%s"]' % sid)
+              if name:
+                break
 
           if icon and icon.startswith('@'):
             dirname, iconname = icon[1:].split('/', 1)
             iconfile = firstExistentPath(
               '%s/%s.png' % (d, iconname) for d in
-              [dirname + x for x in
-               ['-xxhdpi', '-xhdpi', '-hdpi', '']]
+              (dirname + x for x in
+               ('-xxhdpi', '-xhdpi', '-hdpi', ''))
             )
             with open(iconfile, 'rb') as f:
               icon = f.read()
