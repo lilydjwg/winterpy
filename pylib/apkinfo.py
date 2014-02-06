@@ -17,6 +17,18 @@ NAME_ATTR = '{http://schemas.android.com/apk/res/android}label'
 ApkInfo = namedtuple('ApkInfo', 'id version name icon')
 class ApktoolFailed(Exception): pass
 
+def read_string(s):
+  if s and s.startswith('@string/'):
+    sid = s.split('/', 1)[1]
+    for d in ('values-zh-rCN', 'values-zh-rTW', 'values-zh-rHK', 'values'):
+      if not os.path.isdir(d):
+        continue
+      strings = ET.parse(os.path.join(d, 'strings.xml')).getroot()
+      val = strings.findtext('string[@name="%s"]' % sid)
+      if val:
+        return val
+  return s
+
 def apkinfo(apk):
   with tempfile.TemporaryDirectory('apk') as tempdir:
     try:
@@ -35,15 +47,8 @@ def apkinfo(apk):
 
       if os.path.isdir('res'):
         with at_dir('res'):
-          if name and name.startswith('@string/'):
-            sid = name.split('/', 1)[1]
-            for d in ('values-zh-rCN', 'values-zh-rTW', 'values-zh-rHK', 'values'):
-              if not os.path.isdir(d):
-                continue
-              strings = ET.parse(os.path.join(d, 'strings.xml')).getroot()
-              name = strings.findtext('string[@name="%s"]' % sid)
-              if name:
-                break
+          name = read_string(name)
+          package_ver = read_string(package_ver)
 
           if icon and icon.startswith('@'):
             dirname, iconname = icon[1:].split('/', 1)
