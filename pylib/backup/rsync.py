@@ -54,7 +54,7 @@ def sync2native(name, src, dst, really=False, filelist=False, exclude=()):
 
   `filelist` indicates `src` is a list of files to sync
   '''
-  return sync(name, src, dst, '-aviHK', really, filelist, exclude=exclude)
+  return sync(name, src, dst, '-aviHKhP', really, filelist, exclude=exclude)
 
 def sync2win(name, src, dst, really=False, filelist=False, exclude=()):
   '''
@@ -62,4 +62,4 @@ def sync2win(name, src, dst, really=False, filelist=False, exclude=()):
 
   `filelist` indicates `src` is a list of files to sync
   '''
-  return sync(name, src, dst, '-virtO', really, filelist, exclude=exclude)
+  return sync(name, src, dst, '-virtOhP', really, filelist, exclude=exclude)
