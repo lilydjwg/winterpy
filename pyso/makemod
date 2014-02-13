@@ -15,8 +15,9 @@ makeamod () {
   fi
   shift
   setopt -x
-  $CC $@ -O2 -shared -fPIC $infile -o $outfile ${=FLAGS}
+  $CC $@ -Wall -O2 -shared -fPIC $infile -o $outfile ${=FLAGS}
 }
 
 makeamod X.c -lX11 -lXtst -lXss
 makeamod myopencv.c `pkg-config --cflags --libs opencv`
+makeamod mysysutil.c
