@@ -15,7 +15,7 @@ static PyObject* subreap(PyObject *self, PyObject *args){
   Py_END_ALLOW_THREADS
 
   if(result != 0){
-    return PyErr_SetFromErrno(Py_None);
+    return PyErr_SetFromErrno(PyExc_OSError);
   }else{
     Py_RETURN_NONE;
   }
