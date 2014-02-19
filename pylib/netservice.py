@@ -5,6 +5,7 @@ from functools import lru_cache
 import json
 import urllib.request
 
+import htmlutils
 from url import *
 
 def getTitle(url, headers={}, timeout=5):
@@ -70,7 +71,7 @@ def getTitle(url, headers={}, timeout=5):
     if charset.lower().find('big5') != -1:
       charset = 'big5'
     title = title.decode(charset)
-  title = entityunescape(title.replace('\n', '')).strip()
+  title = htmlutils.entityunescape(title.replace('\n', '')).strip()
 
   return title or None
 

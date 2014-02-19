@@ -130,23 +130,6 @@ class PostData:
   def __bool__(self):
     return bool(self.data)
 
-def entityunescape(string):
-  '''HTML 实体反转义'''
-  from html.entities import entitydefs
-  import re
-
-  def sharp2uni(m):
-    '''&#...; ==> unicode'''
-    s = m.group(0)[2:-1]
-    if s.startswith('x'):
-      return chr(int('0'+s, 16))
-    else:
-      return chr(int(s))
-
-  string = re.sub(r'&#[^;]+;', sharp2uni, string)
-  string = re.sub(r'&[^;]+;', lambda m: entitydefs[m.group(0)[1:-1]], string)
-
-  return string
 def encode_multipart_formdata(fields, files, boundary=None):
   """
   fields is a sequence of (name, value) elements for regular form fields.

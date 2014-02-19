@@ -1,5 +1,6 @@
 # vim:fileencoding=utf-8
 
+import re
 import copy
 
 from lxml import html
@@ -22,6 +23,30 @@ def iter_text_and_br(el):
       yield '\n'
     if i.tail:
       yield i.tail
+
+def un_jsescape(s):
+    '''%xx & %uxxxx -> char, opposite of Javascript's escape()'''
+    return re.sub(
+        r'%u([0-9a-fA-F]{4})|%([0-9a-fA-F]{2})',
+        lambda m: chr(int(m.group(1) or m.group(2), 16)),
+        s
+    )
+
+def entityunescape(string):
+  '''HTML entity decode'''
+  from html.entities import entitydefs
+
+  def sharp2uni(m):
+    '''&#...; ==> unicode'''
+    s = m.group(0)[2:-1]
+    if s.startswith('x'):
+      return chr(int('0'+s, 16))
+    else:
+      return chr(int(s))
+
+  string = re.sub(r'&#[^;]+;', sharp2uni, string)
+  string = re.sub(r'&[^;]+;', lambda m: entitydefs[m.group(0)[1:-1]], string)
+  return string
 
 def parse_document_from_requests(url, session, *, encoding=None):
   '''
