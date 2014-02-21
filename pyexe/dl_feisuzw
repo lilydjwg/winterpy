@@ -61,7 +61,7 @@ def gather_content(write, i, l):
   url = l.get('href')
   _, _, _, _, bookid, chapterid = url.split('/')
   chapterid = chapterid.split('.', 1)[0]
-  r = session.post('http://www.feisuzw.com/skin/hongxiu/include/fe1sushow.php', data={
+  r = session.post('http://www.feisuzw.com/skin/hongxiu/include/fe1sushow.php?r=6cOKhNLFqKoIfqEelGb6iF', data={
     'bookid': bookid, 'chapterid': chapterid,
   }, headers={'Referer': url})
 
