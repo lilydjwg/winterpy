@@ -1,5 +1,3 @@
-import urllib.parse
-
 from lxml.html import fromstring
 
 from requestsutils import RequestsBase
@@ -64,3 +62,18 @@ class FluxBB(RequestsBase):
     res = self.request('/admin_users.php', data=post)
     body = res.text
     return True
+
+  def edit_post(self, post_id, body, *, subject=None, sticky=False):
+    html = self.request('/viewtopic.php?pid=%s' % post_id).text
+    post = fromstring(html)
+    old_subject = post.xpath('//ul[@class="crumbs"]/li/strong/a')[0].text
+    data = {
+      'form_sent': '1',
+      'req_message': body,
+      'req_subject': subject or old_subject,
+      'stick_topic': sticky and '1' or '0',
+    }
+    url = '/edit.php?id=%s&action=edit' % post_id
+    res = self.request(url, data=data)
+    return b'http-equiv="refresh"' in res.content
+
