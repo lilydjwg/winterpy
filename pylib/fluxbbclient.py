@@ -1,5 +1,3 @@
-# vim:fileencoding=utf-8
-
 import urllib.parse
 
 from lxml.html import fromstring
@@ -33,7 +31,7 @@ class FluxBB(httpsession.Session):
 
   def delete_unverified_users(self, doc=None, *, msg=None, since=None):
     '''delete inverified users in first page
-    
+
     doc can be given if you have that page's parsed content alread.
     return False if no such users are found.
     '''
