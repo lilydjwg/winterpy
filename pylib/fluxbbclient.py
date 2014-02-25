@@ -4,6 +4,7 @@ from requestsutils import RequestsBase
 
 class FluxBB(RequestsBase):
   userAgent = 'A Python Fluxbb Client by lilydjwg'
+  auto_referer = True
 
   def check_login(self):
     '''check if we have logged in already (by cookies)'''

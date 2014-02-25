@@ -32,6 +32,7 @@ class RequestsBase:
   _session = None
   userAgent = None
   lasturl = None
+  auto_referer = False
 
   @property
   def session(self):
@@ -61,7 +62,7 @@ class RequestsBase:
     if self.baseurl:
       url = urljoin(self.baseurl, url)
 
-    if self.lasturl:
+    if self.auto_referer and self.lasturl:
       h = kwargs.get('headers', None)
       if not h:
         h = kwargs['headers'] = {}
