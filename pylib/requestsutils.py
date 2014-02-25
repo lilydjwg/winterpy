@@ -1,3 +1,9 @@
+import os
+from http.cookiejar import MozillaCookieJar
+from urllib.parse import urljoin
+
+import requests
+
 CHUNK_SIZE = 40960
 
 def download_into(session, url, file, process_func=None):
@@ -15,13 +21,60 @@ def download_into(session, url, file, process_func=None):
 def download_into_with_progressbar(url, dest):
   import time
   from functools import partial
-  import requests
   from termutils import download_process, get_terminal_size
 
   w = get_terminal_size()[1]
   with open(dest, 'wb') as f:
     download_into(requests, url, f, partial(
       download_process, dest, time.time(), width=w))
+
+class RequestsBase:
+  _session = None
+  userAgent = None
+  lasturl = None
+
+  @property
+  def session(self):
+    if not self._session:
+      s = requests.Session()
+      if self.userAgent:
+        s.headers['User-Agent'] = self.userAgent
+      self._session = s
+    return self._session
+
+  def __init__(self, *, baseurl=None, cookiefile=None, session=None):
+    self.baseurl = baseurl
+    self._session = session
+
+    s = self.session
+    if cookiefile:
+      s.cookies = MozillaCookieJar(cookiefile)
+      if os.path.exists(cookiefile):
+        s.cookies.load()
+
+    self._has_cookiefile = bool(cookiefile)
+
+  def __del__(self):
+    self.session.cookies.save()
+
+  def request(self, url, method=None, *args, **kwargs):
+    if self.baseurl:
+      url = urljoin(self.baseurl, url)
+
+    if self.lasturl:
+      h = kwargs.get('headers', None)
+      if not h:
+        h = kwargs['headers'] = {}
+      h['Referer'] = self.lasturl
+
+    if method is None:
+      if 'data' in kwargs or 'files' in kwargs:
+        method = 'post'
+      else:
+        method = 'get'
+
+    self.lasturl = url
+    return self.session.request(method, url, *args, **kwargs)
 
 if __name__ == '__main__':
   from sys import argv, exit
