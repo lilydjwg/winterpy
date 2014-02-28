@@ -5,6 +5,7 @@
 # License: Public domain
 
 import re
+import os
 import sys, easygui
 # TimeoutExpired is added in Python 3, oh yeah~
 from subprocess import check_call, check_output, TimeoutExpired
@@ -32,7 +33,7 @@ def parseLineno(f):
     m = r.match(f)
     if m:
       d = m.groupdict()
-      file = d['file']
+      file = os.path.abspath(d['file'])
       line = d.get('line', None)
       col = d.get('col', None)
       break
@@ -45,7 +46,7 @@ def parseLineno(f):
   elif line is not None:
     cmd = '+%s' % line
   else:
-    return (file,)
+    return (os.path.abspath(file),)
 
   return cmd, file
 
