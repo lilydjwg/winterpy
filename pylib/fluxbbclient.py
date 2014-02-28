@@ -1,21 +1,17 @@
-# vim:fileencoding=utf-8
-
-import urllib.parse
-
 from lxml.html import fromstring
 
-import httpsession
+from requestsutils import RequestsBase
 
-class FluxBB(httpsession.Session):
-  def __init__(self, urlprefix, *args, **kwargs):
-    self.urlprefix = urlprefix
-    super().__init__(*args, **kwargs)
+class FluxBB(RequestsBase):
+  userAgent = 'A Python Fluxbb Client by lilydjwg'
+  auto_referer = True
 
   def check_login(self):
     '''check if we have logged in already (by cookies)'''
-    res = self.bbsrequest('/')
-    body = res.read().decode('utf-8')
-    return len(fromstring(body).xpath('//div[@id="brdwelcome"]/*[@class="conl"]/li')) > 0
+    res = self.request('/')
+    body = res.text
+    return len(fromstring(body).xpath(
+      '//div[@id="brdwelcome"]/*[@class="conl"]/li')) > 0
 
   def login(self, username, password):
     post = {
@@ -24,31 +20,29 @@ class FluxBB(httpsession.Session):
       'save_pass': '1',
       'form_sent': '1',
     }
-    res = self.bbsrequest('/login.php?action=in', post)
-    body = res.read()
-    if body.find(b'http-equiv="refresh"') == -1:
-      return False
-    else:
-      return True
+    body = self.request('/login.php?action=in', data=post).content
+    return b'http-equiv="refresh"' in body
 
   def delete_unverified_users(self, doc=None, *, msg=None, since=None):
     '''delete inverified users in first page
-    
+
     doc can be given if you have that page's parsed content alread.
     return False if no such users are found.
     '''
     if doc is None:
-      url = '/admin_users.php?find_user=&order_by=username&direction=ASC&user_group=0&p=1'
+      url = '/admin_users.php?find_user=&' \
+          'order_by=username&direction=ASC&user_group=0&p=1'
       if since:
         url += '&registered_before=' + since.strftime('%Y-%m-%d %H:%M:%s')
-      res = self.bbsrequest(url)
-      body = res.read().decode('utf-8')
+      res = self.request(url)
+      body = res.text
       doc = fromstring(body)
     trs = doc.xpath('//div[@id="users2"]//tbody/tr')
     if not trs:
       return False
 
-    users = [tr.xpath('td/input[@type="checkbox"]/@name')[0][6:-1] for tr in trs]
+    users = [tr.xpath('td/input[@type="checkbox"]/@name')[0][6:-1]
+             for tr in trs]
     users = ','.join(users)
 
     post = {
@@ -58,22 +52,29 @@ class FluxBB(httpsession.Session):
       'ban_the_ip': '1',
       'users': users,
     }
-    res = self.bbsrequest('/admin_users.php', post, headers={
-      'Referer': urllib.parse.urljoin(self.urlprefix, '/admin_users.php'),
-    })
-    body = res.read().decode('utf-8')
+    res = self.request('/admin_users.php', data=post)
+    body = res.text
 
     post = {
       'delete_users_comply': 'delete',
       'delete_posts': '1',
       'users': users,
     }
-    res = self.bbsrequest('/admin_users.php', post, headers={
-      'Referer': urllib.parse.urljoin(self.urlprefix, '/admin_users.php'),
-    })
-    body = res.read().decode('utf-8')
+    res = self.request('/admin_users.php', data=post)
+    body = res.text
     return True
 
-  def bbsrequest(self, path, *args, **kwargs):
-    url = urllib.parse.urljoin(self.urlprefix, path)
-    return self.request(url, *args, **kwargs)
+  def edit_post(self, post_id, body, *, subject=None, sticky=False):
+    html = self.request('/viewtopic.php?pid=%s' % post_id).text
+    post = fromstring(html)
+    old_subject = post.xpath('//ul[@class="crumbs"]/li/strong/a')[0].text
+    data = {
+      'form_sent': '1',
+      'req_message': body,
+      'req_subject': subject or old_subject,
+      'stick_topic': sticky and '1' or '0',
+    }
+    url = '/edit.php?id=%s&action=edit' % post_id
+    res = self.request(url, data=data)
+    return b'http-equiv="refresh"' in res.content
+
