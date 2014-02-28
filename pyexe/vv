@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+
+'''在 vim 服务器上打开文件'''
+
+# License: Public domain
+
+import re
+import sys, easygui
+# TimeoutExpired is added in Python 3, oh yeah~
+from subprocess import check_call, check_output, TimeoutExpired
+
+filelines = (
+  re.compile(
+    r'''[^/]*
+    (?P<file>[^"]+)
+    ",\sline\s
+    (?P<line>\d+)''', re.VERBOSE), # Python Traceback, e.g. File "/path/to/file.py", line 23
+  re.compile(
+    r'''(?P<file>.*?)
+    (?:
+      :(?P<line>\d+)
+      (?:
+        :(?P<col>\d+)
+      )?
+    )?$''', re.VERBOSE), # filename:line:col
+)
+
+TIMEOUT = 1
+
+def parseLineno(f):
+  for r in filelines:
+    m = r.match(f)
+    if m:
+      d = m.groupdict()
+      file = d['file']
+      line = d.get('line', None)
+      col = d.get('col', None)
+      break
+  else:
+    file = f
+    line = col = None
+
+  if col is not None:
+    cmd = '+call setpos(".", [0, %s, %s, 0])' % (line, col)
+  elif line is not None:
+    cmd = '+%s' % line
+  else:
+    return (file,)
+
+  return cmd, file
+
+def main(files):
+  if len(files) == 1:
+    try:
+      files = parseLineno(files[0])
+    except ValueError:
+      pass
+
+  vims = [x for x in
+          check_output(['vim', '--serverlist'], universal_newlines=True).split('\n')
+          if x]
+
+  if len(vims) > 1:
+    # '\t' 不能正常显示
+    vims_ = []
+    for x in vims:
+      try:
+        out = check_output(['vim', '--servername', x, '--remote-expr', 'expand("%")'],
+                           universal_newlines=True,
+                           timeout=TIMEOUT)
+      except TimeoutExpired:
+        continue
+      vims_.append(x + ' '*(10-len(x)) + out)
+    vims = vims_
+    if len(vims) == 1:
+      vim = vims[0].split(' ', 1)[0]
+    else:
+      try:
+        vim = easygui.choicebox(msg='有多个 Vim 实例正在当前系统上运行，你要使用哪个？',
+            title='选择一个 Vim 实例', choices=vims).split(' ', 1)[0]
+      except AttributeError:
+        print('已取消。')
+        sys.exit(1)
+
+  elif len(vims) == 1 and vims[0]:
+    vim = vims[0]
+  else:
+    # 没有找到 Vim 实例，使用 GVim 打开文件
+    cmd = ['gvim']
+    cmd.extend(files)
+    check_call(cmd)
+    sys.exit()
+
+  cmd = ['vim', '--servername', vim, '--remote-tab-silent']
+  cmd.extend(files)
+  check_call(cmd, timeout=TIMEOUT)
+
+if __name__ == '__main__':
+  main(sys.argv[1:])
