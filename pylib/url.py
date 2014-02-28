@@ -95,7 +95,7 @@ class Cookie(cookies.SimpleCookie):
     for i in self.keys():
       ret += i+'='+self[i].value+'; '
     return ret[:-2]
-  
+
   def __del__(self):
     '''自动保存'''
     if self.file:
