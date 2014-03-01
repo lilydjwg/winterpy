@@ -17,4 +17,3 @@ makeaso () {
 }
 
 makeaso ard.c
-makeaso wchar.c

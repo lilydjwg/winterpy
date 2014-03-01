@@ -93,18 +93,18 @@ def strwidth_py(s, ambiwidth=2):
   return count
 
 try:
-  from ctypes import *
-  _w = myutils.loadso('_wchar.so')
-  _w.width.argtypes = (c_wchar_p,)
-  _w.width.restype = c_size_t
+  import ctypes.util
+  _libc = ctypes.CDLL(ctypes.util.find_library('c'))
+  _libc.wcswidth.argtypes = (ctypes.c_wchar_p, ctypes.c_size_t)
+  _libc.wcswidth.restype = ctypes.c_int
   def strwidth(s, ambiwidth=1):
     '''
     ambiwidth is ignored
 
-    This is over one time quicker than `strwidth_py' in Python
+    quicker than `strwidth_py' in Python
     '''
-    return _w.width(s)
-except ImportError:
+    return _libc.wcswidth(s, len(s))
+except (ImportError, OSError):
   strwidth = strwidth_py
 
 def _CJK_align(字符串, 对齐宽度, 方向='左', 填充=' '):
