@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+
+import json
+import sys
+
+def cmtjson_reader(f):
+  data = json.load(f)
+  for o in data:
+    c = o['c'].split(',')
+    m = o['m']
+    # see
+    # https://github.com/muzuiget/niconvert/blob/master/niconvert/libsite/acfun.py
+    start = float(c[0])
+    yield start, m
+
+def format_time(t):
+  s, ms = divmod(t, 1)
+  s = int(s)
+  ms = int(ms * 1000)
+  m, s = divmod(s, 60)
+  h, m = divmod(m, 60)
+  return '%d:%02d:%02d,%03d' % (h, m, s, ms)
+
+def crt_writer(f):
+  i = 0
+
+  fmt = '%d\n%s --> %s\n%s\n\n'
+  try:
+    while True:
+      t, m = yield
+      ts = format_time(t)
+      if i != 0:
+        f.write(fmt % (i, format_time(old_t), ts, old_m))
+      i += 1
+      old_t = t
+      old_m = m
+  except GeneratorExit:
+    f.write(fmt % (
+      i+1, format_time(old_t), format_time(old_t + 2), m))
+
+def main():
+  w = crt_writer(sys.stdout)
+  w.send(None)
+  old_d0 = 0
+  for d in cmtjson_reader(sys.stdin):
+    w.send(d)
+    if d[0] < old_d0:
+      break
+    old_d0 = d[0]
+
+if __name__ == '__main__':
+  main()
