@@ -36,16 +36,16 @@ def crt_writer(f):
       old_m = m
   except GeneratorExit:
     f.write(fmt % (
-      i+1, format_time(old_t), format_time(old_t + 2), m))
+      i+1, format_time(t), format_time(t+2), m))
 
 def main():
   w = crt_writer(sys.stdout)
   w.send(None)
   old_d0 = 0
   for d in cmtjson_reader(sys.stdin):
-    w.send(d)
     if d[0] < old_d0:
       break
+    w.send(d)
     old_d0 = d[0]
 
 if __name__ == '__main__':
