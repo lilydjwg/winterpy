@@ -53,10 +53,8 @@ def filesize(size):
 def humantime(t):
   '''seconds -> XhYmZs'''
   units = 'hms'
-  m = t // 60
-  s = t % 60
-  h = m // 60
-  m = m % 60
+  m, s = divmod(t, 60)
+  h, m = divmod(m, 60)
   ret = ''
   if h:
     ret += '%dh' % h
