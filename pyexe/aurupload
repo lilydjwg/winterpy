@@ -58,9 +58,18 @@ def upload(s, f):
     'pkgsubmit': '1',
     'token': token,
   }
-  s.post('https://aur.archlinux.org/submit/', postdata,
+  res = s.post('https://aur.archlinux.org/submit/', postdata,
          files = {'pfile': open(f, 'rb')},
          allow_redirects = False)
+  if res.status_code != 302:
+    info = re.findall(r'<p class="pkgoutput">(.*?)</p>', res.text)
+    if info:
+      info = info[0]
+      sys.exit('Error: ' + info)
+    else:
+      print('Unknown error. Check by yourself.', file=sys.stderr)
+      from cli import repl
+      repl(locals())
 
 if __name__ == '__main__':
   enable_pretty_logging(logging.DEBUG)
