@@ -23,7 +23,7 @@ filelines = (
       (?:
         :(?P<col>\d+)
       )?
-    )?$''', re.VERBOSE), # filename:line:col
+    )?:?$''', re.VERBOSE), # filename:line:col
 )
 
 TIMEOUT = 1
