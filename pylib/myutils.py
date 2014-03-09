@@ -13,6 +13,7 @@ except ImportError:
   ipaddress = None
 import contextlib
 import signal
+import hashlib
 
 from nicelogger import enable_pretty_logging
 
@@ -230,3 +231,12 @@ def firstExistentPath(paths):
     if os.path.exists(p):
       return p
 
+def md5sum_of_file(file):
+  with open(file, 'rb') as f:
+    m = hashlib.md5()
+    while True:
+      d = f.read(8192)
+      if not d:
+        break
+      m.update(d)
+  return m.hexdigest()
