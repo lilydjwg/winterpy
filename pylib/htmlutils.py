@@ -1,5 +1,6 @@
 import re
 import copy
+from html.entities import entitydefs
 
 from lxml import html
 
@@ -32,19 +33,23 @@ def un_jsescape(s):
 
 def entityunescape(string):
   '''HTML entity decode'''
-  from html.entities import entitydefs
-
-  def sharp2uni(m):
-    '''&#...; ==> unicode'''
-    s = m.group(0)[2:-1]
-    if s.startswith('x'):
-      return chr(int('0'+s, 16))
-    else:
-      return chr(int(s))
-
   string = re.sub(r'&#[^;]+;', sharp2uni, string)
   string = re.sub(r'&[^;]+;', lambda m: entitydefs[m.group(0)[1:-1]], string)
   return string
+
+def entityunescape_loose(string):
+  '''HTML entity decode. losse version.'''
+  string = re.sub(r'&#[0-9a-fA-F]+[;；]?', _sharp2uni, string)
+  string = re.sub(r'&\w+[;；]?', lambda m: entitydefs[m.group(0)[1:].rstrip(';；')], string)
+  return string
+
+def _sharp2uni(m):
+  '''&#...; ==> unicode'''
+  s = m.group(0)[2:].rstrip(';；')
+  if s.startswith('x'):
+    return chr(int('0'+s, 16))
+  else:
+    return chr(int(s))
 
 def parse_document_from_requests(url, session, *, encoding=None):
   '''

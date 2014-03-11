@@ -13,6 +13,7 @@ except ImportError:
   ipaddress = None
 import contextlib
 import signal
+import hashlib
 
 from nicelogger import enable_pretty_logging
 
@@ -53,10 +54,8 @@ def filesize(size):
 def humantime(t):
   '''seconds -> XhYmZs'''
   units = 'hms'
-  m = t // 60
-  s = t % 60
-  h = m // 60
-  m = m % 60
+  m, s = divmod(t, 60)
+  h, m = divmod(m, 60)
   ret = ''
   if h:
     ret += '%dh' % h
@@ -232,3 +231,12 @@ def firstExistentPath(paths):
     if os.path.exists(p):
       return p
 
+def md5sum_of_file(file):
+  with open(file, 'rb') as f:
+    m = hashlib.md5()
+    while True:
+      d = f.read(8192)
+      if not d:
+        break
+      m.update(d)
+  return m.hexdigest()
