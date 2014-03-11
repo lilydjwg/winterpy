@@ -7,7 +7,11 @@ import subprocess
 import datetime
 import argparse
 
-from pymongo import Connection
+try:
+  # pymongo 2.4+
+  from pymongo.mongo_client import MongoClient
+except ImportError:
+  from pymongo import Connection as MongoClient
 import pymongo.cursor
 
 from cli import repl
@@ -42,7 +46,7 @@ def displayfunc(value):
 
 def main(kwargs):
   global db, conn
-  conn = Connection(host=host, port=port, **kwargs)
+  conn = MongoClient(host=host, port=port, **kwargs)
   db = conn[db]
 
   rc = os.path.expanduser('~/.mongorc.py')
