@@ -33,7 +33,7 @@ def un_jsescape(s):
 
 def entityunescape(string):
   '''HTML entity decode'''
-  string = re.sub(r'&#[^;]+;', sharp2uni, string)
+  string = re.sub(r'&#[^;]+;', _sharp2uni, string)
   string = re.sub(r'&[^;]+;', lambda m: entitydefs[m.group(0)[1:-1]], string)
   return string
 
