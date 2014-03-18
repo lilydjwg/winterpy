@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# vim:fileencoding=utf-8
 
+import re
 import sys
 from functools import partial
 from string import Template
@@ -23,14 +23,14 @@ def main(index, filename='$name-$author.txt', start=0, start_title=None):
   doc = htmlutils.parse_document_from_requests(index, session,
                                                encoding='gb18030')
   print('完成。')
-  name = doc.xpath('//h1/a/text()')[0][1:-1]
-  author = doc.xpath('//h3/span[@class="author"]/a/text()')[0]
+  name = doc.xpath('//h1/text()')[0]
+  author = doc.xpath('//section/span/a/text()')[0]
 
   nametmpl = Template(filename)
   fname = nametmpl.substitute(name=name, author=author)
   with open(fname, 'w') as f:
     sys.stderr.write('下载到文件 %s。\n' % fname)
-    links = doc.xpath('//div[@class="kuai"]//ul/ul/li/a')
+    links = doc.xpath('//section[@class="ml_main"]/dl/dd/a')
     try:
       if start_title:
         for i, l in enumerate(links):
@@ -53,7 +53,10 @@ def gather_content(write, i, l):
   url = l.get('href')
   doc = htmlutils.parse_document_from_requests(url, session, encoding='gb18030')
   content = doc.xpath("//div[contains(concat(' ', normalize-space(@class), ' '), ' yd_text2 ')]")[0]
+  for a in content.xpath('a'):
+    content.remove(a)
   text = ''.join(htmlutils.iter_text_and_br(content)).replace('\n\n', '\n')
+  text = re.sub(r'\s*D586\.COM.*', '', text)
   title = l.text
   write(title)
   write('\n\n')
