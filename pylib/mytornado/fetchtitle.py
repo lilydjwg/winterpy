@@ -100,6 +100,10 @@ class TitleFinder(ContentFinder):
       if self.charset.lower() == 'gb2312':
         # Windows misleadingly uses gb2312 when it's gbk or gb18030
         self.charset = 'gb18030'
+      elif self.charset.lower() == 'windows-31j':
+        # cp932's IANA name (Windows-31J), extended shift_jis
+        # https://en.wikipedia.org/wiki/Code_page_932
+        self.charset = 'cp932'
 
   def __call__(self, data):
     if data is not None:
