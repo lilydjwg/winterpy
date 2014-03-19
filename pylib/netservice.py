@@ -70,6 +70,8 @@ def getTitle(url, headers={}, timeout=5):
   else:
     if charset.lower().find('big5') != -1:
       charset = 'big5'
+    elif charset.lower() == 'windows-31j':
+      charset = 'cp932'
     title = title.decode(charset)
   title = htmlutils.entityunescape(title.replace('\n', '')).strip()
 
