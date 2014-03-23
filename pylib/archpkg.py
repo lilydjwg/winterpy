@@ -1,6 +1,7 @@
 import os
 from collections import defaultdict, namedtuple
 import subprocess
+import re
 
 from pkg_resources import parse_version
 
@@ -43,3 +44,4 @@ echo ${pkgname[*]}''' % PKGBUILD
       ret, ['bash'], output)
   return output.split()
 
+pkgfile_pat = re.compile(r'(?:^|/).+-[^-]+-\d+-(?:\w+)\.pkg\.tar\.xz$')
