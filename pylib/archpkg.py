@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict, namedtuple
+import subprocess
 
 from pkg_resources import parse_version
 
@@ -27,3 +28,18 @@ def trimext(name, num=1):
   for i in range(num):
     name = os.path.splitext(name)[0]
   return name
+
+def get_pkgname_with_bash(PKGBUILD):
+  script = '''\
+. '%s'
+echo ${pkgname[*]}''' % PKGBUILD
+  # Python 3.4 has 'input' arg for check_output
+  p = subprocess.Popen(['bash'], stdin=subprocess.PIPE,
+                       stdout=subprocess.PIPE)
+  output = p.communicate(script.encode('latin1'))[0].decode('latin1')
+  ret = p.wait()
+  if ret != 0:
+    raise subprocess.CalledProcessError(
+      ret, ['bash'], output)
+  return output.split()
+
