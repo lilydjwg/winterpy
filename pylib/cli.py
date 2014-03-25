@@ -15,9 +15,9 @@ def repl(local, histfile=None, banner=None):
   readline.parse_and_bind('tab: complete')
   if histfile is not None and os.path.exists(histfile):
     # avoid duplicate reading
-    readline.clear_history()
-    readline.set_history_length(10000)
-    readline.read_history_file(histfile)
+    if readline.get_current_history_length() <= 0:
+      readline.set_history_length(10000)
+      readline.read_history_file(histfile)
   import code
   readline.set_completer(rlcompleter.Completer(local).complete)
   code.interact(local=local, banner=banner)
