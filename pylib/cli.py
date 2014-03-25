@@ -12,7 +12,10 @@ import os
 def repl(local, histfile=None, banner=None):
   import readline
   import rlcompleter
-  readline.parse_and_bind('tab: complete')
+  if 'libedit' in readline.__doc__:
+    readline.parse_and_bind('bind ^I rl_complete')
+  else:
+    readline.parse_and_bind('tab: complete')
   if histfile is not None and os.path.exists(histfile):
     # avoid duplicate reading
     if readline.get_current_history_length() <= 0:
