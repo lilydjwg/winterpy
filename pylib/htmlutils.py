@@ -66,3 +66,7 @@ def parse_document_from_requests(url, session, *, encoding=None):
   doc.make_links_absolute()
 
   return doc
+
+def parse_html_with_encoding(data, encoding='utf-8'):
+  parser = html.HTMLParser(encoding=encoding)
+  return html.fromstring(data, parser=parser)
