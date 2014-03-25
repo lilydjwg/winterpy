@@ -49,9 +49,11 @@ def repl_py27(local, *args, **kwargs):
       print(r)
     local['_'] = value
 
+  old_displayhook = sys.displayhook
   sys.displayhook = displayfunc
   try:
     repl(local, *args, **kwargs)
   finally:
+    sys.displayhook = old_displayhook
     p.stdin.close()
     p.wait()
