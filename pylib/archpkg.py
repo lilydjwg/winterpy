@@ -44,4 +44,16 @@ echo ${pkgname[*]}''' % PKGBUILD
       ret, ['bash'], output)
   return output.split()
 
+def get_aur_pkgbuild_with_bash(name):
+  script = '''\
+. /usr/lib/yaourt/util.sh
+. /usr/lib/yaourt/aur.sh
+aur_get_pkgbuild '%s' ''' % name
+  p = subprocess.Popen(['bash'], stdin=subprocess.PIPE)
+  p.communicate(script.encode('latin1'))
+  ret = p.wait()
+  if ret != 0:
+    raise subprocess.CalledProcessError(
+      ret, ['bash'])
+
 pkgfile_pat = re.compile(r'(?:^|/).+-[^-]+-\d+-(?:\w+)\.pkg\.tar\.xz$')
