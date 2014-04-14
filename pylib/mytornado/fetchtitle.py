@@ -9,6 +9,7 @@ import struct
 import json
 import logging
 import encodings.idna
+from html.parser import HTMLParser
 try:
   # Python 3.3
   from html.entities import html5 as _entities
@@ -28,7 +29,73 @@ try:
 except ImportError:
   from http_parser.pyparser import HttpParser
 
-UserAgent = 'FetchTitle/1.2 (lilydjwg@gmail.com)'
+UserAgent = 'FetchTitle/1.3 (https://github.com/lilydjwg/winterpy/blob/master/pylib/mytornado/fetchtitle.py)'
+
+def get_charset_from_ctype(ctype):
+  pos = ctype.find('charset=')
+  if pos > 0:
+    charset = ctype[pos+8:]
+    if charset.lower() == 'gb2312':
+      # Windows misleadingly uses gb2312 when it's gbk or gb18030
+      charset = 'gb18030'
+    elif charset.lower() == 'windows-31j':
+      # cp932's IANA name (Windows-31J), extended shift_jis
+      # https://en.wikipedia.org/wiki/Code_page_932
+      charset = 'cp932'
+    return charset
+
+class HtmlTitleParser(HTMLParser):
+  charset = title = None
+  default_charset = 'utf-8'
+  result = None
+  _title_coming = False
+
+  def feed(self, bytesdata):
+    if bytesdata:
+      super().feed(bytesdata.decode('latin1'))
+    else:
+      self.close()
+
+  def close(self):
+    self._check_result(force=True)
+    super().close()
+
+  def handle_starttag(self, tag, attrs):
+    if tag == 'meta':
+      attrs = dict(attrs)
+      if attrs.get('http-equiv', '').lower() == 'content-type':
+        self.charset = get_charset_from_ctype(attrs.get('content', ''))
+      elif attrs.get('charset', False):
+        self.charset = attrs['charset']
+    elif tag in ('body', 'p', 'div'):
+      # won't be found
+      self.charset = False
+    elif tag == 'title':
+      self._title_coming = True
+
+    self._check_result()
+
+  def handle_data(self, data):
+    if self._title_coming:
+      if self.title is None:
+        self.title = b''
+      self.title += data.encode('latin1')
+      self._check_result()
+
+  def handle_endtag(self, tag):
+    self._title_coming = False
+
+  def _check_result(self, *, force=False):
+    if self.result is not None:
+      return
+
+    if (force or self.charset is not None) \
+       and self.title is not None:
+      self.result = self.title.decode(
+        self.charset or self.default_charset,
+        errors = 'surrogateescape',
+      )
+
 class SingletonFactory:
   def __init__(self, name):
     self.name = name
@@ -79,78 +146,27 @@ class ContentFinder:
     return False
 
 class TitleFinder(ContentFinder):
-  found = False
-  title_begin = re.compile(b'<title[^>]*>', re.IGNORECASE)
-  title_end = re.compile(b'</title\s*>', re.IGNORECASE)
+  parser = None
   pos = 0
-
-  default_charset = 'UTF-8'
-  meta_charset = re.compile(br'<meta\s+http-equiv="?content-type"?\s+content="?[^;]+;\s*charset=([^">]+)"?\s*/?>|<meta\s+charset="?([^">/"]+)"?\s*/?>', re.IGNORECASE)
-  charset = None
+  maxpos = 102400 # look at most around 100K
 
   @staticmethod
   def _match_type(ctype):
     return ctype.find('html') != -1
 
   def __init__(self, mediatype):
-    ctype = mediatype.type
-    pos = ctype.find('charset=')
-    if pos > 0:
-      self.charset = ctype[pos+8:]
-      if self.charset.lower() == 'gb2312':
-        # Windows misleadingly uses gb2312 when it's gbk or gb18030
-        self.charset = 'gb18030'
-      elif self.charset.lower() == 'windows-31j':
-        # cp932's IANA name (Windows-31J), extended shift_jis
-        # https://en.wikipedia.org/wiki/Code_page_932
-        self.charset = 'cp932'
+    charset = get_charset_from_ctype(mediatype.type)
+    self.parser = HtmlTitleParser(charset)
 
   def __call__(self, data):
-    if data is not None:
-      self.buf += data
+    if data:
       self.pos += len(data)
-      if len(self.buf) < 100:
-        return
-
-    buf = self.buf
-
-    if self.charset is None:
-      m = self.meta_charset.search(buf)
-      if m:
-        self.charset = (m.group(1) or m.group(2)).decode('latin1')
-
-    if not self.found:
-      m = self.title_begin.search(buf)
-      if m:
-        buf = self.buf = buf[m.end():]
-        self.found = True
-
-    if self.found:
-      m = self.title_end.search(buf)
-      if m:
-        raw_title = buf[:m.start()].strip()
-        logger.debug('title found at %d', self.pos - len(buf) + m.start())
-      elif len(buf) > 200: # when title goes too long
-        raw_title = buf[:200] + b'...'
-        logger.warn('title too long, starting at %d', self.pos - len(buf))
-      else:
-        raw_title = False
-
-      if raw_title:
-        return self.decode_title(raw_title)
-
-    if not self.found:
-      self.buf = buf[-100:]
-
-  def decode_title(self, raw_title):
-    try:
-      title = replaceEntities(raw_title.decode(self.get_charset(), errors='replace'))
-      return title
-    except (UnicodeDecodeError, LookupError):
-      return raw_title
-
-  def get_charset(self):
-    return self.charset or self.default_charset
+    if self.pos > self.maxpos:
+      # stop here
+      data = b''
+    self.parser.feed(data)
+    if self.parser.result:
+      return self.parser.result
 
 class PNGFinder(ContentFinder):
   _mime = 'image/png'
@@ -483,7 +499,7 @@ class TitleFetcher:
     return True
 
   def feed_finder(self, chunk):
-    '''feed data to TitleFinder, return the title if found'''
+    '''feed data to finder, return the title if found'''
     t = self.finder(chunk)
     if t is not None:
       return t
@@ -565,14 +581,12 @@ def test():
     'http://www.baidu.com',
     'https://zh.wikipedia.org', # redirection
     'http://redis.io/',
-    'http://kernel.org',
     'http://lilydjwg.is-programmer.com/2012/10/27/streaming-gzip-decompression-in-python.36130.html', # maybe timeout
     'http://img.vim-cn.com/22/cd42b4c776c588b6e69051a22e42dabf28f436', # image with length
     'https://github.com/m13253/titlebot/blob/master/titlebot.py_', # 404
     'http://lilydjwg.is-programmer.com/admin', # redirection
     'http://twitter.com', # timeout
     'http://www.wordpress.com', # reset
-    'https://www.wordpress.com', # timeout
     'http://jquery-api-zh-cn.googlecode.com/svn/trunk/xml/jqueryapi.xml', # xml
     'http://lilydjwg.is-programmer.com/user_files/lilydjwg/config/avatar.png', # PNG
     'http://img01.taobaocdn.com/bao/uploaded/i1/110928240/T2okG7XaRbXXXXXXXX_!!110928240.jpg', # JPEG with Start Of Frame as the second block
@@ -585,6 +599,7 @@ def test():
     'http://www.galago-project.org/specs/notification/0.9/x408.html', # </TITLE\n>
     'http://x.co/dreamz', # redirection caused false ConnectionClosed error
     'http://m8y.org/tmp/zipbomb/zipbomb_light_nonzero.html', # very long title
+    'http://www.83wyt.com', # reversed meta attribute order
   )
   main(urls)
 
