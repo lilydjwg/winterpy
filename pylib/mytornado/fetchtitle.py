@@ -598,6 +598,7 @@ def test():
     'http://t.cn/zTOgr1n', # multiple redirections
     'http://www.galago-project.org/specs/notification/0.9/x408.html', # </TITLE\n>
     'http://x.co/dreamz', # redirection caused false ConnectionClosed error
+    # http_parser won't decode this big gzip?
     'http://m8y.org/tmp/zipbomb/zipbomb_light_nonzero.html', # very long title
     'http://www.83wyt.com', # reversed meta attribute order
   )
