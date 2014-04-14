@@ -305,10 +305,12 @@ class TitleFetcher:
       )
       try:
         self.new_url(self.origurl)
-      finally:
+      except:
         self.io_loop.remove_timeout(self._timeout)
+        raise
 
   def on_timeout(self):
+    logger.debug('request timed out')
     self.run_callback(Timeout)
 
   def parse_url(self, url):
@@ -585,7 +587,7 @@ def test():
     'http://img.vim-cn.com/22/cd42b4c776c588b6e69051a22e42dabf28f436', # image with length
     'https://github.com/m13253/titlebot/blob/master/titlebot.py_', # 404
     'http://lilydjwg.is-programmer.com/admin', # redirection
-    'http://twitter.com', # timeout
+    'http://twitter.com', # connect timeout
     'http://www.wordpress.com', # reset
     'http://jquery-api-zh-cn.googlecode.com/svn/trunk/xml/jqueryapi.xml', # xml
     'http://lilydjwg.is-programmer.com/user_files/lilydjwg/config/avatar.png', # PNG
