@@ -156,7 +156,8 @@ class TitleFinder(ContentFinder):
 
   def __init__(self, mediatype):
     charset = get_charset_from_ctype(mediatype.type)
-    self.parser = HtmlTitleParser(charset)
+    self.parser = HtmlTitleParser()
+    self.parser.charset = charset
 
   def __call__(self, data):
     if data:
@@ -603,6 +604,7 @@ def test():
     # http_parser won't decode this big gzip?
     'http://m8y.org/tmp/zipbomb/zipbomb_light_nonzero.html', # very long title
     'http://www.83wyt.com', # reversed meta attribute order
+    'https://www.inoreader.com', # malformed start tag: <meta http-equiv="Content-Type" content="text/html" ; charset="UTF-8">
   )
   main(urls)
 
