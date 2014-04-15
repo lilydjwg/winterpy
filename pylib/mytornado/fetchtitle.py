@@ -1,5 +1,3 @@
-# vim:fileencoding=utf-8
-
 import re
 import socket
 from urllib.parse import urlsplit, urljoin
@@ -10,15 +8,7 @@ import json
 import logging
 import encodings.idna
 from html.parser import HTMLParser
-try:
-  # Python 3.3
-  from html.entities import html5 as _entities
-  def _extract_entity_name(m):
-    return m.group()[1:]
-except ImportError:
-  from html.entities import entitydefs as _entities
-  def _extract_entity_name(m):
-    return m.group()[1:-1]
+from html.entities import entitydefs
 
 import tornado.ioloop
 import tornado.iostream
@@ -80,10 +70,22 @@ class HtmlTitleParser(HTMLParser):
       if self.title is None:
         self.title = b''
       self.title += data.encode('latin1')
-      self._check_result()
 
   def handle_endtag(self, tag):
     self._title_coming = False
+    self._check_result()
+
+  def handle_charref(self, name):
+    if name[0] == 'x':
+      x = int(name[1:], 16)
+    else:
+      x = int(name)
+    self.handle_data(chr(x))
+
+  def handle_entityref(self, name):
+    ch = entitydefs[name]
+    ch = ch.encode('utf-8').decode('latin1')
+    self.handle_data(ch)
 
   def _check_result(self, *, force=False):
     if self.result is not None:
@@ -110,26 +112,6 @@ TooManyRedirection = SingletonFactory('TooManyRedirection')
 Timeout = SingletonFactory('Timeout')
 
 logger = logging.getLogger(__name__)
-
-def _sharp2uni(code):
-  '''&#...; ==> unicode'''
-  s = code[1:].rstrip(';')
-  if s.startswith('x'):
-    return chr(int('0'+s, 16))
-  else:
-    return chr(int(s))
-
-def _mapEntity(m):
-  name = _extract_entity_name(m)
-  if name.startswith('#'):
-    return _sharp2uni(name)
-  try:
-    return _entities[name]
-  except KeyError:
-    return '&' + name
-
-def replaceEntities(s):
-  return re.sub(r'&[^;]+;', _mapEntity, s)
 
 class ContentFinder:
   buf = b''
