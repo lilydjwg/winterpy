@@ -80,7 +80,8 @@ class HtmlTitleParser(HTMLParser):
       x = int(name[1:], 16)
     else:
       x = int(name)
-    self.handle_data(chr(x))
+    ch = chr(x).encode('utf-8').decode('latin1')
+    self.handle_data(ch)
 
   def handle_entityref(self, name):
     ch = entitydefs[name]
@@ -587,6 +588,7 @@ def test():
     'http://m8y.org/tmp/zipbomb/zipbomb_light_nonzero.html', # very long title
     'http://www.83wyt.com', # reversed meta attribute order
     'https://www.inoreader.com', # malformed start tag: <meta http-equiv="Content-Type" content="text/html" ; charset="UTF-8">
+    'https://linuxtoy.org/archives/linux-deepin-2014-alpha-into-new-deepin-world.html', # charref outside ASCII
   )
   main(urls)
 
