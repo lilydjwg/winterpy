@@ -51,7 +51,8 @@ class HtmlTitleParser(HTMLParser):
     super().close()
 
   def handle_starttag(self, tag, attrs):
-    if tag == 'meta':
+    # Google Search uses wrong meta info
+    if tag == 'meta' and not self.charset:
       attrs = dict(attrs)
       if attrs.get('http-equiv', '').lower() == 'content-type':
         self.charset = get_charset_from_ctype(attrs.get('content', ''))
@@ -589,6 +590,7 @@ def test():
     'http://www.83wyt.com', # reversed meta attribute order
     'https://www.inoreader.com', # malformed start tag: <meta http-equiv="Content-Type" content="text/html" ; charset="UTF-8">
     'https://linuxtoy.org/archives/linux-deepin-2014-alpha-into-new-deepin-world.html', # charref outside ASCII
+    'http://74.125.235.191/search?site=&source=hp&q=%E6%9C%8D%E5%8A%A1%E5%99%A8+SSD&btnG=Google+%E6%90%9C%E7%B4%A2', # right charset in HTTP, wrong in HTML
   )
   main(urls)
 
