@@ -85,8 +85,11 @@ class HtmlTitleParser(HTMLParser):
     self.handle_data(ch)
 
   def handle_entityref(self, name):
-    ch = entitydefs[name]
-    ch = ch.encode('utf-8').decode('latin1')
+    try:
+      ch = entitydefs[name]
+      ch = ch.encode('utf-8').decode('latin1')
+    except KeyError:
+      ch = '&' + name
     self.handle_data(ch)
 
   def _check_result(self, *, force=False):
