@@ -56,6 +56,7 @@ def get_aur_pkgbuild_with_bash(name):
   script = '''\
 . /usr/lib/yaourt/util.sh
 . /usr/lib/yaourt/aur.sh
+init_color
 aur_get_pkgbuild '%s' ''' % name
   _run_bash(script)
 
@@ -63,7 +64,8 @@ def get_abs_pkgbuild_with_bash(name):
   script = '''\
 . /usr/lib/yaourt/util.sh
 . /usr/lib/yaourt/abs.sh
-parse_pacman_conf
+init_paths
+init_color
 arg=$(pacman -Sp --print-format '%%r/%%n' '%s')
 RSYNCOPT="$RSYNCOPT -O"
 abs_get_pkgbuild "$arg" ''' % name
