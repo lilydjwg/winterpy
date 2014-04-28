@@ -25,6 +25,7 @@ from tornado.log import app_log, gen_log
 
 from .util import FileEntry
 
+maxint = sys.maxint
 _legal_range = re.compile(r'bytes=(\d*)-(\d*)$')
 
 class ErrorHandlerMixin:
@@ -406,6 +407,12 @@ class HTTPConnection(tornado.httpserver.HTTPConnection):
           self.stream.write(b"HTTP/1.1 100 (Continue)\r\n\r\n")
         if use_tmp_files:
           gen_log.debug('using temporary files for uploading')
+
+          # avoid raising
+          # IOError("Reached maximum read buffer size")
+          # in tornado.iostream.BaseIOStream._read_to_buffer
+          self.stream.max_buffer_size = maxint
+
           self._receive_content(content_length)
         else:
           gen_log.debug('using memory for uploading')
