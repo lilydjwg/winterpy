@@ -40,6 +40,11 @@ class HtmlTitleParser(HTMLParser):
   result = None
   _title_coming = False
 
+  def __init__(self):
+    # use a list to store literal bytes and escaped Unicode
+    self.title = []
+    super().__init__()
+
   def feed(self, bytesdata):
     if bytesdata:
       super().feed(bytesdata.decode('latin1'))
@@ -66,11 +71,11 @@ class HtmlTitleParser(HTMLParser):
 
     self._check_result()
 
-  def handle_data(self, data):
+  def handle_data(self, data, *, unicode=False):
+    if not unicode:
+      data = data.encode('latin1') # encode back
     if self._title_coming:
-      if self.title is None:
-        self.title = b''
-      self.title += data.encode('latin1')
+      self.title.append(data)
 
   def handle_endtag(self, tag):
     self._title_coming = False
@@ -81,8 +86,8 @@ class HtmlTitleParser(HTMLParser):
       x = int(name[1:], 16)
     else:
       x = int(name)
-    ch = chr(x).encode('utf-8').decode('latin1')
-    self.handle_data(ch)
+    ch = chr(x)
+    self.handle_data(ch, unicode=True)
 
   def handle_entityref(self, name):
     try:
@@ -90,17 +95,19 @@ class HtmlTitleParser(HTMLParser):
       ch = ch.encode('utf-8').decode('latin1')
     except KeyError:
       ch = '&' + name
-    self.handle_data(ch)
+    self.handle_data(ch, unicode=True)
 
   def _check_result(self, *, force=False):
     if self.result is not None:
       return
 
     if (force or self.charset is not None) \
-       and self.title is not None:
-      self.result = self.title.decode(
-        self.charset or self.default_charset,
-        errors = 'surrogateescape',
+       and self.title:
+      self.result = ''.join(
+        x if isinstance(x, str) else x.decode(
+          self.charset or self.default_charset,
+          errors = 'surrogateescape',
+        ) for x in self.title
       )
 
 class SingletonFactory:
@@ -594,6 +601,7 @@ def test():
     'https://www.inoreader.com', # malformed start tag: <meta http-equiv="Content-Type" content="text/html" ; charset="UTF-8">
     'https://linuxtoy.org/archives/linux-deepin-2014-alpha-into-new-deepin-world.html', # charref outside ASCII
     'http://74.125.235.191/search?site=&source=hp&q=%E6%9C%8D%E5%8A%A1%E5%99%A8+SSD&btnG=Google+%E6%90%9C%E7%B4%A2', # right charset in HTTP, wrong in HTML
+    'http://digital.sina.com.hk/news/-7-1514837/1.html', # mixed Big5 and non-Big5 escaped Unicode character
   )
   main(urls)
 
