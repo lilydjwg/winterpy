@@ -92,7 +92,6 @@ class HtmlTitleParser(HTMLParser):
   def handle_entityref(self, name):
     try:
       ch = entitydefs[name]
-      ch = ch.encode('utf-8').decode('latin1')
     except KeyError:
       ch = '&' + name
     self.handle_data(ch, unicode=True)
