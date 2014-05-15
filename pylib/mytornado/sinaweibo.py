@@ -119,7 +119,8 @@ def _on_weibo_request(future, response):
     except:
       ex = WeiboRequestError(response)
     future.set_exception(ex)
-  future.set_result(escape.json_decode(body))
+  else:
+    future.set_result(escape.json_decode(body))
 
 class WeiboRequestError(Exception):
   pass
