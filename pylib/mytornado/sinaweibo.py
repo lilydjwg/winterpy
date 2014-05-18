@@ -112,7 +112,11 @@ def weibo_request(path, callback, access_token=None, post_args=None,
     http.fetch(url, callback=callback, headers=header)
 
 def _on_weibo_request(future, response):
-  body = response.body.decode('utf-8')
+  if response.body:
+    body = response.body.decode('utf-8')
+  else:
+    body = None
+
   if response.error:
     try:
       ex = WeiboError(body)
