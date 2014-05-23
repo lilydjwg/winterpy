@@ -304,7 +304,7 @@ class TitleFetcher:
         raise
 
   def on_timeout(self):
-    logger.debug('request timed out')
+    logger.debug('%s: request timed out', self.origurl)
     self.run_callback(Timeout)
 
   def parse_url(self, url):
@@ -406,6 +406,10 @@ class TitleFetcher:
   def on_data(self, data, close=False, addr=None, stream=None):
     if close:
       logger.debug('%s: connection to %s closed.', self.origurl, addr)
+
+    if self.stream.error:
+      self.run_callback(self.stream.error)
+      return
 
     if (close and stream and self._redirected_stream is stream) or self._finished:
       # The connection is closing, and we are being redirected or we're done.
