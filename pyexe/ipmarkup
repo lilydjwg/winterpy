@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-# vim:fileencoding=utf-8
 
 import sys
 import re
 
-from cmdutils import lookupip
 from myutils import is_internal_ip
+from QQWry import MQQWry
 
 ip_re = re.compile(r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')
+
+Q = MQQWry()
+
+def lookupip(ip):
+  return ''.join(Q[ip][2:])
 
 def transformline(l):
   shift = 0
