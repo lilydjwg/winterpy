@@ -22,6 +22,11 @@ from tornado.web import HTTPError, RequestHandler, asynchronous, GZipContentEnco
 import tornado.escape
 import tornado.httpserver
 from tornado.log import app_log, gen_log
+try:
+  from tornado.httpserver import HTTPConnection as _HTTPConnection
+except ImportError:
+  # Tornado 3.3
+  from tornado.http1connection import HTTP1Connection as _HTTPConnection
 
 from .util import FileEntry
 
@@ -370,7 +375,7 @@ def apache_style_log(handler):
   print(ip, '- -', dt, req, status, length, referrer, ua, file=f)
   f.flush()
 
-class HTTPConnection(tornado.httpserver.HTTPConnection):
+class HTTPConnection(_HTTPConnection):
   _recv_a_time = 8192
   def _on_headers(self, data):
     try:
