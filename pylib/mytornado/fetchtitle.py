@@ -57,15 +57,13 @@ class HtmlTitleParser(HTMLParser):
 
   def handle_starttag(self, tag, attrs):
     # Google Search uses wrong meta info
+    # Baidu Cache declared charset twice. The former is correct.
     if tag == 'meta' and not self.charset:
       attrs = dict(attrs)
       if attrs.get('http-equiv', '').lower() == 'content-type':
         self.charset = get_charset_from_ctype(attrs.get('content', ''))
       elif attrs.get('charset', False):
         self.charset = attrs['charset']
-    elif tag in ('body', 'p', 'div'):
-      # won't be found
-      self.charset = False
     elif tag == 'title':
       self._title_coming = True
 
@@ -605,6 +603,7 @@ def test():
     'https://linuxtoy.org/archives/linux-deepin-2014-alpha-into-new-deepin-world.html', # charref outside ASCII
     'http://74.125.235.191/search?site=&source=hp&q=%E6%9C%8D%E5%8A%A1%E5%99%A8+SSD&btnG=Google+%E6%90%9C%E7%B4%A2', # right charset in HTTP, wrong in HTML
     'http://digital.sina.com.hk/news/-7-1514837/1.html', # mixed Big5 and non-Big5 escaped Unicode character
+    'http://cache.baiducontent.com/c?m=9f65cb4a8c8507ed4fece7631046893b4c4380147c808c5528888448e435061e5a27b9e867750d04d6c57f6102ad4b57f7fa3372340126bc9fcc825e98e6d27e20d77465671df65663a70edecb5124b137e65ffed86ef0bb8025e3ddc5a2de4352ba44757d97818d4d0164dd1efa034093b1e842022e60adec40728f2d6058e93430c6508ae5256f779686d94b3db3&p=882a9e41c0d25ffc57efdc394c52&newp=8a64865b85cc43ff57e6902c495f92695803ed603fd3d7&user=baidu&fm=sc&query=mac%CF%C2%D7%EE%BA%C3%B5%C4%C8%CB%C8%CB%BF%CD%BB%A7%B6%CB&qid=&p1=5', # HTML document inside another, correct charset is in outside one and title inside
   )
   main(urls)
 
