@@ -60,10 +60,12 @@ class HtmlTitleParser(HTMLParser):
     # Baidu Cache declared charset twice. The former is correct.
     if tag == 'meta' and not self.charset:
       attrs = dict(attrs)
-      if attrs.get('http-equiv', '').lower() == 'content-type':
-        self.charset = get_charset_from_ctype(attrs.get('content', ''))
-      elif attrs.get('charset', False):
+      # try charset attribute first. Wrong quoting may result in this:
+      # <META http-equiv=Content-Type content=text/html; charset=gb2312>
+      if attrs.get('charset', False):
         self.charset = attrs['charset']
+      elif attrs.get('http-equiv', '').lower() == 'content-type':
+        self.charset = get_charset_from_ctype(attrs.get('content', ''))
     elif tag == 'title':
       self._title_coming = True
 
