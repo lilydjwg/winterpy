@@ -20,7 +20,7 @@ def reformat(s):
     return
 
   isre = False
-  tag = None
+  tags = []
   ot = False
   usertag = []
   for tok in tokens:
@@ -29,11 +29,12 @@ def reformat(s):
     elif tok.idtype == 'ot':
       ot = True
     elif tok.idtype == 'tag':
-      tag_text = tok.match.group(1)
-      if tag and tag_text != tag[1:-2] or tag_text.lower() == 'bug':
-        usertag.append(tok.data)
+      tag_text = tok.match.group(1).lower()
+      if tag_text.endswith('lug') or not tags:
+        if tag_text not in tags:
+          tags.append(tok.match.group(1))
       else:
-        tag = '[%s] ' % tag_text
+        usertag.append(tok.data)
     else:
       sys.exit('error: unknown idtype: %s' % tok.idtype)
 
@@ -41,8 +42,9 @@ def reformat(s):
     ret = 'Re: '
   else:
     ret = ''
-  if tag:
-    ret += tag
+  if tags:
+    tags.sort()
+    ret += '[' + ']['.join(tags) + '] '
   if ot:
     ret += '[OT]'
   ret += ''.join(usertag) + left
