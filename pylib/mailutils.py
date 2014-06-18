@@ -1,6 +1,8 @@
 # vim:fileencoding=utf-8
 
 import re
+import datetime
+import codecs
 from email import header
 from email.header import Header
 from email.mime.text import MIMEText
@@ -21,6 +23,20 @@ def decode_multiline_header(s):
     ret.append(b)
 
   return ''.join(ret)
+
+def get_datetime(m):
+  d = m['Date']
+  # Wed, 18 Jun 2014 04:09:18 +0000
+  t = datetime.datetime.strptime(d, '%a, %d %b %Y %H:%M:%S %z')
+  # convert to local time
+  return datetime.datetime.fromtimestamp(t.timestamp())
+
+def decode_payload(m):
+  p = m.get_payload()
+  enc = m['Content-Transfer-Encoding']
+  ctype = m['Content-Type']
+  charset = get_charset_from_ctype(ctype) or 'utf-8'
+  return codecs.decode(p.encode(), enc).decode(charset)
 
 def assemble_mail(subject, to, from_, html=None, text=None):
   if html is None and text is None:
@@ -53,3 +69,17 @@ def _addr_submatch(m):
 
 def eight_bit_clean(s):
   return all(ord(c) < 128 for c in s)
+
+def get_charset_from_ctype(ctype):
+  pos = ctype.find('charset=')
+  if pos > 0:
+    charset = ctype[pos+8:]
+    if charset.lower() == 'gb2312':
+      # Windows misleadingly uses gb2312 when it's gbk or gb18030
+      charset = 'gb18030'
+    elif charset.lower() == 'windows-31j':
+      # cp932's IANA name (Windows-31J), extended shift_jis
+      # https://en.wikipedia.org/wiki/Code_page_932
+      charset = 'cp932'
+    return charset
+
