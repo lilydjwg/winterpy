@@ -1,5 +1,3 @@
-# vim:fileencoding=utf-8
-
 r"""
 Imap folder names are encoded using a special version of utf-7 as defined in RFC
 2060 section 5.1.3.
@@ -89,18 +87,19 @@ def decoder(s):
   r = []
   decode = []
   for c in s:
-    if c == b'&' and not decode:
+    c = chr(c)
+    if c == '&' and not decode:
       decode.append(b'&')
-    elif c == b'-' and decode:
+    elif c == '-' and decode:
       if len(decode) == 1:
         r.append('&')
       else:
         r.append(modified_unbase64(b''.join(decode[1:])))
       decode = []
     elif decode:
-      decode.append(c)
+      decode.append(c.encode('ascii'))
     else:
-      r.append(c.decode('ascii'))
+      r.append(c)
   if decode:
     r.append(modified_unbase64(b''.join(decode[1:])))
   bin_str = ''.join(r)
