@@ -72,3 +72,46 @@ abs_get_pkgbuild "$arg" ''' % name
   _run_bash(script)
 
 pkgfile_pat = re.compile(r'(?:^|/).+-[^-]+-\d+-(?:\w+)\.pkg\.tar\.xz$')
+
+def _strip_ver(s):
+  return re.sub(r'[<>=].*', '', s)
+
+def get_package_dependencies(name):
+  out = subprocess.check_output(["package-query", "-Sii", "-f", "%D", name])
+  out = out.decode('latin1')
+  return [_strip_ver(x) for x in out.split() if x != '-']
+
+def get_package_info(name, local=False):
+  old_lang = os.environ['LANG']
+  os.environ['LANG'] = 'C'
+  args = '-Qi' if local else '-Si'
+  try:
+    out = subprocess.check_output(["pacman", args, name])
+    out = out.decode('latin1')
+  finally:
+    os.environ['LANG'] = old_lang
+
+  ret = {}
+  for l in out.splitlines():
+    if not l:
+      continue
+    if l[0] not in ' \t':
+      key, value = l.split(':', 1)
+      key = key.strip()
+      value = value.strip()
+      ret[key] = value
+    else:
+      ret[key] += ' ' + l.strip()
+  return ret
+
+def get_package_repository(name):
+  try:
+    out = subprocess.check_output(["package-query", "-Sii", "-f", "%r", name])
+    repo = out.strip().decode('latin1')
+  except subprocess.CalledProcessError:
+    repo = 'local'
+  return repo
+
+def is_official(name):
+  repo = get_package_repository(name)
+  return repo in ('core', 'extra', 'community', 'multilib', 'testing')
