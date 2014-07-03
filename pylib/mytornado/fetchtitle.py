@@ -401,7 +401,8 @@ class TitleFetcher:
 
   def _prepare_host(self, host):
     host = encodings.idna.nameprep(host)
-    return b'.'.join(encodings.idna.ToASCII(x) for x in host.split('.')).decode('ascii')
+    return b'.'.join(encodings.idna.ToASCII(x) if x else b''
+                     for x in host.split('.')).decode('ascii')
 
   def on_data(self, data, close=False, addr=None, stream=None):
     if close:
