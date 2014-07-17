@@ -542,6 +542,9 @@ class GithubFinder(URLFinder):
                      })
 
   def parse_info(self, res):
+    if res.error:
+      self.done(res.error)
+      return
     repoinfo = json.loads(res.body.decode('utf-8'))
     self.response = res
     self.done(repoinfo)
