@@ -553,7 +553,7 @@ class GithubUserFinder(GithubFinder):
   _url_pat = re.compile(r'https://github\.com/(?!blog(?:$|/))(?P<user>[^/]+)/?$')
   _api_pat = 'https://api.github.com/users/{user}'
 
-def main(urls):
+def main(urls, *, url_finders=(GithubFinder,)):
   class BatchFetcher:
     n = 0
     def __call__(self, title, fetcher):
@@ -569,7 +569,7 @@ def main(urls):
         tornado.ioloop.IOLoop.instance().stop()
 
     def add(self, url):
-      TitleFetcher(url, self, url_finders=(GithubFinder,))
+      TitleFetcher(url, self, url_finders=url_finders)
       self.n += 1
 
   from myutils import enable_pretty_logging
