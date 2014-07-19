@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+
+'''
+根据文件存放的路径给歌曲添加曲名、演唱者和歌词信息
+
+从 stdin 读入文件列表
+'''
+
+import sys
+import os
+from pathlib import Path
+
+import stagger
+
+import lrc
+
+def get_text_from_lrc(f):
+  with open(f) as f:
+    _, lines = lrc.parse(f.read())
+    return '\n'.join(x[1] for x in lrc.uniq(lrc.sort(lines)))
+
+def process_file(f):
+  try:
+    tag = stagger.read_tag(f)
+  except stagger.errors.NoTagError:
+    tag = stagger.Tag24()
+  p = Path(f).absolute()
+  modified = False
+
+  if not tag.title:
+    tag.title = p.stem
+    modified = True
+  if not tag.artist:
+    tag.artist = p.parent.name
+    modified = True
+
+  if 'USLT' not in tag:
+    lf = p.with_suffix('.lrc')
+    if lf.exists():
+      lyrics = get_text_from_lrc(str(lf))
+    else:
+      lf = p.with_suffix('.txt')
+      if lf.exists():
+        lyrics = lf.open().read()
+      else:
+        lyrics = None
+    if lyrics:
+      frame = stagger.id3.USLT(lang='chi', text=lyrics)
+      tag['USLT'] = [frame]
+      modified = True
+
+  if modified:
+    print('updated: %s' % f)
+    tag.write(f)
+
+if __name__ == '__main__':
+  for f in sys.stdin:
+    f = f[:-1]
+    process_file(f)
