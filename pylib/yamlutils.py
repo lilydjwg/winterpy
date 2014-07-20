@@ -19,3 +19,9 @@ def dump(data, stream=None, **kwargs):
   mykwargs.update(kwargs)
   return yaml.dump(data, stream=stream, Dumper=Dumper, **mykwargs)
 
+def represent_multiline_str(self, data):
+  style = '|' if '\n' in data else None
+  return self.represent_scalar(
+    'tag:yaml.org,2002:str', data, style=style)
+
+Dumper.add_representer(str, represent_multiline_str)
