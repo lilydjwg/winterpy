@@ -11,7 +11,11 @@ def load(src):
 def load_all(src):
   return yaml.load_all(src, Loader=Loader)
 
-def dump(data, stream=None):
-  return yaml.dump(data, stream=stream, Dumper=Dumper,
-                   allow_unicode=True, default_flow_style=False)
+def dump(data, stream=None, **kwargs):
+  mykwargs = {
+    'allow_unicode': True,
+    'default_flow_style': False,
+  }
+  mykwargs.update(kwargs)
+  return yaml.dump(data, stream=stream, Dumper=Dumper, **mykwargs)
 
