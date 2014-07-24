@@ -62,9 +62,9 @@ def upload(s, f):
          files = {'pfile': open(f, 'rb')},
          allow_redirects = False)
   if res.status_code != 302:
-    info = re.findall(r'<p class="pkgoutput">(.*?)</p>', res.text)
+    info = re.findall(r'<ul class="errorlist">(.*?)</ul>', res.text)
     if info:
-      info = info[0]
+      info = re.sub(r'<[^>]+>', info[0], '')
       sys.exit('Error: ' + info)
     else:
       print('Unknown error. Check by yourself.', file=sys.stderr)
