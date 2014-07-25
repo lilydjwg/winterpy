@@ -299,12 +299,13 @@ def main(file):
     return True
 
   def console():
+    from cli import repl
     mbName = os.path.splitext(os.path.basename(file))[0]
-    code.interact('''已经进入 Python 控制台。请对你的码表文件执行你想要的操作。
-你的码表对象是 {mbName}。你可以键入 help({mbName}) 查看如何使用。'''.format(mbName=mbName), local={
-          mbName: m,
-          'Record': mb3.Record,
-        })
+    repl({
+      mbName: m,
+      'Record': mb3.Record,
+    }, banner='''已经进入 Python 控制台。请对你的码表文件执行你想要的操作。
+你的码表对象是 {mbName}。你可以键入 help({mbName}) 查看如何使用。'''.format(mbName=mbName))
     print('已退出 Python 控制台。')
 
   def mainloop():

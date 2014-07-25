@@ -236,7 +236,7 @@ class mbTable:
   def get(self, record):
     '''
     获取 record 以便修改
-    
+
     record 是 Record 对象
     '''
     pos = self.getpos(record)
@@ -253,7 +253,7 @@ class mbTable:
 
   def getpos(self, record):
     '''获取 record 的位置。如果它不存在，获取它应当被插入的位置
-    
+
 record 可以是 Record 对象或者表示编码的字符串'''
     if isinstance(record, Record):
       return algorithm.二分搜索(self.数据, record)
@@ -317,7 +317,7 @@ record 可以是 Record 对象或者表示编码的字符串'''
       print('相似编码查询完毕。')
       if timeit:
         print('用时', datetime.today() - imeitstart)
-    return ret 
+    return ret
 
   def insert(self, code, hz, hit=0, index=0, ispy=False):
     '''插入记录'''
@@ -531,7 +531,7 @@ record 可以是 Record 对象或者表示编码的字符串'''
 
   def print(self, 文件=None, 词频=False, 编码='utf-8'):
     '''以纯文本方式输出
-    
+
 如果词频为 False 并且编码为默认的话，所得文件与 mb2txt 程序产生的
 完全一致'''
 
@@ -585,7 +585,7 @@ record 可以是 Record 对象或者表示编码的字符串'''
 
   def search(self, hz, 搜寻子串=False):
     '''寻找汉字，返回索引列表，搜寻子串 指示是否要准确匹配
-    
+
 返回结果总是排序过的'''
     # 精确匹配时测试用时 0.06x 秒
     # 模糊匹配时测试用时 0.1x 秒
