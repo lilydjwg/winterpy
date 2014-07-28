@@ -177,7 +177,7 @@ if __name__ == '__main__':
   parser.add_argument('-s', '--server', action='store_true', default=False,
                       help='server-side')
   parser.add_argument('-n', '--name', required=True,
-                      help='set a name to identity peers')
+                      help="set a name to identity peers. DON'T use same one in a few minutes!")
   parser.add_argument('prog', metavar='PROG', default='mosh', nargs='?',
                       help='program to run via the hole')
   parser.add_argument('-a', '--auth', type=open,
