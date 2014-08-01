@@ -30,7 +30,7 @@ if __name__ == '__main__':
     print('\n'.join(files))
     if not dry_run:
       archieve = os.path.basename(fin)
-      with tarfile.open(archieve + '.tar.bz2', 'w:bz2') as f:
+      with tarfile.open(archieve + '.tar.xz', 'w:xz') as f:
         for i in files:
           f.add(i, os.path.split(i)[1])
       print('完成！')
