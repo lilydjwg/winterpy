@@ -2,6 +2,8 @@
 
 import math
 
+NaN = float('NaN')
+
 class Stat:
   '''A class that accepts numbers and provides stats info.
 
@@ -21,13 +23,19 @@ class Stat:
 
   @property
   def avg(self):
-    '''average or raise ZeroDivisionError if nothing has been added yet'''
-    return self.sum / self.n
+    '''average or 0'''
+    try:
+      return self.sum / self.n
+    except ZeroDivisionError:
+      return NaN
 
   @property
   def mdev(self):
     '''standard deviation or raise ZeroDivisionError if nothing has been added yet'''
-    return math.sqrt(self.sum2 / self.n - self.avg ** 2)
+    try:
+      return math.sqrt(self.sum2 / self.n - self.avg ** 2)
+    except ZeroDivisionError:
+      return NaN
 
   def add(self, x):
     '''add a number to stats'''
@@ -43,14 +51,10 @@ class Stat:
         self.max = x
 
   def __str__(self):
-    try:
-      avg = self.avg
-      mdev = self.mdev
-      min = self.min
-      max = self.max
-    except ZeroDivisionError:
-      avg = mdev = 0
-      min = max = 0
+    avg = self.avg
+    mdev = self.mdev
+    min = self.min
+    max = self.max
     return 'min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f' % (min, avg, max, mdev)
 
   def __repr__(self):
