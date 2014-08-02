@@ -264,15 +264,16 @@ def update():
     shutil.rmtree(tmp_dir)
 
 if __name__ == '__main__':
+  if len(sys.argv) == 2 and sys.argv[1] == 'update':
+    update()
+    sys.exit()
+
   Q = MQQWry()
   if len(sys.argv) == 1:
     print(Q)
   elif len(sys.argv) == 2:
     if sys.argv[1] == '-': #参数只有一个“-”时，从标准输入读取IP
       print(''.join(Q[input()][2:]))
-    elif sys.argv[1] == 'update':
-      update()
-      sys.exit()
     elif sys.argv[1] in ('all', '-a', '-all'): #遍历示例代码
       try:
         for i in Q:
