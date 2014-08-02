@@ -19,6 +19,8 @@ import subprocess
 import tempfile
 import shutil
 
+from myutils import safe_overwrite
+
 DataFileName = os.path.expanduser('~/etc/data/QQWry.Dat')
 
 copywrite_url = 'http://update.cz88.net/ip/copywrite.rar'
