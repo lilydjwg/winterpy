@@ -9,13 +9,20 @@ lilydjwg 修改于 2014-05-26
 本程序遵循 GNU GENERAL PUBLIC LICENSE Version 2 (http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt)
 '''
 
-#数据文件下载地址： http://update.cz88.net/soft/qqwry.rar
-
 from struct import unpack, pack
 import sys, _socket, mmap
 from collections import namedtuple
+import re
+import zlib
+import subprocess
+import tempfile
+import shutil
+import os
 
 DataFileName = "/home/lilydjwg/etc/data/QQWry.Dat"
+
+copywrite_url = 'http://update.cz88.net/ip/copywrite.rar'
+data_url = 'http://update.cz88.net/ip/qqwry.rar'
 
 def _ip2ulong(ip):
   '''点分十进制 -> unsigned long
@@ -26,6 +33,9 @@ def _ulong2ip(ip):
   '''unsigned long -> 点分十进制
   '''
   return _socket.inet_ntoa(pack('>L', ip))
+
+def _extract_date(s):
+    return tuple(int(x) for x in re.findall(r'\d+', s))
 
 class ipInfo(namedtuple('ipInfo', 'sip eip country area')):
   __slots__ = ()
@@ -172,6 +182,9 @@ class QQWry:
 
     return result
 
+  def getDate(self):
+    return _extract_date(self[self.Count].area)
+
 class MQQWry(QQWry):
   '''
   将数据库放到内存
@@ -195,13 +208,67 @@ class MQQWry(QQWry):
     self.f.seek(end + 1)
     return self.f[start:end]
 
+
+def decipher_data(key, data):
+  h = bytearray()
+  for b in data[:0x200]:
+    key *= 0x805
+    key += 1
+    key &= 0xff
+    h.append(key ^ b)
+  return bytes(h) + data[0x200:]
+
+def unpack_meta(data):
+  # http://microcai.org/2014/05/11/qqwry_dat_download.html
+  sign, version, _1, size, _, key, text, link = \
+      unpack('<4sIIIII128s128s', data)
+  sign = sign.decode('gb18030')
+  text = text.rstrip(b'\x00').decode('gb18030')
+  link = link.rstrip(b'\x00').decode('gb18030')
+  del data
+  return locals()
+
+def update():
+  try:
+    tmp_dir = tempfile.mkdtemp(prefix='QQWry')
+    old_d = os.getcwd()
+    Q = MQQWry()
+    os.chdir(tmp_dir)
+
+    p = subprocess.Popen(['wget', copywrite_url])
+    p.wait()
+    d = open('copywrite.rar', 'rb').read()
+    info = unpack_meta(d)
+    date = _extract_date(info['text'])
+    if date <= Q.getDate():
+      print(info['text'], '是最新的！')
+      return
+    else:
+      print(info['text'], '开始下载...')
+    p = subprocess.Popen(['wget', data_url])
+    p.wait()
+    d = open('qqwry.rar', 'rb').read()
+    d = decipher_data(info['key'], d)
+    d = zlib.decompress(d)
+
+    os.chdir(old_d)
+    safe_overwrite(os.path.join(d, DataFileName), d, mode='wb')
+    old_c = Q.Count
+    Q = MQQWry()
+    print('已经更新！数据条数 %d->%d.' % (old_c, Q.Count))
+  finally:
+    shutil.rmtree(tmp_dir)
+
 if __name__ == '__main__':
-  Q = QQWry()
+  Q = MQQWry()
   if len(sys.argv) == 1:
     print(Q)
   elif len(sys.argv) == 2:
     if sys.argv[1] == '-': #参数只有一个“-”时，从标准输入读取IP
       print(''.join(Q[input()][2:]))
+    elif sys.argv[1] == 'update':
+      update()
+      sys.exit()
     elif sys.argv[1] in ('all', '-a', '-all'): #遍历示例代码
       try:
         for i in Q:
