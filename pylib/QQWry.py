@@ -258,7 +258,7 @@ def update():
     d = zlib.decompress(d)
 
     os.chdir(old_d)
-    safe_overwrite(os.path.join(d, DataFileName), d, mode='wb')
+    safe_overwrite(DataFileName, d, mode='wb')
     old_c = Q and Q.Count or 0
     Q = MQQWry()
     print('已经更新！数据条数 %d->%d.' % (old_c, Q.Count))
