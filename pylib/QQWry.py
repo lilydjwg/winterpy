@@ -13,13 +13,13 @@ from struct import unpack, pack
 import sys, _socket, mmap
 from collections import namedtuple
 import re
+import os
 import zlib
 import subprocess
 import tempfile
 import shutil
-import os
 
-DataFileName = "/home/lilydjwg/etc/data/QQWry.Dat"
+DataFileName = os.path.expanduser('~/etc/data/QQWry.Dat')
 
 copywrite_url = 'http://update.cz88.net/ip/copywrite.rar'
 data_url = 'http://update.cz88.net/ip/qqwry.rar'
@@ -232,7 +232,11 @@ def update():
   try:
     tmp_dir = tempfile.mkdtemp(prefix='QQWry')
     old_d = os.getcwd()
-    Q = MQQWry()
+    try:
+      Q = MQQWry()
+    except OSError as e:
+      print('注意：原数据文件无法打开：', e)
+      Q = None
     os.chdir(tmp_dir)
 
     p = subprocess.Popen(['wget', copywrite_url])
@@ -240,7 +244,7 @@ def update():
     d = open('copywrite.rar', 'rb').read()
     info = unpack_meta(d)
     date = _extract_date(info['text'])
-    if date <= Q.getDate():
+    if Q and date <= Q.getDate():
       print(info['text'], '是最新的！')
       return
     else:
@@ -253,7 +257,7 @@ def update():
 
     os.chdir(old_d)
     safe_overwrite(os.path.join(d, DataFileName), d, mode='wb')
-    old_c = Q.Count
+    old_c = Q and Q.Count or 0
     Q = MQQWry()
     print('已经更新！数据条数 %d->%d.' % (old_c, Q.Count))
   finally:
