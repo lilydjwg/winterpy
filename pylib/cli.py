@@ -36,7 +36,9 @@ def repl_reset_stdin(*args, **kwargs):
 def repl_py27(local, *args, **kwargs):
   '''Fix unicode display in Python 2.x by filtering through the ascii2uni program'''
   import subprocess, sys, time
-  p = subprocess.Popen(['ascii2uni', '-qa7'],
+  p2 = subprocess.Popen(['ascii2uni', '-qaL'],
+                       stdin=subprocess.PIPE, preexec_fn=os.setpgrp)
+  p = subprocess.Popen(['stdbuf', '-oL', 'ascii2uni', '-qa7'], stdout=p2.stdin,
                        stdin=subprocess.PIPE, preexec_fn=os.setpgrp)
 
   def displayfunc(value):
@@ -45,7 +47,7 @@ def repl_py27(local, *args, **kwargs):
       return
 
     r = repr(value)
-    if r.find(r'\x') != -1:
+    if any(x in r for x in (r'\x', r'\u', r'\U')):
       p.stdin.write(r+'\n')
       time.sleep(0.01)
     else:
