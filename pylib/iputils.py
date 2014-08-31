@@ -1,3 +1,4 @@
+import re
 from ipaddress import IPv4Network, IPv4Address
 
 def range2network(a, b):
@@ -9,6 +10,8 @@ def range2network(a, b):
 def network2range(n):
   n = IPv4Network(n)
   return str(n.network_address), str(n.broadcast_address)
+
+ipv4_re = re.compile(r'\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b')
 
 if __name__ == '__main__':
   import sys
