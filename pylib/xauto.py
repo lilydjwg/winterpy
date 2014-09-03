@@ -92,5 +92,5 @@ class XAuto:
       pass
 
   def monitor_size(self, *args, **kwargs):
-      return gdkutils.get_moniter_size(*args, **kwargs)
+    return gdkutils.get_monitor_size(*args, **kwargs)
 
