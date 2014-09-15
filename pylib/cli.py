@@ -34,12 +34,20 @@ def repl_reset_stdin(*args, **kwargs):
   repl(*args, **kwargs)
 
 def repl_py27(local, *args, **kwargs):
-  '''Fix unicode display in Python 2.x by filtering through the ascii2uni program'''
-  import subprocess, sys, time
-  p2 = subprocess.Popen(['ascii2uni', '-qaL'],
-                       stdin=subprocess.PIPE, preexec_fn=os.setpgrp)
-  p = subprocess.Popen(['stdbuf', '-oL', 'ascii2uni', '-qa7'], stdout=p2.stdin,
-                       stdin=subprocess.PIPE, preexec_fn=os.setpgrp)
+  '''Fix unicode display in Python 2.x; Console encoding must be UTF-8'''
+  import re, sys
+
+  def translate(m):
+    s = m.group(0)
+    type, code = s[1], int(s[2:], 16)
+    if type == 'x':
+      return chr(code)
+    else:
+      return unichr(code).encode('utf-8')
+
+  def unescape(s):
+    return re.sub(r'\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8}',
+                  translate, s)
 
   def displayfunc(value):
     if value is None:
@@ -47,11 +55,8 @@ def repl_py27(local, *args, **kwargs):
       return
 
     r = repr(value)
-    if any(x in r for x in (r'\x', r'\u', r'\U')):
-      p.stdin.write(r+'\n')
-      time.sleep(0.01)
-    else:
-      print(r)
+    r = unescape(r)
+    print(r)
     local['_'] = value
 
   old_displayhook = sys.displayhook
@@ -60,5 +65,3 @@ def repl_py27(local, *args, **kwargs):
     repl(local, *args, **kwargs)
   finally:
     sys.displayhook = old_displayhook
-    p.stdin.close()
-    p.wait()
