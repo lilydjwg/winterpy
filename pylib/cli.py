@@ -65,3 +65,11 @@ def repl_py27(local, *args, **kwargs):
     repl(local, *args, **kwargs)
   finally:
     sys.displayhook = old_displayhook
+
+if __name__ == '__main__':
+  import sys
+  if sys.version_info[0] == 3:
+    repl_func = repl
+  else:
+    repl_func = repl_py27
+  repl_func(vars(), os.path.expanduser('~/.pyhistory'))
