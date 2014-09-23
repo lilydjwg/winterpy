@@ -8,6 +8,7 @@ Python 2 & 3
 '''
 
 import os
+import re
 
 def repl(local, histfile=None, banner=None):
   import readline
@@ -33,21 +34,21 @@ def repl_reset_stdin(*args, **kwargs):
   os.close(fd)
   repl(*args, **kwargs)
 
+def _translate(m):
+  s = m.group(0)
+  type, code = s[1], int(s[2:], 16)
+  if type == 'x':
+    return chr(code)
+  else:
+    return unichr(code).encode('utf-8')
+
+def unescape_py2(s):
+  return re.sub(r'\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8}',
+                _translate, s)
+
 def repl_py27(local, *args, **kwargs):
   '''Fix unicode display in Python 2.x; Console encoding must be UTF-8'''
   import re, sys
-
-  def translate(m):
-    s = m.group(0)
-    type, code = s[1], int(s[2:], 16)
-    if type == 'x':
-      return chr(code)
-    else:
-      return unichr(code).encode('utf-8')
-
-  def unescape(s):
-    return re.sub(r'\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8}',
-                  translate, s)
 
   def displayfunc(value):
     if value is None:
@@ -55,7 +56,7 @@ def repl_py27(local, *args, **kwargs):
       return
 
     r = repr(value)
-    r = unescape(r)
+    r = unescape_py2(r)
     print(r)
     local['_'] = value
 
