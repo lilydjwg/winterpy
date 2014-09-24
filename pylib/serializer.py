@@ -35,7 +35,8 @@ class Serializer(metaclass=abc.ABCMeta):
           else:
             self.lock = None
             raise SerializerError('数据已加锁')
-        open(self.lock, 'w').write(str(os.getpid()))
+        with open(self.lock, 'w') as f:
+          f.write(str(os.getpid()))
 
     try:
       self.load()
