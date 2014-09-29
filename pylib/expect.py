@@ -46,6 +46,7 @@ class Expect:
       raise TypeError('regex must be one of type str, bytes or regex of bytes')
 
     fd = self.master
+    outfd = sys.stdout.fileno()
     buf = self.buffer
     try:
       while True:
@@ -53,6 +54,7 @@ class Expect:
           data = buf
         else:
           data = os.read(fd, 4096)
+          os.write(outfd, data)
         data = data.split(b'\n', 1)
         if len(data) == 2:
           data, buf = data
@@ -64,27 +66,26 @@ class Expect:
       self.buffer = buf
 
   def _read_write(self, data):
-    # TODO
     fd = self.master
     outfd = sys.stdout.fileno()
-    while True:
+    to_write = len(data)
+    while to_write:
       try:
         r, w, e = select([fd], [fd], [])
-        for fd in r:
+        if r:
           data = os.read(fd, 4096)
-          os.write(fd, data)
+          os.write(outfd, data)
+        if w:
+          written = os.write(fd, data)
+          data = data[written:]
+          to_write -= written
       except InterruptedError:
         continue
 
   def send(self, data):
     if isinstance(data, str):
       data = data.encode(self.encoding)
-    fd = self.master
-    to_write = len(data)
-    while to_write:
-      written = os.write(fd, data)
-      data = data[written:]
-      to_write -= written
+    self._read_write(data)
 
   def interact(self):
     pfd = sys.stdin.fileno()
