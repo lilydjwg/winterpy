@@ -18,8 +18,7 @@ from termutils import foreach
 session = requests.Session()
 
 def main(index, filename='$name-$author.txt', start=0, start_title=None):
-  sys.stdout.write('获取目录页...')
-  sys.stdout.flush()
+  print('获取目录页...', end='', flush=True)
   doc = htmlutils.parse_document_from_requests(index, session,
                                                encoding='gb18030')
   print('完成。')
