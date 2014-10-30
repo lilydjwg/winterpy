@@ -30,7 +30,7 @@ def reformat(s):
       ot = True
     elif tok.idtype == 'tag':
       tag_text = tok.match.group(1).lower()
-      if tag_text.endswith('lug') or not tags:
+      if tag_text.endswith('lug') or tag_text == 'wine-zh' or not tags:
         if tag_text not in tags:
           tags.append(tok.match.group(1))
       else:
