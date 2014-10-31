@@ -11,7 +11,7 @@ class PkgNameInfo(namedtuple('PkgNameInfo', 'name, version, release, arch')):
       return NotImplemented
     if self.version != other.version:
       return parse_version(self.version) < parse_version(other.version)
-    return int(self.release) < int(other.release)
+    return float(self.release) < float(other.release)
 
   def __gt__(self, other):
     # No, try the other side please.
@@ -71,7 +71,7 @@ RSYNCOPT="$RSYNCOPT -O"
 abs_get_pkgbuild "$arg" ''' % name
   _run_bash(script)
 
-pkgfile_pat = re.compile(r'(?:^|/).+-[^-]+-\d+-(?:\w+)\.pkg\.tar\.xz$')
+pkgfile_pat = re.compile(r'(?:^|/).+-[^-]+-[\d.]+-(?:\w+)\.pkg\.tar\.xz$')
 
 def _strip_ver(s):
   return re.sub(r'[<>=].*', '', s)
