@@ -223,8 +223,10 @@ def is_internal_ip(ip):
 def at_dir(d):
   old_dir = os.getcwd()
   os.chdir(d)
-  yield
-  os.chdir(old_dir)
+  try:
+    yield
+  finally:
+    os.chdir(old_dir)
 
 def firstExistentPath(paths):
   for p in paths:
