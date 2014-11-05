@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+
+import sys
+
+from lxml.builder import E
+from lxml.etree import tostring
+
+ALIAS = E.alias
+FAMILY = E.family
+ACCEPT = E.accept
+PREFER = E.prefer
+
+def gen_aliases(from_, to, action):
+  return [
+    ALIAS(FAMILY(f), action(
+      *(FAMILY(t) for t in to)
+    )) for f in from_
+  ]
+
+def assemble_doc(aliases):
+  print('<?xml version="1.0"?>')
+  print(tostring(
+    E.fontconfig(*aliases),
+    encoding = str,
+    doctype = '<!DOCTYPE fontconfig SYSTEM "fonts.dtd">',
+    pretty_print = True,
+  ), end='')
+
+def parse_line(line):
+  line = line.strip()
+  if not line or line[0] == '#':
+    return
+
+  if ':' in line:
+    from_, to = line.split(':')
+    action = ACCEPT
+  elif '=' in line:
+    from_, to = line.split('=')
+    action = PREFER
+  else:
+    raise ValueError('bad line: %s' % line)
+
+  from_ = [x.strip() for x in from_.split(',')]
+  to = [x.strip() for x in to.split(',')]
+  return gen_aliases(from_, to, action)
+
+def main():
+  aliases = []
+  for l in sys.stdin:
+    r = parse_line(l)
+    if r:
+      aliases.extend(r)
+  assemble_doc(aliases)
+
+if __name__ == '__main__':
+  main()
