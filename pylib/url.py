@@ -1,14 +1,10 @@
 '''
 一些和HTTP/HTML相关的函数/类
-
-2010年10月22日
 '''
 
 import sys, os
 from urllib.parse import urlsplit
 from urllib.parse import quote as URIescape
-from urllib.parse import unquote as URIunescape
-from http import cookies
 
 class URL(dict):
   '''
@@ -55,55 +51,6 @@ class URL(dict):
 
   def __delattr__(self, name):
     dict.__delitem__(self, name)
-
-class Cookie(cookies.SimpleCookie):
-  def __init__(self, file=None):
-    self.data = {}
-    if file:
-      self.loadFromFile(file)
-      self.file = file
-
-  def loadFromFile(self, file):
-    '''从文件载入。文件中每行一条 cookie 信息'''
-    try:
-      l = open(file).readlines()
-      l = [i[i.find(' ')+1:].strip() for i in l]
-      self.add(l)
-    except IOError as e:
-      if e.errno == 2:
-        #文件尚未建立
-        pass
-      else:
-        raise
-
-  def add(self, data):
-    '''加入或更新一条 cookie 信息，其格式为 name=value'''
-    if isinstance(data, (list, tuple)):
-      for i in data:
-        self.add(i)
-    else:
-      name, value = data.split(';')[0].split('=')
-      self[name] = value
-
-  def addFromResponse(self, response):
-    '''从 Response 对象加入/更新 Cookie'''
-    self.add([i[1] for i in response.info().items() if i[0] == 'Set-Cookie'])
-
-  def sendFormat(self):
-    '''发送格式：key=value; key=value'''
-    ret = ''
-    for i in self.keys():
-      ret += i+'='+self[i].value+'; '
-    return ret[:-2]
-
-  def __del__(self):
-    '''自动保存'''
-    if self.file:
-      open(self.file, 'w').write(str(self))
-      os.chmod(self.file, 0o600)
-
-  def __bool__(self):
-    return bool(self.data)
 
 class PostData:
   def __init__(self, data=None):
