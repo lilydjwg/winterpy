@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# vim:fileencoding=utf-8
 
 import sys
 import re
@@ -29,10 +28,13 @@ def reformat(s):
     elif tok.idtype == 'ot':
       ot = True
     elif tok.idtype == 'tag':
-      tag_text = tok.match.group(1).lower()
+      tag = tok.match.group(1)
+      tag_text = tag.lower()
       if tag_text.endswith('lug') or tag_text == 'wine-zh' or not tags:
         if tag_text not in tags:
           tags.append(tok.match.group(1))
+      elif tag in tags:
+        continue
       else:
         usertag.append(tok.data)
     else:
