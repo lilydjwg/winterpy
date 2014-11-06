@@ -3,6 +3,8 @@ import abc
 
 import pickle
 
+from myutils import safe_overwrite
+
 class Serializer(metaclass=abc.ABCMeta):
   def __init__(self, fname, readonly=False, default=None):
     '''
@@ -70,7 +72,8 @@ class Serializer(metaclass=abc.ABCMeta):
 
 class PickledData(Serializer):
   def save(self):
-    pickle.dump(self.data, open(self.fname, 'wb'))
+    data = pickle.dumps(self.data)
+    safe_overwrite(self.fname, data, mode='wb')
 
   def load(self):
     self.data = pickle.load(open(self.fname, 'rb'))
