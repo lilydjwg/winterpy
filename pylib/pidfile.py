@@ -13,15 +13,19 @@ class PIDFile:
     try:
       pid = int(open(pidfile).read())
     except (IOError, ValueError):
-      open(pidfile, 'w').write(str(os.getpid()))
+      self._write_pid()
       return
     else:
       try:
         os.kill(pid, 0)
       except OSError:
-        open(pidfile, 'w').write(str(os.getpid()))
+        self._write_pid()
       else:
         raise AlreadyRun(pid)
+
+  def _write_pid(self):
+    with open(self.pidfile, 'w') as f:
+      f.write(str(os.getpid()))
 
   def __enter__(self):
     pass
