@@ -4,8 +4,9 @@ HTTP 会话，主要针对需要登录的服务
 
 import urllib.request
 import http.cookiejar
-from url import PostData
 import os
+
+from url import encode_url_params
 
 class Session:
   '''通过 cookie 保持一个 HTTP 会话'''
@@ -42,7 +43,7 @@ class Session:
     '''
     发送请求，返回 response 对象
 
-    url 为字符串，data 会传给 PostData
+    url 为字符串，data 会传给 encode_url_params
     '''
     kwargs = {}
     # only Python 3.3+ support the method keyword
@@ -50,7 +51,7 @@ class Session:
       kwargs['method'] = method
 
     if data:
-      request = urllib.request.Request(url, PostData(data).data, **kwargs)
+      request = urllib.request.Request(url, encode_url_params(data), **kwargs)
     else:
       request = urllib.request.Request(url, **kwargs)
 
@@ -75,7 +76,7 @@ class Operation:
   '''与 Session 配合使用，说明一个会话中可能的操作'''
   def login(self, url, logindata, checkfunc):
     '''logindata 是登录字典，checkfunc 返回登录成功与否'''
-    logindata = PostData(logindata).data
+    logindata = encode_url_params(logindata)
     response = self.request(url, logindata)
     return checkfunc(response)
 

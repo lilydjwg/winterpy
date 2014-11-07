@@ -6,7 +6,7 @@ import json
 import socket
 import urllib.request
 
-from url import PostData
+from url import encode_url_params
 
 def translate(text, timeout=socket._GLOBAL_DEFAULT_TIMEOUT):
   post = {
@@ -16,7 +16,9 @@ def translate(text, timeout=socket._GLOBAL_DEFAULT_TIMEOUT):
     'source': 'txt',
     'query': text,
   }
-  ans = urllib.request.urlopen('http://fanyi.baidu.com/transcontent', PostData(post).data, timeout=timeout).read().decode('utf-8')
+  ans = urllib.request.urlopen(
+    'http://fanyi.baidu.com/transcontent',
+    encode_url_params(post), timeout=timeout).read().decode('utf-8')
   result = json.loads(ans)
   return '\n'.join([x['dst'] for x in result['data']])
 

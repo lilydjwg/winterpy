@@ -3,7 +3,7 @@
 '''
 
 import sys, os
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlencode
 from urllib.parse import quote as URIescape
 
 class URL(dict):
@@ -52,30 +52,21 @@ class URL(dict):
   def __delattr__(self, name):
     dict.__delitem__(self, name)
 
-class PostData:
-  def __init__(self, data=None):
-    '''data 可为 dict, str, bytes 或 None，最终得到的为 bytes'''
-    self.data = b''
-    if isinstance(data, dict):
-      for k, v in data.items():
-        self.add(k, v)
-    elif isinstance(data, bytes):
-      self.data = data
-    elif isinstance(data, str):
-      self.data = URIescape(data).encode('utf-8')
-    elif data is None:
-      pass
-    else:
-      raise TypeError('data 类型（%s）不正确' % data.__class__.__name__)
+def encode_url_params(data):
+  '''
+  为 URL 编码数据
 
-  def add(self, key, value):
-    '''添加键值对，key 和 value 要求为 str'''
-    key = key.encode('utf-8')
-    value = URIescape(value).encode('utf-8')
-    self.data += b'&'+key+b'='+value if self.data else key+b'='+value
-
-  def __bool__(self):
-    return bool(self.data)
+  data 可为 dict, str, bytes 或 None，最终得到的为 bytes
+  '''
+  if isinstance(data, dict):
+    ret = urlencode(data)
+  elif isinstance(data, bytes):
+    ret = data
+  elif isinstance(data, str):
+    ret = data.encode('utf-8')
+  else:
+    raise TypeError('data 类型（%s）不支持' % data.__class__.__name__)
+  return ret
 
 def encode_multipart_formdata(fields, files, boundary=None):
   """
