@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+
+import sys
+
+from myutils import filesize as _filesize
+
+def filesize(s):
+  return _filesize(int(s))[:-2]
+
+def main():
+  fmt = '%-9s%10s%10s'
+  print(fmt % ('qgroupid', 'rfer', 'excl'))
+  for l in sys.stdin.readlines()[2:]:
+    qgid, rfer, excl = l.split()
+    print(fmt % (
+      qgid, filesize(rfer), filesize(excl)))
+
+if __name__ == '__main__':
+  main()
