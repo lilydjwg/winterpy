@@ -20,7 +20,7 @@ class Expect:
     except AttributeError:
       pass
 
-  def spawn(self, cmd, *, executable=None):
+  def spawn(self, cmd, *, executable=None, preexec_fn=None):
     if executable is None:
       executable = cmd[0]
 
@@ -31,8 +31,11 @@ class Expect:
       os.dup2(slave, 1)
       os.dup2(slave, 2)
       os.close(slave)
+      if preexec_fn is not None:
+        preexec_fn()
       os.execvp(executable, cmd)
     elif pid > 0:
+      os.close(self.slave)
       return
     else:
       raise RuntimeError('os.fork() return negative value?')
@@ -105,6 +108,11 @@ class Expect:
             os.write(other, data)
         except InterruptedError:
           continue
+        except OSError as e:
+          if e.errno == 5: # Input/output error: no clients run
+            break
+          else:
+            raise
     except ChildProcessError:
       pass
     finally:
