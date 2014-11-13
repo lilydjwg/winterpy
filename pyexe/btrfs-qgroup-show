@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+
+import sys
+import subprocess
+import argparse
+
+import os, sys
+sys.path.append(os.path.expanduser('~/scripts/python/pylib'))
+
+from myutils import filesize as _filesize
+
+def filesize(s):
+  return _filesize(int(s))[:-2]
+
+def get_output_as_lines(cmd):
+  output = subprocess.check_output(cmd)
+  return output.decode('utf-8', errors='replace').splitlines()
+
+def get_path_for_id(path):
+  output = get_output_as_lines(["btrfs", "subvolume", "list", path])
+  ret = {}
+  for l in output:
+    fs = l.split(None, 8)
+    ret[fs[1]] = fs[-1]
+  return ret
+
+def main(path):
+  output = get_output_as_lines(["btrfs", "qgroup", "show", path])
+  id_map = get_path_for_id(path)
+
+  fmt = '%-9s%10s%10s   %s'
+  print(fmt % ('qgroupid', 'rfer', 'excl', 'path'))
+  for l in output[2:]:
+    qgid, rfer, excl = l.split()
+    print(fmt % (
+      qgid, filesize(rfer), filesize(excl),
+      id_map.get(qgid.split('/', 1)[1], '-'),
+    ))
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(
+    description='Show BTRFS quota groups in human-readable format')
+  parser.add_argument('path', metavar='<path>',
+                      help='path of the BTRFS filesystem')
+  args = parser.parse_args()
+  main(args.path)
