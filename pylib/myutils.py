@@ -51,6 +51,10 @@ def filesize(size):
       left = -left
     return '%.1f%siB' % (left, units[unit])
 
+class FileSize(int):
+  def __str__(self):
+    return filesize(self).rstrip('iB')
+
 def humantime(t):
   '''seconds -> XhYmZs'''
   units = 'hms'
