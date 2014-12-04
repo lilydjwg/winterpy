@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import time
+import urllib.request
+
+def get_ips():
+  urls = ['https://www.cloudflare.com/ips-v4', 'https://www.cloudflare.com/ips-v6']
+  ret = []
+  for url in urls:
+    ret.extend(urllib.request.urlopen(url).read().decode('utf-8').split())
+  return ret
+
+def main(target_file):
+  ips = get_ips()
+  tmpfile = target_file + '.tmp'
+  with open(tmpfile, 'w', encoding='utf-8') as f:
+    f.write("# CloudFlare IPs, updated at %s\n" % time.strftime('%Y-%m-%d %H:%M:%S'))
+    for ip in ips:
+      f.write("set_real_ip_from %s;\n" % ip)
+    f.write("real_ip_header CF-Connecting-IP;\n")
+  os.rename(tmpfile, target_file)
+
+if __name__ == '__main__':
+  if len(sys.argv) != 2:
+    sys.exit('where to write data?')
+  main(sys.argv[1])
