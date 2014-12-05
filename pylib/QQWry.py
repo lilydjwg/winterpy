@@ -10,7 +10,8 @@ lilydjwg 修改于 2014-05-26
 '''
 
 from struct import unpack, pack
-import sys, _socket, mmap
+import sys
+import _socket, mmap
 from collections import namedtuple
 import re
 import os
@@ -230,28 +231,33 @@ def unpack_meta(data):
   del data
   return locals()
 
-def update():
+def update(q):
   try:
     tmp_dir = tempfile.mkdtemp(prefix='QQWry')
     old_d = os.getcwd()
     try:
       Q = MQQWry()
     except OSError as e:
-      print('注意：原数据文件无法打开：', e)
+      print('注意：原数据文件无法打开：', e, file=sys.stderr)
       Q = None
     os.chdir(tmp_dir)
 
-    p = subprocess.Popen(['wget', copywrite_url])
+    wget = ['wget']
+    if q:
+      wget.append('-q')
+    p = subprocess.Popen(wget + [copywrite_url])
     p.wait()
     d = open('copywrite.rar', 'rb').read()
     info = unpack_meta(d)
     date = _extract_date(info['text'])
     if Q and date <= Q.getDate():
-      print(info['text'], '是最新的！')
+      if not q:
+        print(info['text'], '是最新的！')
       return
     else:
-      print(info['text'], '开始下载...')
-    p = subprocess.Popen(['wget', data_url])
+      if q != 2:
+        print(info['text'], '开始下载...')
+    p = subprocess.Popen(wget + [data_url])
     p.wait()
     d = open('qqwry.rar', 'rb').read()
     d = decipher_data(info['key'], d)
@@ -261,29 +267,56 @@ def update():
     safe_overwrite(DataFileName, d, mode='wb')
     old_c = Q and Q.Count or 0
     Q = MQQWry()
-    print('已经更新！数据条数 %d->%d.' % (old_c, Q.Count))
+    if q != 2:
+      print('已经更新！数据条数 %d->%d.' % (old_c, Q.Count))
   finally:
     shutil.rmtree(tmp_dir)
 
-if __name__ == '__main__':
-  if len(sys.argv) == 2 and sys.argv[1] == 'update':
-    update()
-    sys.exit()
+def main():
+  import argparse
+  parser = argparse.ArgumentParser(description='纯真IP数据库查询与更新')
+  parser.add_argument('IP', nargs='*',
+                      help='要查询的IP')
+  parser.add_argument('-u', '--update', action='store_true', default=False,
+                      help='更新数据库')
+  parser.add_argument('-a', '--all', action='store_true', default=False,
+                      help='输出所有IP数据')
+  parser.add_argument('-q', '--quiet', action='store_true', default=False,
+                      help='更新数据库时，没有更新则不输出内容')
+  parser.add_argument('-Q', '--more-quiet', action='store_true', default=False,
+                      help='更新数据库时总是不输出内容')
+
+  args = parser.parse_args()
+
+  if args.update:
+    q = 0
+    if args.more_quiet:
+      q = 2
+    elif args.quiet:
+      q = 1
+    update(q)
+    return
 
   Q = MQQWry()
-  if len(sys.argv) == 1:
+  if args.all:
+    try:
+      for i in Q: #遍历示例代码
+        print(i.normalize())
+    except IOError:
+      pass
+    return
+
+  ips = args.IP
+  if not ips:
     print(Q)
-  elif len(sys.argv) == 2:
-    if sys.argv[1] == '-': #参数只有一个“-”时，从标准输入读取IP
+  elif len(ips) == 1:
+    if ips[0] == '-': #参数只有一个“-”时，从标准输入读取IP
       print(''.join(Q[input()][2:]))
-    elif sys.argv[1] in ('all', '-a', '-all'): #遍历示例代码
-      try:
-        for i in Q:
-          print(i.normalize())
-      except IOError:
-        pass
     else: #参数只有一个IP时，只输出简要的信息
       print(''.join(Q[sys.argv[1]][2:]))
   else:
-    for i in sys.argv[1:]:
+    for i in ips:
       print(Q[i])
+
+if __name__ == '__main__':
+  main()
