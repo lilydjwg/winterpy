@@ -252,11 +252,11 @@ def update(q):
     date = _extract_date(info['text'])
     if Q and date <= Q.getDate():
       if not q:
-        print(info['text'], '是最新的！')
+        print(info['text'], '是最新的！', file=sys.stderr)
       return
     else:
       if q != 2:
-        print(info['text'], '开始下载...')
+        print(info['text'], '开始下载...', file=sys.stderr)
     p = subprocess.Popen(['wget', data_url])
     p.wait()
     d = open('qqwry.rar', 'rb').read()
@@ -268,7 +268,7 @@ def update(q):
     old_c = Q and Q.Count or 0
     Q = MQQWry()
     if q != 2:
-      print('已经更新！数据条数 %d->%d.' % (old_c, Q.Count))
+      print('已经更新！数据条数 %d->%d.' % (old_c, Q.Count), file=sys.stderr)
   finally:
     shutil.rmtree(tmp_dir)
 
