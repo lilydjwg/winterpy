@@ -64,7 +64,7 @@ def upload(s, f):
   if res.status_code != 302:
     info = re.findall(r'<ul class="errorlist">(.*?)</ul>', res.text)
     if info:
-      info = re.sub(r'<[^>]+>', info[0], '')
+      info = re.sub(r'<[^>]+>', '', info[0])
       sys.exit('Error: ' + info)
     else:
       print('Unknown error. Check by yourself.', file=sys.stderr)
