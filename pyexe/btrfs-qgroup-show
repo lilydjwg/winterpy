@@ -54,4 +54,7 @@ if __name__ == '__main__':
   parser.add_argument('-s', '--sort', choices=('rfer', 'excl', 'path'),
                       help='field to be sorted by')
   args = parser.parse_args()
-  main(args.path, args.sort)
+  try:
+    main(args.path, args.sort)
+  except subprocess.CalledProcessError as e:
+    sys.exit(e.returncode)
