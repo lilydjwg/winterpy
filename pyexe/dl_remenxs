@@ -64,7 +64,7 @@ def gather_content(write, i, l):
   return title
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description='下载D586网小说')
+  parser = argparse.ArgumentParser(description='下载热门小说网小说')
   parser.add_argument('url',
                       help='小说首页链接')
   parser.add_argument('name', default='$name-$author.txt', nargs='?',

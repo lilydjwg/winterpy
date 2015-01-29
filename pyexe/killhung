@@ -8,6 +8,10 @@ import select
 import tempfile
 import subprocess
 
+# my cron environment doesn't have this
+sys.path.append(os.path.expanduser('~/scripts/python/pylib'))
+from mysysutil import subreap
+
 timeout = 60
 
 def new_group():
@@ -21,14 +25,22 @@ def main(args):
   p = subprocess.Popen(['strace', '-o', path, '-e', 'trace=network'] + args, preexec_fn=new_group)
 
   try:
+    sig = 15
     while True:
+      try:
+        while os.waitid(os.P_ALL, 0, os.WEXITED | os.WNOHANG) is not None:
+          pass
+      except ChildProcessError:
+        break
+
       ret = p.poll()
       if ret is not None:
         return ret
       rs, ws, xs = select.select([pipe], (), (), timeout)
       if not rs:
-        print('subprocess met network problem, killing...', file=sys.stderr)
-        os.kill(-p.pid, 15)
+        print('subprocess met network problem, killing with signal %d...' % sig, file=sys.stderr)
+        os.kill(-p.pid, sig)
+        sig = 9
       else:
         os.read(pipe, 1024)
   except KeyboardInterrupt:
@@ -43,4 +55,5 @@ if __name__ == '__main__':
     del setproctitle
   except ImportError:
     pass
+  subreap(True)
   sys.exit(main(sys.argv[1:]))
