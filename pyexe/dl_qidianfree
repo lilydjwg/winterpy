@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+
+import re
+import sys
+from functools import partial
+from string import Template
+import argparse
+import base64
+import binascii
+from urllib.parse import unquote
+
+from lxml.html import fromstring
+import requests
+
+import htmlutils
+from termutils import foreach
+
+session = requests.Session()
+
+def main(index, filename='$name-$author.txt', start=0, start_title=None):
+  print('获取目录页...', end='', flush=True)
+  doc = htmlutils.parse_document_from_requests(index, session,
+                                               encoding='utf-8')
+  print('完成。')
+  name = doc.xpath('//div[@class="book_title"]/h2/strong')[0].text_content()
+  author = doc.xpath('//div[@class="book_title"]/h3/a/text()')[0]
+
+  nametmpl = Template(filename)
+  fname = nametmpl.substitute(name=name, author=author)
+  with open(fname, 'w') as f:
+    sys.stderr.write('下载到文件 %s。\n' % fname)
+    links = doc.xpath('//div[@class="section"]/ul/li/a')
+    try:
+      if start_title:
+        for i, l in enumerate(links):
+          if l.text_content().strip().startswith(start_title):
+            start = i
+            break
+        else:
+          sys.exit('指定的开始下载位置没有找到。')
+      if start:
+        links = links[start:]
+      foreach(links, partial(gather_content, f.write))
+    except KeyboardInterrupt:
+      sys.stderr.write('\n')
+      sys.exit(130)
+
+  sys.stderr.write('\n')
+  return True
+
+def gather_content(write, i, l):
+  url = l.get('href')
+  doc = htmlutils.parse_document_from_requests(url, session, encoding='utf-8')
+  title = doc.xpath('//div[@class="title"]/h3/text()')[0]
+  content_div = doc.xpath('//div[@id="content"]')[0]
+  paras = content_div.xpath('p')
+  write(title)
+  write('\n\n')
+
+  if not paras:
+    # http://free.qidian.com/Free/ReadChapter.aspx?bookId=1068403&chapterId=22172588
+    # else:
+    # http://free.qidian.com/Free/ReadChapter.aspx?bookId=1068403&chapterId=21413586
+    script = content_div.xpath('script[substring(@src, string-length(@src)-3) = ".txt"]')[0]
+    url = script.get('src')
+    text = session.get(url).content.decode('gb18030')
+    first = text.find("'")
+    last = text.rfind("'")
+    content = text[first+1:last-1].replace(r"\'", "'")
+    paras = fromstring('<p>' + content)
+
+  for p in paras:
+    content = p.text_content().strip()
+    if content.startswith('起点中文网'):
+      continue
+    content = htmlutils.entityunescape_loose(content)
+    write(content + '\n\n')
+  write('\n\n')
+  return title
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='下载起点中文网免费小说')
+  parser.add_argument('url',
+                      help='小说首页链接')
+  parser.add_argument('name', default='$name-$author.txt', nargs='?',
+                      help='保存文件名模板（支持 $name 和 $author）')
+  group = parser.add_mutually_exclusive_group()
+  group.add_argument('-s', '--start', default=1, type=int, metavar='N',
+                      help='下载起始页位置（以 1 开始）')
+  group.add_argument('-t', '--title', metavar='TITLE',
+                      help='下载起始页标题')
+  args = parser.parse_args()
+  main(args.url, args.name, args.start-1, args.title)
