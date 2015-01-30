@@ -56,7 +56,7 @@ def gather_content(write, i, l):
     content.remove(a)
   text = ''.join(htmlutils.iter_text_and_br(content)).replace('\n\n', '\n')
   text = re.sub(r'\s*D586\.COM.*', '', text)
-  title = l.text
+  title = re.sub(r'^(\d+)', r'第\1节', l.text)
   write(title)
   write('\n\n')
   write(text)
