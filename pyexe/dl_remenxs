@@ -29,7 +29,7 @@ def main(index, filename='$name-$author.txt', start=0, start_title=None):
   fname = nametmpl.substitute(name=name, author=author)
   with open(fname, 'w') as f:
     sys.stderr.write('下载到文件 %s。\n' % fname)
-    links = doc.xpath('//section[@class="ml_main"]/dl/dd/a')
+    links = doc.xpath('//section[@class="ml_main"]/dl[last()]/dd/a')
     try:
       if start_title:
         for i, l in enumerate(links):
