@@ -34,7 +34,7 @@ class QuotaRecord:
     self.path = id_map.get(self.qgid.split('/', 1)[1], '-')
 
 def main(path, sortby):
-  output = get_output_as_lines(["btrfs", "qgroup", "show", path])
+  output = get_output_as_lines(["btrfs", "qgroup", "show", "--raw", path])
   id_map = get_path_for_id(path)
 
   fmt = '{0.qgid:9}{0.rfer!s:10}{0.excl!s:10}   {0.path}'
