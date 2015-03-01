@@ -256,7 +256,7 @@ def update(q):
       return
     else:
       if q != 2:
-        print(info['text'], '开始下载...', file=sys.stderr)
+        print(info['text'], '开始下载...', file=sys.stderr, flush=True)
     p = subprocess.Popen(['wget', data_url])
     p.wait()
     d = open('qqwry.rar', 'rb').read()
