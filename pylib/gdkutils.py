@@ -37,4 +37,4 @@ def screenshot(filename, rect=None, filetype=None):
 
   rootwin = screen.get_root_window()
   pixbuf = Gdk.pixbuf_get_from_window(rootwin, *rect)
-  pixbuf.savev(filename, filetype, (), ())
+  pixbuf.save(filename, filetype, (), ())
