@@ -23,7 +23,7 @@ def download_into_with_progressbar(url, dest):
   from functools import partial
   from termutils import download_process, get_terminal_size
 
-  w = get_terminal_size()[1]
+  w = os.get_terminal_size()[1]
   with open(dest, 'wb') as f:
     download_into(requests, url, f, partial(
       download_process, dest, time.time(), width=w))
