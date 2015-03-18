@@ -51,18 +51,24 @@ def _sharp2uni(m):
   else:
     return chr(int(s))
 
-def parse_document_from_requests(url, session, *, encoding=None):
+def parse_document_from_requests(response, session=None, *, encoding=None):
   '''
+  ``response``: requests ``Response`` object, or URL
   ``encoding``: override detected encoding
   '''
-  r = session.get(url)
+  if isinstance(response, str):
+    if session is None:
+      raise ValueError('URL given but no session')
+    r = session.get(response)
+  else:
+    r = response
   if encoding:
     r.encoding = encoding
 
   # fromstring handles bytes well
   # http://stackoverflow.com/a/15305248/296473
   parser = html.HTMLParser(encoding=encoding or r.encoding)
-  doc = html.fromstring(r.content, base_url=url, parser=parser)
+  doc = html.fromstring(r.content, base_url=r.url, parser=parser)
   doc.make_links_absolute()
 
   return doc
