@@ -56,7 +56,8 @@ class RequestsBase:
     self._has_cookiefile = bool(cookiefile)
 
   def __del__(self):
-    self.session.cookies.save()
+    if self._has_cookiefile:
+      self.session.cookies.save()
 
   def request(self, url, method=None, *args, **kwargs):
     if self.baseurl:
