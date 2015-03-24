@@ -17,15 +17,6 @@ import hashlib
 
 from nicelogger import enable_pretty_logging
 
-def path_import(path):
-  '''指定路径来 import'''
-  d, f = os.path.split(path)
-  if d not in sys.path:
-    sys.path[0:0] = [d]
-    ret = __import__(os.path.splitext(f)[0])
-    del sys.path[0]
-    return ret
-
 def safe_overwrite(fname, data, *, method='write', mode='w', encoding=None):
   # FIXME: directory has no read perm
   # FIXME: symlinks and hard links
