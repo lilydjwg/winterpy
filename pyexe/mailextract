@@ -29,6 +29,8 @@ def decodeHeader(h):
     var = var[0].decode(charset)
   except AttributeError:
     var = var[0]
+  except LookupError:
+    var = var[0].decode('utf-8', errors='replace')
   return var
 
 def getMailSize(mail):
