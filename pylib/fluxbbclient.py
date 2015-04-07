@@ -1,6 +1,5 @@
-from lxml.html import fromstring
-
 from requestsutils import RequestsBase
+from htmlutils import parse_document_from_requests
 
 class FluxBB(RequestsBase):
   userAgent = 'A Python Fluxbb Client by lilydjwg'
@@ -9,8 +8,8 @@ class FluxBB(RequestsBase):
   def check_login(self):
     '''check if we have logged in already (by cookies)'''
     res = self.request('/')
-    body = res.text
-    return len(fromstring(body).xpath(
+    doc = parse_document_from_requests(res)
+    return len(doc.xpath(
       '//div[@id="brdwelcome"]/*[@class="conl"]/li')) > 0
 
   def login(self, username, password):
@@ -35,8 +34,7 @@ class FluxBB(RequestsBase):
       if since:
         url += '&registered_before=' + since.strftime('%Y-%m-%d %H:%M:%s')
       res = self.request(url)
-      body = res.text
-      doc = fromstring(body)
+      doc = parse_document_from_requests(res)
     trs = doc.xpath('//div[@id="users2"]//tbody/tr')
     if not trs:
       return False
@@ -65,8 +63,8 @@ class FluxBB(RequestsBase):
     return True
 
   def edit_post(self, post_id, body, *, subject=None, sticky=False):
-    html = self.request('/viewtopic.php?pid=%s' % post_id).text
-    post = fromstring(html)
+    r = self.request('/viewtopic.php?pid=%s' % post_id)
+    post = parse_document_from_requests(r)
     old_subject = post.xpath('//ul[@class="crumbs"]/li/strong/a')[0].text
     data = {
       'form_sent': '1',
@@ -78,3 +76,43 @@ class FluxBB(RequestsBase):
     res = self.request(url, data=data)
     return b'http-equiv="refresh"' in res.content
 
+  def delete_post(self, post_id):
+    self.request('/delete.php?id=%d' % post_id).content
+    data = {
+      'delete': '删除',
+    }
+    self.request('/delete.php?id=%d' % post_id, data=data).content
+
+  def block_user(self, user_id):
+    r = self.request('/profile.php?section=admin&id=%d' % user_id)
+    r.content
+
+    data = {
+      'form_sent': '1',
+      'group_id': '4',
+      'ban': '阻止用户',
+    }
+    r = self.request('/profile.php?section=admin&id=%d' % user_id, data=data)
+    doc = parse_document_from_requests(r)
+    r = self.request('/admin_bans.php?add_ban=%d' % user_id)
+    doc = parse_document_from_requests(r)
+    form = doc.forms[0]
+    form.fields['ban_message'] = 'spam'
+    r = self.request(form.action, data=dict(form.fields))
+    r.content
+
+  def get_post_ids_from_topic(self, topic_id):
+    r = self.request('/viewtopic.php?id=%d' % topic_id)
+    doc = parse_document_from_requests(r)
+    links = doc.xpath('//div[@id]/h2//a')
+    pids = [int(x.get('href').split('#', 1)[-1][1:])
+            for x in links]
+    return pids
+
+  def get_user_topic_ids(self, user_id):
+    r = self.request('/search.php?action=show_user_topics&user_id=%d' % user_id)
+    doc = parse_document_from_requests(r)
+    links = doc.xpath('//td[@class="tcl"]/div[@class="tclcon"]/div/strong/a')
+    tids = [int(x.get('href').split('=', 1)[-1])
+            for x in links]
+    return tids
