@@ -33,7 +33,10 @@ def main(port):
     while True:
       data, addr = s.recvfrom(4096)
       msg = data.decode('utf-8', 'replace').rstrip('\n')
-      cmd, *rest = msg.split()
+      try:
+        cmd, *rest = msg.split()
+      except ValueError:
+          continue
       cmd = cmd.upper()
       if cmd == 'REG' and len(rest):
         name = rest[0]
