@@ -51,6 +51,7 @@ def main(port):
 
 if __name__ == '__main__':
   try:
-    main(int(sys.argv[1]))
+    port = int(sys.argv[1])
   except (ValueError, IndexError):
     sys.exit('which port to listen?')
+  main(port)
