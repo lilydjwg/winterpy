@@ -8,11 +8,17 @@ import time
 import subprocess
 import argparse
 import logging
+from ctypes import CDLL, create_string_buffer
 
 from nicelogger import enable_pretty_logging
-enable_pretty_logging()
+enable_pretty_logging('DEBUG')
 
 udp_server = ('xmpp.vim-cn.com', 2727)
+
+def disconnect(sock):
+  libc = CDLL("libc.so.6")
+  buf = create_string_buffer(16) # sizeof struct sockaddr_in
+  libc.connect(sock.fileno(), buf, 16)
 
 # For the address variable names, pe is 'peer external', sl is 'self local', etc
 
@@ -46,14 +52,18 @@ def main(server, prog, name):
   sl_ip, sl_port = sock.getsockname()
   logging.info('Got my IP and Port: (%r, %s), (%r, %s).', se_ip, se_port, sl_ip, sl_port)
 
-  sock.connect((pe_ip, pe_port))
+  # be optimisctic, works even when peer is symmetric
+  dst = pe_ip, pe_port
+  disconnect(sock)
+  # sock.connect((pe_ip, pe_port))
   logging.info('send and receive local ip...')
-  pl_ip = None
+  pl_ip = pl_port = None
   for i in range(1, 5):
     # TODO: require ACK before stop
     try:
-      sock.send(('%s %d' % (sl_ip, sl_port)).encode('utf-8'))
+      sock.sendto(('%s %d' % (sl_ip, sl_port)).encode('utf-8'), dst)
       msg, addr = sock.recvfrom(1024)
+      logging.debug('recv from %r: %s', addr, msg)
       msg = msg.decode('utf-8', errors='replace')
       pl_ip, pl_port = msg.split()
       pl_port = int(pl_port)
@@ -63,8 +73,7 @@ def main(server, prog, name):
       # peer not ready
       time.sleep(2)
   if pl_ip is None:
-    logging.fatal("failed to get peer's address.")
-    sys.exit(2)
+    logging.warn("failed to get peer's address, continue anyway.")
 
   if server:
     globals()['sprog_' + prog](sock, sl_port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port)
@@ -127,27 +136,28 @@ route 10.7.0.0 255.255.255.0
     f.write(s)
   sconfig = os.path.join(os.getcwd(), 'hole_s.ovpn')
 
-  s = ctmpl.format(
-    se_ip=se_ip, se_port=se_port,
-    pl_ip=pl_ip, pl_port=pl_port
-  ).encode()
-  logging.info('sending client-side config to %s:%d...', pe_ip, pe_port)
+  if pl_ip is not None:
+    s = ctmpl.format(
+      se_ip=se_ip, se_port=se_port,
+      pl_ip=pl_ip, pl_port=pl_port
+    ).encode()
+    logging.info('sending client-side config to %s:%d...', pe_ip, pe_port)
 
-  sock.settimeout(1)
-  sock.connect((pe_ip, pe_port))
-  for i in range(5):
-    try:
-      sock.sendto(s, (pe_ip, pe_port))
-      msg, addr = sock.recvfrom(1024)
-      if msg == b'ok':
-        break
-    except socket.timeout:
-      pass
-  else:
-    logging.warn('ACK not received, starting anyway...')
+    sock.settimeout(1)
+    sock.connect((pe_ip, pe_port))
+    for i in range(5):
+      try:
+        sock.sendto(s, (pe_ip, pe_port))
+        msg, addr = sock.recvfrom(1024)
+        if msg == b'ok':
+          logging.info('client-side config sent. starting openvpn')
+          break
+      except socket.timeout:
+        pass
+    else:
+      logging.warn('ACK not received, starting anyway...')
   sock.close()
 
-  logging.info('client-side config sent. starting openvpn')
   p = subprocess.Popen(['sudo', '/usr/bin/openvpn', '--cd', '/etc/openvpn', '--config', sconfig])
   try:
     p.wait()
@@ -155,21 +165,41 @@ route 10.7.0.0 255.255.255.0
     p.wait()
 
 def cprog_openvpn(sock, port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port):
-  logging.info('receiving config')
-  sock.settimeout(20)
-  sock.connect((pe_ip, pe_port))
-  while True:
-    msg = sock.recv(1024)
-    if not msg.strip().startswith(b'client'):
-      continue
-    sock.send(b'ok')
-    sock.close()
-    break
+  if pl_ip:
+    logging.info('receiving config')
+    sock.settimeout(20)
+    sock.connect((pe_ip, pe_port))
+    while True:
+      msg = sock.recv(1024)
+      if not msg.strip().startswith(b'client'):
+        continue
+      sock.send(b'ok')
+      sock.close()
+      break
+    msg = msg.decode()
+    logging.info('config received as hole.ovpn')
+  else:
+    # try connecting with any address, hoping peer side will pass it through
+    msg = '''\
+client
+max-routes 2048
+dev tun
+remote {pe_ip} {pe_port} udp
+resolv-retry infinite
+mssfix 1400
+keepalive 10 60
+persist-key
+persist-tun
+ns-cert-type server
+comp-lzo
+verb 3
+route-nopull
+route 10.7.0.0 255.255.255.0
+'''.format(pe_ip = pe_ip, pe_port = pe_port)
   with open('hole.ovpn', 'w') as f:
-    f.write(msg.decode())
+    f.write(msg)
     auth = args.auth.read()
     f.write(auth)
-  logging.info('config received as hole.ovpn')
   os.execvp('sudo', ['sudo', 'openvpn', 'hole.ovpn'])
 
 if __name__ == '__main__':
