@@ -43,3 +43,8 @@ class LengthPrefixedMessenger(object):
     s, addr = self.sock.accept()
     s = self.__class__(s)
     return s, addr
+
+  def close(self):
+      self.sock.close()
+      # discard results to closed socket
+      self.send = lambda x: None
