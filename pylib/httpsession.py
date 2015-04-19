@@ -72,18 +72,6 @@ class Session:
       if e.errno != 2:
         raise
 
-class Operation:
-  '''与 Session 配合使用，说明一个会话中可能的操作'''
-  def login(self, url, logindata, checkfunc):
-    '''logindata 是登录字典，checkfunc 返回登录成功与否'''
-    logindata = encode_url_params(logindata)
-    response = self.request(url, logindata)
-    return checkfunc(response)
-
-  def logout(self):
-    '''删除 cookie 好了'''
-    os.unlink(self.cookie.filename)
-
 def make_cookie(name, value, expires=None, domain='', path='/'):
   '''
   returns a Cookie instance that you can add to a cookiejar
