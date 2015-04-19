@@ -59,7 +59,7 @@ def encode_url_params(data):
   data 可为 dict, str, bytes 或 None，最终得到的为 bytes
   '''
   if isinstance(data, dict):
-    ret = urlencode(data)
+    ret = urlencode(data).encode('utf-8')
   elif isinstance(data, bytes):
     ret = data
   elif isinstance(data, str):
