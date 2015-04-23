@@ -5,11 +5,14 @@ import re
 import sys
 import getpass
 from http.cookiejar import MozillaCookieJar
-import logging
 
 import requests
 
-from nicelogger import enable_pretty_logging
+try:
+  from nicelogger import enable_pretty_logging
+  import logging
+except ImportError:
+  pass
 
 cookiefile = os.path.expanduser('~/scripts/python/pydata/aur.cookie')
 token_pattern = re.compile(r'[a-f0-9]{32}')
@@ -72,5 +75,8 @@ def upload(s, f):
       repl(locals())
 
 if __name__ == '__main__':
-  enable_pretty_logging(logging.DEBUG)
+  try:
+    enable_pretty_logging(logging.DEBUG)
+  except NameError:
+    pass
   main(sys.argv[1:])
