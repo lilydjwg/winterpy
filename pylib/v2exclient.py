@@ -3,10 +3,19 @@ from urllib.parse import urljoin
 from requestsutils import RequestsBase
 from htmlutils import parse_document_from_requests
 
-class V2EXFailure(Exception):
+class V2EXError(Exception):
+  pass
+
+class V2EXFailure(V2EXError):
   def __init__(self, msg, req):
     self.msg = msg
     self.req = req
+
+class NotLoggedIn(V2EXError):
+  pass
+
+class MissionNotAvailable(V2EXError):
+  pass
 
 class V2EX(RequestsBase):
   auto_referer = True
@@ -38,10 +47,13 @@ class V2EX(RequestsBase):
 
   def daily_mission(self):
     r = self.request(self.daily_url)
+    if 'href="/signin"' in r.text:
+      raise NotLoggedIn
+
     doc = parse_document_from_requests(r)
     buttons = doc.xpath('//input[@value = "领取 X 铜币"]')
     if not buttons:
-      raise V2EXFailure('mission not available', r)
+      raise MissionNotAvailable
 
     button = buttons[0]
     url = button.get('onclick').split("'")[1]
