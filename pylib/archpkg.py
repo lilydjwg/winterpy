@@ -10,7 +10,7 @@ def parse_arch_version(v):
     epoch = int(v.split(':', 1)[0])
   else:
     epoch = 0
-  return (epoch,) + _parse_version(v)
+  return epoch, _parse_version(v)
 
 class PkgNameInfo(namedtuple('PkgNameInfo', 'name, version, release, arch')):
   def __lt__(self, other):
