@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+from collections import defaultdict
+
+import archpkg
+from archpkg import parse_arch_version
+
+class PkgNameInfo(archpkg.PkgNameInfo):
+  def __lt__(self, other):
+    # ignore arch mismatch
+    if self.name != other.name:
+      return NotImplemented
+    if self.version != other.version:
+      return parse_arch_version(self.version) < parse_arch_version(other.version)
+    return float(self.release) < float(other.release)
+
+def remove_pkg(path):
+  try:
+    os.unlink(path)
+  except FileNotFoundError:
+    pass
+  sig = path + '.sig'
+  try:
+    os.unlink(sig)
+  except FileNotFoundError:
+    pass
+
+def main(args):
+  pkgs = defaultdict(list)
+  for f in args.packages:
+    pkg = PkgNameInfo.parseFilename(f)
+    pkgs[pkg.name].append((pkg, f))
+  for _, v in pkgs.items():
+    try:
+      v.sort()
+    except TypeError:
+      print('Bad things happen: %s' % v)
+      raise
+
+    for pkg, f in v[:-args.keep]:
+      if args.dry_run:
+        print('would remove %s.' % f)
+      else:
+        print('removing %s.' % f)
+        remove_pkg(f)
+
+    if args.show_kept_fd >= 0:
+      for _, f in v[-args.keep:]:
+        os.write(args.show_kept_fd, f.encode('utf-8') + b'\n')
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='remove old Arch Linux packages')
+  parser.add_argument('-n', '--dry-run', action='store_true',
+                      help='dry run')
+  parser.add_argument('-k', '--keep', metavar='N', type=int, default=2,
+                      help='how many versions to keep. Default is 2')
+  parser.add_argument('--show-kept-fd', metavar='FD', type=int, default=-1,
+                      help='write kept package paths to fd FD, one per line')
+  parser.add_argument('packages', metavar='PACKAGE', nargs='+',
+                      help='package files to check')
+  args = parser.parse_args()
+  main(args)
