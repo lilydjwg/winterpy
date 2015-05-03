@@ -38,7 +38,6 @@ def set(summary=None, body=None, icon_str=None):
     c_char_p(notify_st.summary),
     c_char_p(notify_st.body),
     c_char_p(notify_st.icon_str),
-    c_void_p()
   )
 
 def show():
