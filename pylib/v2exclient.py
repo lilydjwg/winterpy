@@ -46,6 +46,11 @@ class V2EX(RequestsBase):
       raise V2EXFailure('login failed', r)
 
   def daily_mission(self):
+    # may need this or mission will fail
+    r = self.request(self.index_url)
+    if '/signout?once=' not in r.text:
+      raise NotLoggedIn
+
     r = self.request(self.daily_url)
     if 'href="/signin"' in r.text:
       raise NotLoggedIn
