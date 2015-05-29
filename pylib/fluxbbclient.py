@@ -44,16 +44,6 @@ class FluxBB(RequestsBase):
     users = ','.join(users)
 
     post = {
-      'ban_expire': '',
-      'ban_users_comply': 'save',
-      'ban_message': msg or 'not verified. Ask admin if you are not a spammer.',
-      'ban_the_ip': '1',
-      'users': users,
-    }
-    res = self.request('/admin_users.php', data=post)
-    body = res.text
-
-    post = {
       'delete_users_comply': 'delete',
       'delete_posts': '1',
       'users': users,
