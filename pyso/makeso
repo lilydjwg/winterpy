@@ -15,5 +15,3 @@ makeaso () {
   setopt -x
   $CC $@ -O2 -shared -fPIC $infile -o $outfile
 }
-
-makeaso ard.c
