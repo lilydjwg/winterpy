@@ -44,3 +44,7 @@ def ping(host, *, count=4):
   else:
     avg = mdev = -1
   return PingResult(loss, float(avg), float(mdev))
+
+def get_directory_size(d):
+  return int(subprocess.check_output(
+    ['du', '-sb', d]).decode().split(None, 1)[0])
