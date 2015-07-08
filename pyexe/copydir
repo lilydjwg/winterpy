@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import subprocess
+
+from cmdutils import get_directory_size
+
+def do_copy(src, dst):
+  print('计算大小中……', end='', flush=True)
+  s = get_directory_size(src)
+  print('\r\x1b[K', end='', flush=True)
+  dir, file = os.path.split(src)
+  tar1 = subprocess.Popen(['tar', 'c', file], cwd = dir or None,
+                          stdout = subprocess.PIPE)
+  pv = subprocess.Popen(['pv', '-s', str(s)],
+                        stdin = tar1.stdout,
+                        stdout = subprocess.PIPE)
+  tar2 = subprocess.Popen(['tar', 'x', '-C', dst],
+                          stdin = pv.stdout)
+  tar1.wait()
+  pv.wait()
+  tar2.wait()
+
+def main():
+  if len(sys.argv) != 3:
+    sys.exit('src and dest not given.')
+
+  do_copy(sys.argv[1], sys.argv[2])
+
+if __name__ == '__main__':
+  main()
