@@ -57,6 +57,7 @@ def gather_content(write, i, l):
   text = ''.join(htmlutils.iter_text_and_br(content)).replace('\r', '').replace('\n\n', '\n')
   title = l.text_content()
   write(title)
+  write('\n\n')
   write(text)
   write('\n\n')
   return title
