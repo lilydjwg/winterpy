@@ -17,6 +17,8 @@ def extractText(el):
   return el.text_content()
 
 def iter_text_and_br(el):
+  if el.text:
+    yield el.text
   for i in el.iterchildren():
     if i.tag == 'br':
       yield '\n'
