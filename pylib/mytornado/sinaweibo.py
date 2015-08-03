@@ -118,15 +118,20 @@ def _on_weibo_request(future, response):
     body = None
 
   if response.error:
-    try:
+    if 400 <= responses.code < 500:
       ex = WeiboError(body)
-    except:
+    elif 500 <= responses.code < 600:
+      ex = WeiboServerError(response)
+    else:
       ex = WeiboRequestError(response)
     future.set_exception(ex)
   else:
     future.set_result(escape.json_decode(body))
 
 class WeiboRequestError(Exception):
+  pass
+
+class WeiboServerError(WeiboRequestError):
   pass
 
 class WeiboError(WeiboRequestError):
