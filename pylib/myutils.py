@@ -237,3 +237,8 @@ def md5sum_of_file(file):
         break
       m.update(d)
   return m.hexdigest()
+
+def md5(s, encoding='utf-8'):
+  m = hashlib.md5()
+  m.update(s.encode(encoding))
+  return m.hexdigest()
