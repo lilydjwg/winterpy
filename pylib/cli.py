@@ -43,6 +43,7 @@ def _translate(m):
     return unichr(code).encode('utf-8')
 
 def unescape_py2(s):
+  '''unescape string displays for Python 2, works in Python 2'''
   return re.sub(r'\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8}',
                 _translate, s)
 
