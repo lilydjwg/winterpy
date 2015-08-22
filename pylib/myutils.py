@@ -4,6 +4,7 @@
 
 import os, sys
 import datetime
+import time
 from functools import lru_cache, wraps
 import logging
 try:
@@ -127,7 +128,6 @@ def restart_if_failed(func, max_tries, args=(), kwargs={}, secs=60, sleep=None):
   '''
   re-run when some exception happens, until `max_tries` in `secs`
   '''
-  import time
   import traceback
   from collections import deque
 
@@ -177,12 +177,19 @@ def execution_timeout(timeout):
   def timed_out(signum, sigframe):
     raise TimeoutError
 
+  delay, interval = signal.setitimer(signal.ITIMER_REAL, timeout, 0)
   old_hdl = signal.signal(signal.SIGALRM, timed_out)
-  old_itimer = signal.setitimer(signal.ITIMER_REAL, timeout, 0)
+  now = time.time()
   try:
     yield
   finally:
-    signal.setitimer(signal.ITIMER_REAL, *old_itimer)
+    # inner timeout must be smaller, or the timer event will be delayed
+    if delay:
+      elapsed = time.time() - now
+      delay = max(delay - elapsed, 0.000001)
+    else:
+      delay = 0
+    signal.setitimer(signal.ITIMER_REAL, delay, interval)
     signal.signal(signal.SIGALRM, old_hdl)
 
 def find_executables(name, path=None):
