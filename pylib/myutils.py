@@ -179,9 +179,11 @@ def execution_timeout(timeout):
 
   old_hdl = signal.signal(signal.SIGALRM, timed_out)
   old_itimer = signal.setitimer(signal.ITIMER_REAL, timeout, 0)
-  yield
-  signal.setitimer(signal.ITIMER_REAL, *old_itimer)
-  signal.signal(signal.SIGALRM, old_hdl)
+  try:
+    yield
+  finally:
+    signal.setitimer(signal.ITIMER_REAL, *old_itimer)
+    signal.signal(signal.SIGALRM, old_hdl)
 
 def find_executables(name, path=None):
   '''find all matching executables with specific name in path'''
