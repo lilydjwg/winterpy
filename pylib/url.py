@@ -3,7 +3,7 @@
 '''
 
 import sys, os
-from urllib.parse import urlsplit, urlencode, unquote
+from urllib.parse import urlsplit, urlencode, unquote, unquote_plus
 from urllib.parse import quote as URIescape
 
 class URL(dict):
@@ -111,4 +111,4 @@ def get_content_type(filename):
 def urldecode(d, encoding='utf-8'):
   for pair in d.split('&'):
     k, v = pair.split('=', 1)
-    yield unquote(k, encoding=encoding), unquote(v, encoding=encoding)
+    yield unquote(k, encoding=encoding), unquote_plus(v, encoding=encoding)
