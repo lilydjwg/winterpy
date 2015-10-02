@@ -32,7 +32,7 @@ def read_string(s):
 def apkinfo(apk):
   with tempfile.TemporaryDirectory('apk') as tempdir:
     try:
-      run(["apktool", "d", "-f", "-s", apk, tempdir])
+      run(["apktool", "d", "-f", "-s", apk, "-o", tempdir])
     except CalledProcessError:
       raise ApktoolFailed
 
@@ -76,7 +76,7 @@ def showInfo(apks):
       'convert', '-alpha', 'remove',
       '-font', '文泉驿正黑', '-pointsize', '12', '-gravity', 'center',
       'label:' + info.id,
-      'label:' + info.version,
+      'label:%s' % info.version,
       '-' if info.icon else 'label:(No Icon)',
       'label:' + (info.name or '(None)'),
       '-append', 'png:-',
