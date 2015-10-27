@@ -6,19 +6,12 @@ from pprint import pprint
 import subprocess
 import datetime
 import argparse
+import urllib.parse
 
-try:
-  # pymongo 2.4+
-  from pymongo.mongo_client import MongoClient
-except ImportError:
-  from pymongo import Connection as MongoClient
+from pymongo import MongoClient
 import pymongo.cursor
 
 from cli import repl
-
-host = 'localhost'
-port = 27017
-db = 'test'
 
 import locale
 locale.setlocale(locale.LC_ALL, '')
@@ -44,10 +37,16 @@ def displayfunc(value):
     pprint(value)
   v['_'] = value
 
-def main(kwargs):
+def main(url, kwargs):
   global db, conn
-  conn = MongoClient(host=host, port=port, **kwargs)
-  db = conn[db]
+  if not url:
+    url = ['mongodb://localhost/']
+  conn = MongoClient(host=url, **kwargs)
+  try:
+    dbname = urllib.parse.urlsplit(url[0]).path.lstrip('/') or 'test'
+  except IndexError:
+    dbname = 'test'
+  db = conn[dbname]
 
   rc = os.path.expanduser('~/.mongorc.py')
   if os.path.isfile(rc):
@@ -57,7 +56,7 @@ def main(kwargs):
   v = globals().copy()
   v.update(locals())
   v['_'] = None
-  del v['repl'], v['kwargs'], v['main'], v['host'], v['port']
+  del v['repl'], v['kwargs'], v['main']
   del v['displayfunc'], v['subprocess'], v['env']
   del v['__name__'], v['__cached__'], v['__doc__'], v['__file__'], v['__package__']
   del v['rc'], v['argparse']
@@ -78,21 +77,12 @@ if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(description='MongoDB Shell in Python')
   parser.add_argument('--slaveok', action='store_true')
-  parser.add_argument('dburl', nargs='?', default=None,
-                      help='the database to use instead of localhost\'s test')
+  parser.add_argument('dburl', nargs='*', default=None,
+                      help='mongodo:// URL(s) to connect to')
   args = parser.parse_args()
 
   kwargs = {}
-  if args.dburl:
-    dburl = args.dburl
-    if '/' in dburl:
-      host, db = dburl.split('/', 1)
-      if ':' in host:
-        host, port = host.split(':', 1)
-        port = int(port)
-    else:
-      db = dburl
   if args.slaveok:
     kwargs['slave_okay'] = True
 
-  main(kwargs)
+  main(args.dburl, kwargs)
