@@ -67,7 +67,7 @@ class RequestsBase:
       h = kwargs.get('headers', None)
       if not h:
         h = kwargs['headers'] = {}
-      h['Referer'] = self.lasturl
+      h.setdefault('Referer', self.lasturl)
 
     if method is None:
       if 'data' in kwargs or 'files' in kwargs:
@@ -75,8 +75,10 @@ class RequestsBase:
       else:
         method = 'get'
 
-    self.lasturl = url
-    return self.session.request(method, url, *args, **kwargs)
+    response = self.session.request(method, url, *args, **kwargs)
+    # url may have been changed due to redirection
+    self.lasturl = response.url
+    return response
 
 if __name__ == '__main__':
   from sys import argv, exit
