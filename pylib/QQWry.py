@@ -2,7 +2,7 @@
 
 '''QQWry 模块，提供读取纯真IP数据库的数据的功能。
 
-纯真数据库格式参考 http://lumaqq.linuxsir.org/article/qqwry_format_detail.html
+纯真数据库格式参考 https://web.archive.org/web/20140423114336/http://lumaqq.linuxsir.org/article/qqwry_format_detail.html
 作者 AutumnCat. 最后修改在 2008年 04月 29日
 bones7456 最后修改于 2009-02-02
 lilydjwg 修改于 2014-05-26
