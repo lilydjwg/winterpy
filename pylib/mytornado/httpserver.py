@@ -63,7 +63,10 @@ class ErrorHandlerMixin:
         err_msg = ''
       else:
         if isinstance(err_exc, HTTPError):
-          err_msg = str(err_exc.log_message) + '.'
+          if err_exc.log_message is not None:
+            err_msg = str(err_exc.log_message) + '.'
+          else:
+            err_msg = ''
         else:
           err_msg = str(err_exc) + '.'
 
