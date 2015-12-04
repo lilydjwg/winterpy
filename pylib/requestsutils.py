@@ -44,7 +44,8 @@ class RequestsBase:
     return self._session
 
   def __init__(self, *, baseurl=None, cookiefile=None, session=None):
-    self.baseurl = baseurl
+    if baseurl is not None:
+      self.baseurl = baseurl
     self._session = session
 
     s = self.session
