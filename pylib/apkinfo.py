@@ -55,7 +55,8 @@ def apkinfo(apk):
             iconfile = firstExistentPath(
               '%s/%s.png' % (d, iconname) for d in
               (dirname + x for x in
-               ('-xxhdpi', '-xhdpi', '-hdpi', '', '-nodpi'))
+               ('-xxhdpi', '-xhdpi', '-hdpi', '', '-nodpi',
+                '-xxhdpi-v4', '-xhdpi-v4', '-hdpi-v4', '-v4', '-nodpi-v4'))
             )
             with open(iconfile, 'rb') as f:
               icon = f.read()
