@@ -33,6 +33,7 @@ class RequestsBase:
   userAgent = None
   lasturl = None
   auto_referer = False
+  baseurl = None
 
   @property
   def session(self):
