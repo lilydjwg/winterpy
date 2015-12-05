@@ -241,7 +241,7 @@ def md5sum_of_file(file):
   with open(file, 'rb') as f:
     m = hashlib.md5()
     while True:
-      d = f.read(8192)
+      d = f.read(81920)
       if not d:
         break
       m.update(d)
