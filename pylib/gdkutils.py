@@ -4,6 +4,8 @@ utils using GDK
 
 import mimetypes
 
+import gi
+gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk
 
 def get_screen_size():
