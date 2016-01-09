@@ -9,6 +9,7 @@ Python 2 & 3
 
 import os
 import re
+import sys
 
 def repl(local, histfile=None, banner=None):
   import readline
@@ -34,13 +35,19 @@ def repl_reset_stdin(*args, **kwargs):
   os.close(fd)
   repl(*args, **kwargs)
 
-def _translate(m):
-  s = m.group(0)
-  type, code = s[1], int(s[2:], 16)
-  if type == 'x':
+if sys.version_info[0] == 2:
+  def _translate(m):
+    s = m.group(0)
+    type, code = s[1], int(s[2:], 16)
+    if type == 'x':
+      return chr(code)
+    else:
+      return unichr(code).encode('utf-8')
+else:
+  def _translate(m):
+    s = m.group(0)
+    type, code = s[1], int(s[2:], 16)
     return chr(code)
-  else:
-    return unichr(code).encode('utf-8')
 
 def unescape_py2(s):
   '''unescape string displays for Python 2, works in Python 2'''
