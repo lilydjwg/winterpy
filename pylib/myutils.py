@@ -124,6 +124,12 @@ def loadso(fname):
       return CDLL(p)
   raise ImportError('%s not found' % fname)
 
+def dofile(path):
+  G = {}
+  with open(path) as f:
+    exec(f.read(), G)
+  return G
+
 def restart_if_failed(func, max_tries, args=(), kwargs={}, secs=60, sleep=None):
   '''
   re-run when some exception happens, until `max_tries` in `secs`
