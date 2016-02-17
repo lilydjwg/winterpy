@@ -8,7 +8,7 @@ import gdkutils
 class XAuto:
   _screensize = None
 
-  def __init__(self, tmp_img='/dev/shm/tmp%d.png' % os.getpid(),
+  def __init__(self, tmp_img='/tmp/tmp%d.png' % os.getpid(),
     default_threshold=0.7, default_rect=None):
     self.d = X.Display()
     self.tmp_img = tmp_img
