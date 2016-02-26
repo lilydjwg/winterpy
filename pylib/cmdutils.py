@@ -48,3 +48,22 @@ def ping(host, *, count=4):
 def get_directory_size(d):
   return int(subprocess.check_output(
     ['du', '-sb', d]).decode().split(None, 1)[0])
+
+def get_entropy(input):
+  if isinstance(input, bytes):
+    stdin = subprocess.PIPE
+    data = input
+  else:
+    stdin = input
+    data = None
+  p = subprocess.Popen(
+    ['ent', '-t'],
+    stdin = stdin,
+    stdout = subprocess.PIPE,
+  )
+  out = p.communicate(data)[0].decode()
+  header, data = out.splitlines()
+  header = header.split(',')[1:]
+  data = [float(x) for x in data.split(',')[1:]]
+  data[0] = int(data[0])
+  return {h: d for h, d in zip(header, data)}
