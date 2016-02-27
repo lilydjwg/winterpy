@@ -15,6 +15,7 @@ except ImportError:
 import contextlib
 import signal
 import hashlib
+import base64
 
 from nicelogger import enable_pretty_logging
 
@@ -257,3 +258,8 @@ def md5(s, encoding='utf-8'):
   m = hashlib.md5()
   m.update(s.encode(encoding))
   return m.hexdigest()
+
+def base64_encode(s):
+  if isinstance(s, str):
+    s = s.encode()
+  return base64.b64encode(s).decode('ascii')
