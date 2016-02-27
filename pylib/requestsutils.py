@@ -56,6 +56,11 @@ class RequestsBase:
         s.cookies.load()
 
     self._has_cookiefile = bool(cookiefile)
+    self.initialize()
+
+  def initialize(self):
+    '''subclasss can override this to change initialization behavior.'''
+    pass
 
   def __del__(self):
     if self._has_cookiefile:
