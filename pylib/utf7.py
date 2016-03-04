@@ -49,8 +49,12 @@ From: http://piao-tech.blogspot.com/2010/03/get-offlineimap-working-with-non-asc
 
 """
 
+import sys
 import binascii
 import codecs
+
+if sys.version_info[0] == 2:
+  chr = lambda x: x
 
 # encoding
 def modified_base64(s):
@@ -81,7 +85,7 @@ def encoder(s):
 # decoding
 def modified_unbase64(s):
   b = binascii.a2b_base64(s.replace(b',', b'/') + b'===')
-  return str(b, 'utf-16be')
+  return b.decode('utf-16be')
 
 def decoder(s):
   r = []
