@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+
+import os
+import subprocess
+
+import pygit2
+
+def main():
+  repo = pygit2.Repository(pygit2.discover_repository('.'))
+  h = repo.describe(repo.head, show_commit_oid_as_fallback=True)
+
+  topdir = repo.path
+  if topdir.endswith('/.git/'):
+    topdir = topdir[:-6]
+    name = os.path.basename(topdir)
+
+  if name.endswith('.git'):
+    name = name[:-4]
+
+  prefix = '%s-%s' % (name, h)
+  fullname = '%s-%s.tar.gz' % (name, h)
+  dest = os.path.join(topdir, '..', fullname)
+  dest = os.path.relpath(dest)
+  cmd = ['git', '--git-dir', repo.path,
+         'archive', 'HEAD', '--prefix=%s/' % prefix, '-o', dest]
+  subprocess.check_call(cmd)
+
+  print('Tarball %s created.' % dest)
+
+if __name__ == '__main__':
+  main()
