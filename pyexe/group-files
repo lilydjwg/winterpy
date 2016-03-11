@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+import sys
+from collections import defaultdict
+
+def main(files):
+  datamap = defaultdict(list)
+  for file in files:
+    with open(file) as f:
+      datamap[f.read()].append(file)
+
+  print('=' * 72)
+  for data, files in sorted(datamap.items(), key=lambda x: len(x[1])):
+    print('\n'.join(files))
+    print('-' * 72)
+    if not data.endswith('\n'):
+      data += '%\n'
+    print(data, end='')
+    print('=' * 72)
+
+if __name__ == '__main__':
+  main(sys.argv[1:])
