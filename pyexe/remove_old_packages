@@ -4,10 +4,12 @@ import argparse
 import os
 from collections import defaultdict
 
+from pkg_resources import parse_version
+
 import archpkg
 from archpkg import parse_arch_version
 
-class PkgNameInfo(archpkg.PkgNameInfo):
+class ArchPkgInfo(archpkg.PkgNameInfo):
   def __lt__(self, other):
     # ignore arch mismatch
     if self.name != other.name:
@@ -16,22 +18,58 @@ class PkgNameInfo(archpkg.PkgNameInfo):
       return parse_arch_version(self.version) < parse_arch_version(other.version)
     return float(self.release) < float(other.release)
 
-def remove_pkg(path):
-  try:
-    os.unlink(path)
-  except FileNotFoundError:
-    pass
-  sig = path + '.sig'
-  try:
-    os.unlink(sig)
-  except FileNotFoundError:
-    pass
+  def remove_pkg(self, path):
+    try:
+      os.unlink(path)
+    except FileNotFoundError:
+      pass
+    sig = path + '.sig'
+    try:
+      os.unlink(sig)
+    except FileNotFoundError:
+      pass
+
+class RpmPkgInfo(object):
+  @classmethod
+  def parseFilename(cls, filename):
+    return cls(filename)
+
+  def __init__(self, path):
+    filename = os.path.basename(path)
+    prefix = filename.rsplit('.', 3)[0]
+    name, version_str, release_num = prefix.rsplit('-', 2)
+    v = '%s-%s' % (version_str, release_num)
+
+    self.path = path
+    self.name = name
+    self.version = parse_version(v)
+
+  def __lt__(self, other):
+    if self.name != other.name:
+      return NotImplemented
+    return self.version < other.version
+
+  def remove_pkg(self, path):
+    try:
+      os.unlink(path)
+    except FileNotFoundError:
+      pass
+
+def parse_filename(f):
+  if f.endswith('.rpm'):
+    cls = RpmPkgInfo
+  elif f.endswith('.pkg.tar.xz'):
+    cls = ArchPkgInfo
+  else:
+    raise Exception('unknown package name style: %s' % f)
+
+  return cls(f)
 
 def main(args):
   pkgs = defaultdict(list)
   for f in args.packages:
-    pkg = PkgNameInfo.parseFilename(f)
-    pkgs[pkg.name].append((pkg, f))
+    pkg = parse_filename(f)
+    pkgs[pkg.__class__, pkg.name].append((pkg, f))
   for _, v in pkgs.items():
     try:
       v.sort()
@@ -44,7 +82,7 @@ def main(args):
         print('would remove %s.' % f)
       else:
         print('removing %s.' % f)
-        remove_pkg(f)
+        pkg.remove_pkg(f)
 
     if args.show_kept_fd >= 0:
       for _, f in v[-args.keep:]:
