@@ -75,8 +75,20 @@ def repl_py27(local, *args, **kwargs):
   finally:
     sys.displayhook = old_displayhook
 
+def install_exc_hook(func=repl):
+  old_hook = sys.excepthook
+
+  def handle_exception(type, value, tb):
+    import traceback
+    traceback.print_exception(type, value, tb)
+    frame = tb.tb_next.tb_frame
+    sys.excepthook = old_hook
+    func(frame.f_locals, banner='>>> Welcome to the debugging console <<<')
+    sys.excepthook = handle_exception
+
+  sys.excepthook = handle_exception
+
 if __name__ == '__main__':
-  import sys
   if sys.version_info[0] == 3:
     repl_func = repl
   else:
