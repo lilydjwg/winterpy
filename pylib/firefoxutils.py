@@ -22,6 +22,7 @@ class NSSDecryptor:
     raise NSSError(error_name, error_str)
 
   def __init__(self, profile_dir, password=''):
+    # profile_dir needs: cert8.db key3.db secmod.db
     nss = self.nss = ctypes.CDLL('libnss3.so')
     nss.PR_ErrorToString.restype = ctypes.c_char_p
     nss.PR_ErrorToName.restype = ctypes.c_char_p
