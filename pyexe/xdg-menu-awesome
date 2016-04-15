@@ -16,7 +16,7 @@ class inTerminal:
 
 def getIconPath(name):
   # FIXME: use a user-preferred theme?
-  return xdg.IconTheme.getIconPath(name, size=16, theme='gnome')
+  return xdg.IconTheme.getIconPath(name, size=16, theme='Adwaita')
 
 def parseMenu(menu, data, indent=0):
   for submenu in menu.Entries:
