@@ -25,3 +25,25 @@ def represent_multiline_str(self, data):
     'tag:yaml.org,2002:str', data, style=style)
 
 Dumper.add_representer(str, represent_multiline_str)
+
+def represent_this_key_first_dict(key, self, data):
+  '''
+  usage:
+
+  yamlutils.Dumper.add_representer(
+    dict, partial(yamlutils.represent_this_key_first_dict, 'name'))
+  '''
+  value = []
+  if key in data:
+    node_key = self.represent_data(key)
+    node_value = self.represent_data(data[key])
+    value.append((node_key, node_value))
+
+  for k, v in data.items():
+    if k == key:
+      continue
+    node_key = self.represent_data(k)
+    node_value = self.represent_data(v)
+    value.append((node_key, node_value))
+
+  return yaml.nodes.MappingNode(u'tag:yaml.org,2002:map', value)
