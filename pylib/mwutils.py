@@ -12,4 +12,4 @@ def move_category(site, old, new):
     if text == old_text:
       continue
     p.save(text, '分类重命名：[[Category:%s]] -> [[Category:%s]]' % (
-      old, new))
+      old, new), minor=True)
