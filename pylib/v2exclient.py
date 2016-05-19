@@ -29,10 +29,10 @@ class V2EX(RequestsBase):
     r = self.request(self.login_url)
     doc = parse_document_from_requests(r)
     once = doc.xpath('//input[@name="once"]')[0].get('value')
-    form = doc.xpath('//form[@action="/signin"]')[0]
-    username_field = form.xpath('//input[@type="text"]')[0].get('name')
-    password_field = form.xpath('//input[@type="password"]')[0].get('name')
-    return form, username_field, password_field
+    form = doc.xpath('//form')[-1]
+    username_field = form.xpath('.//input[@type="text"]')[0].get('name')
+    password_field = form.xpath('.//input[@type="password"]')[0].get('name')
+    return once, username_field, password_field
 
   def login(self, username, password):
     once, username_field, password_field = self.get_login_things()
@@ -40,7 +40,7 @@ class V2EX(RequestsBase):
       'next': '/',
       username_field: username,
       password_field: password,
-      'once': once_value,
+      'once': once,
     }
     r = self.request(
       self.login_url, 'POST',
