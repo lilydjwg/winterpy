@@ -34,8 +34,8 @@ class V2EX(RequestsBase):
     once_value = self.get_once_value()
     post_data = {
       'next': '/',
-      'u': username,
-      'p': password,
+      '101118e0072a431bff5935c20fb1dd87385aea4c2f1cd9b8fc523c04926eb19a': username,
+      '15f8ca8aabad25a8b54b3e062233d59cb309d2b5fbaa1d6a6b99edc821a1ccd0': password,
       'once': once_value,
     }
     r = self.request(
