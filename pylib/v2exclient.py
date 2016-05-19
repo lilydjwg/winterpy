@@ -25,17 +25,21 @@ class V2EX(RequestsBase):
   login_url = 'https://www.v2ex.com/signin'
   daily_url = 'https://www.v2ex.com/mission/daily'
 
-  def get_once_value(self):
+  def get_login_things(self):
     r = self.request(self.login_url)
     doc = parse_document_from_requests(r)
-    return doc.xpath('//input[@name="once"]')[0].get('value')
+    once = doc.xpath('//input[@name="once"]')[0].get('value')
+    form = doc.xpath('//form[@action="/signin"]')[0]
+    username_field = form.xpath('//input[@type="text"]')[0].get('name')
+    password_field = form.xpath('//input[@type="password"]')[0].get('name')
+    return form, username_field, password_field
 
   def login(self, username, password):
-    once_value = self.get_once_value()
+    once, username_field, password_field = self.get_login_things()
     post_data = {
       'next': '/',
-      '101118e0072a431bff5935c20fb1dd87385aea4c2f1cd9b8fc523c04926eb19a': username,
-      '15f8ca8aabad25a8b54b3e062233d59cb309d2b5fbaa1d6a6b99edc821a1ccd0': password,
+      username_field: username,
+      password_field: password,
       'once': once_value,
     }
     r = self.request(
