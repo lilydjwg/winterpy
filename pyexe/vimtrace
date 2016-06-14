@@ -28,6 +28,7 @@ def main():
     pass
   finally:
     os.close(w)
+  vimp.send(b':setf strace\r')
   vimp.interact()
 
 if __name__ == '__main__':
