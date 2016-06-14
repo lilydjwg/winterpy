@@ -76,8 +76,8 @@ class Expect:
       try:
         r, w, e = select([fd], [fd], [])
         if r:
-          data = os.read(fd, 4096)
-          os.write(outfd, data)
+          rdata = os.read(fd, 4096)
+          os.write(outfd, rdata)
         if w:
           written = os.write(fd, data)
           data = data[written:]
