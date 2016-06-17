@@ -24,7 +24,6 @@ def main():
     [tracer] + sys.argv[2:],
     stderr = vim.stdin,
   )
-  logfile = open('/tmp/log', 'w')
   try:
     tracerp.wait()
   except KeyboardInterrupt:
