@@ -20,9 +20,10 @@ def main():
     preexec_fn = os.setpgrp,
     stdin = subprocess.PIPE,
   )
+  fd = vim.stdin.fileno()
   tracerp = subprocess.Popen(
-    [tracer] + sys.argv[2:],
-    stderr = vim.stdin,
+    [tracer, '-o', '/proc/self/fd/%s' % fd] + sys.argv[2:],
+    pass_fds=(fd,),
   )
   try:
     tracerp.wait()
