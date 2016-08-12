@@ -54,7 +54,10 @@ def assemble_mail(subject, to, from_, html=None, text=None):
 
   msg['Subject'] = encode_header(subject)
   msg['From'] = encode_header_address(from_)
-  msg['To'] = encode_header_address(to)
+  if isinstance(to, (list, tuple)):
+    msg['To'] = ', '.join(encode_header_address(x) for x in to)
+  else:
+    msg['To'] = encode_header_address(to)
 
   return msg
 
