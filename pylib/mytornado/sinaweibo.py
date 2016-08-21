@@ -118,9 +118,9 @@ def _on_weibo_request(future, response):
     body = None
 
   if response.error:
-    if 400 <= responses.code < 500:
+    if 400 <= response.code < 500:
       ex = WeiboError(body)
-    elif 500 <= responses.code < 600:
+    elif 500 <= response.code < 600:
       ex = WeiboServerError(response)
     else:
       ex = WeiboRequestError(response)
