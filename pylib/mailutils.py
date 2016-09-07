@@ -3,6 +3,7 @@
 import re
 import datetime
 import codecs
+import smtplib
 from email import header
 from email.header import Header
 from email.mime.text import MIMEText
@@ -86,3 +87,8 @@ def get_charset_from_ctype(ctype):
       charset = 'cp932'
     return charset
 
+def sendmail(mail):
+  s = smtplib.SMTP()
+  s.connect()
+  s.send_message(mail)
+  s.quit()
