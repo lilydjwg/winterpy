@@ -52,6 +52,7 @@ def main():
       os.tcsetpgrp(0, os.getpgid(0))
       # suspend ourself
       os.kill(0, signal.SIGTSTP)
+      continued = False
     elif siginfo.si_status == signal.SIGCONT:
       continued = True
       continue
