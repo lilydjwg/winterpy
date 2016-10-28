@@ -29,3 +29,24 @@ camel_to_underline = partial(
   _camel_to_underline_re.sub,
   _camel_to_underline_replacer,
 )
+
+line_start_re = re.compile(br'(?<=\n)^(?=.)|(?<=\r)', re.MULTILINE | re.DOTALL)
+def prefixer(prefix, stream):
+  if isinstance(prefix, str):
+    prefix = prefix.encode()
+  if hasattr(stream, 'buffer'):
+    stream = stream.buffer
+
+  last_char = 0x0a
+
+  def write(data):
+    nonlocal last_char
+
+    if last_char == 0x0a:
+      stream.write(prefix)
+    data = line_start_re.sub(prefix, data)
+    last_char = data[-1]
+    stream.write(data)
+    stream.flush()
+
+  return write
