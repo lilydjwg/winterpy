@@ -42,6 +42,9 @@ def prefixer(prefix, stream):
   def write(data):
     nonlocal last_char
 
+    if isinstance(data, str):
+      data = data.encode()
+
     if last_char == 0x0a:
       stream.write(prefix)
     data = line_start_re.sub(prefix, data)
