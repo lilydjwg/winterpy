@@ -63,7 +63,7 @@ def parse_filename(f):
   else:
     raise Exception('unknown package name style: %s' % f)
 
-  return cls(f)
+  return cls.parseFilename(f)
 
 def main(args):
   pkgs = defaultdict(list)
