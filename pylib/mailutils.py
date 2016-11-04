@@ -37,7 +37,10 @@ def decode_payload(m):
   enc = m['Content-Transfer-Encoding']
   ctype = m['Content-Type']
   charset = get_charset_from_ctype(ctype) or 'utf-8'
-  return codecs.decode(p.encode(), enc).decode(charset)
+  if enc == '8bit':
+    return p
+  else:
+    return codecs.decode(p.encode(), enc).decode(charset)
 
 def assemble_mail(subject, to, from_, html=None, text=None):
   if html is None and text is None:
