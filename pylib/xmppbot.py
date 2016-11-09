@@ -119,7 +119,10 @@ class XMPPBot(EventHandler, XMPPFeatureHandler):
   def disconnect(self):
     self.do_quit = True
     self.client.disconnect()
-    self.client.run(timeout=2)
+    try:
+      self.client.run(timeout=2)
+    except RuntimeError: # IOLoop is already running
+      pass
 
   @property
   def roster(self):
