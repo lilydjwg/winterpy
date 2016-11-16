@@ -191,7 +191,7 @@ def main():
   import os
   from getpass import getpass
   import argparse
-  from myutils import enable_pretty_logging
+  from nicelogger import enable_pretty_logging
   from cli import repl
 
   """Parse the command-line arguments and run the bot."""

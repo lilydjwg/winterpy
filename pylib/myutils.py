@@ -18,8 +18,6 @@ import hashlib
 import base64
 import fcntl
 
-from nicelogger import enable_pretty_logging
-
 logger = logging.getLogger(__name__)
 
 def safe_overwrite(fname, data, *, method='write', mode='w', encoding=None):
