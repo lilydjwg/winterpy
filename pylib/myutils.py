@@ -16,8 +16,11 @@ import contextlib
 import signal
 import hashlib
 import base64
+import fcntl
 
 from nicelogger import enable_pretty_logging
+
+logger = logging.getLogger(__name__)
 
 def safe_overwrite(fname, data, *, method='write', mode='w', encoding=None):
   # FIXME: directory has no read perm
@@ -263,3 +266,12 @@ def base64_encode(s):
   if isinstance(s, str):
     s = s.encode()
   return base64.b64encode(s).decode('ascii')
+
+def lock_file(path):
+  lock = os.open(path, os.O_WRONLY | os.O_CREAT, 0o600)
+  try:
+    fcntl.flock(lock, fcntl.LOCK_EX|fcntl.LOCK_NB)
+  except BlockingIOError:
+    logger.warning('Waiting for lock to release...')
+    fcntl.flock(lock, fcntl.LOCK_EX)
+
