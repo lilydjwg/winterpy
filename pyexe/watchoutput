@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+'''wrapper for systemd watchdog'''
+
+import os
+import sys
+import select
+import subprocess
+
+import systemd.daemon as sd
+
+def main():
+  args = sys.argv[1:]
+  p = subprocess.Popen(
+    args,
+    stdout = subprocess.PIPE,
+    stderr = subprocess.PIPE,
+  )
+
+  sd.notify('READY=1')
+
+  while True:
+    ret = p.poll()
+    if ret is not None:
+      sys.exit(ret)
+
+    rs, _, _ = select.select([p.stdout, p.stderr], (), ())
+    for r in rs:
+      sd.notify('WATCHDOG=1')
+      data = os.read(r.fileno(), 4096)
+      if r is p.stdout:
+        os.write(1, data)
+      else:
+        os.write(2, data)
+
+if __name__ == '__main__':
+  try:
+    main()
+  except KeyboardInterrupt:
+    sys.exit(130)
