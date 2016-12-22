@@ -4,27 +4,36 @@
 
 import os
 import sys
+import time
 import select
 import subprocess
+import argparse
 
 import systemd.daemon as sd
 
-def main():
-  args = sys.argv[1:]
+def do_work(cmd, ignore_stderr=False):
+  if ignore_stderr:
+    stderr = None
+  else:
+    stderr = subprocess.PIPE
+
   p = subprocess.Popen(
-    args,
+    cmd,
     stdout = subprocess.PIPE,
-    stderr = subprocess.PIPE,
+    stderr = stderr,
   )
 
   sd.notify('READY=1')
+  fds = [p.stdout]
+  if not ignore_stderr:
+    fds.append(p.stderr)
 
   while True:
     ret = p.poll()
     if ret is not None:
       sys.exit(ret)
 
-    rs, _, _ = select.select([p.stdout, p.stderr], (), ())
+    rs, _, _ = select.select(fds, (), ())
     for r in rs:
       sd.notify('WATCHDOG=1')
       data = os.read(r.fileno(), 4096)
@@ -34,7 +43,38 @@ def main():
         os.write(2, data)
 
 if __name__ == '__main__':
+  parser = argparse.ArgumentParser(
+    description='A wrapper for utilizing systemd watchdog feature',
+  )
+  parser.add_argument('--retry-on-exit', type=str, metavar='X,Y,...',
+                      default='',
+                      help='retry command on exit codes')
+  parser.add_argument('--wait-before-retry', type=int, metavar='SEC',
+                      default=1,
+                      help='wait SEC seconds before retrying')
+  parser.add_argument('--ignore-stderr',
+                      default=False, action='store_true',
+                      help='ignore stderr messages')
+  parser.usage = parser.format_usage()[:-1] + ' COMMAND...\n'
+
+  args, remaining = parser.parse_known_args()
+  if remaining and remaining[0] == '--':
+    del remaining[0]
+
+  codes = args.retry_on_exit.split(',')
   try:
-    main()
+    codes = [int(x) for x in codes]
+  except ValueError:
+    parser.error('--retry-on-exit: expected comma-seperated exit codes')
+
+  try:
+    while True:
+      try:
+        do_work(remaining, args.ignore_stderr)
+      except SystemExit as e:
+        if e.code in codes:
+          time.sleep(args.wait_before_retry)
+        else:
+          raise
   except KeyboardInterrupt:
     sys.exit(130)
