@@ -17,6 +17,7 @@ import signal
 import hashlib
 import base64
 import fcntl
+import functools
 
 logger = logging.getLogger(__name__)
 
@@ -132,26 +133,28 @@ def dofile(path):
     exec(f.read(), G)
   return G
 
-def restart_if_failed(func, max_tries, args=(), kwargs={}, secs=60, sleep=None):
-  '''
-  re-run when some exception happens, until `max_tries` in `secs`
-  '''
+def auto_retry(max_times=1, secs=60, sleep=0, logger=None):
   import traceback
   from collections import deque
-
-  dq = deque(maxlen=max_tries)
-  while True:
-    dq.append(time.time())
-    try:
-      func(*args, **kwargs)
-    except:
-      traceback.print_exc()
-      if len(dq) == max_tries and time.time() - dq[0] < secs:
-        break
-      if sleep is not None:
-        time.sleep(sleep)
-    else:
-      break
+  def decorator(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+      dq = deque(maxlen=max_times)
+      while True:
+        dq.append(time.time())
+        try:
+          return func(*args, **kwargs)
+        except Exception as e:
+          if logger:
+            logger.exception(e)
+          else:
+            traceback.print_exc()
+          if len(dq) >= max_times or time.time() - dq[0] >= secs:
+            break
+          if sleep > 0:
+            time.sleep(sleep)
+    return wrapper
+  return decorator
 
 def daterange(start, stop=datetime.date.today(), step=datetime.timedelta(days=1)):
   d = start
