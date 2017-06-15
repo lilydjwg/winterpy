@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+
+import datetime
+import subprocess
+
+def may_snapshot(path, fmt, roundup=0, suffix='-auto'):
+  dt = datetime.datetime.now()
+  if roundup:
+    t = dt - dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    passed = t.total_seconds() % roundup
+    dt = dt - datetime.timedelta(seconds=passed)
+
+  name = '%s@%s%s' % (path, dt.strftime(fmt), suffix)
+  try:
+    subprocess.check_output(['zfs', 'get', 'name', name],
+                            stderr = subprocess.STDOUT)
+  except subprocess.CalledProcessError:
+    subprocess.check_call(['zfs', 'snapshot', name])
+
+def cleanup(path, nkeep, suffix='-auto'):
+  out = subprocess.check_output(['zfs', 'get', '-rH', 'name', path])
+  prefix = path + '@'
+
+  snapshots = []
+  for l in out.decode('utf-8').splitlines():
+    name = l.split('\t')[0]
+    if name.startswith(prefix) and name.endswith(suffix):
+      snapshots.append(name)
+
+  to_remove = snapshots[:-nkeep]
+  for name in to_remove:
+    subprocess.check_call(['zfs', 'destroy', name])
+
+def main():
+  import argparse
+  parser = argparse.ArgumentParser(
+    description = 'automatically keep snapshots for zfs',
+  )
+  parser.add_argument('-n', '--nkeep', type=int,
+                      help='keep n snapshots')
+  parser.add_argument('-f', '--format', default='%Y-%m-%d',
+                      help='datetime format for snapshot names')
+  parser.add_argument('filesystem', nargs='+',
+                      help='filesystems to do snapshots')
+  args = parser.parse_args()
+
+  for fs in args.filesystem:
+    may_snapshot(fs, args.format)
+    if args.nkeep:
+      cleanup(fs, args.nkeep)
+
+if __name__ == '__main__':
+  main()

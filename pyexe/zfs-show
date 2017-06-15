@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+import sys
+import subprocess
+from collections import namedtuple, OrderedDict
+
+Record = namedtuple('Record', 'name property value source')
+
+def get_widths(item):
+  return [len(x) for x in item.values()]
+
+def main(argv):
+  output = subprocess.check_output(['zfs', 'get', '-H'] + argv)
+  items = []
+  for l in output.decode().splitlines():
+    rec = Record(*l.split('\t'))
+    if items and items[-1]['name'] == rec.name:
+      items[-1][rec.property] = rec.value
+    else:
+      d = OrderedDict()
+      d['name'] = rec.name
+      d[rec.property] = rec.value
+      items.append(d)
+
+  if not items:
+    return
+
+  widths = [get_widths(x) for x in items]
+  # header
+  widths.append([len(x) for x in items[0].keys()])
+  column_widths = [max(x) for x in zip(*widths)]
+  fmt = '%%-%ds' % column_widths[0]
+  fmt += '  '.join('%%%ds' % w for w in column_widths[1:])
+
+  print(fmt % tuple(items[0].keys()))
+  for x in items:
+    print(fmt % tuple(x.values()))
+
+if __name__ == '__main__':
+  main(sys.argv[1:])
