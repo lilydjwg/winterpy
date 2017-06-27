@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+
+import subprocess
+from itertools import groupby
+
+def cleanup(path):
+  out = subprocess.check_output(
+    ['zfs', 'get', '-rH', '-t', 'snapshot', 'used', path])
+
+  snapshots = []
+  for l in out.decode('utf-8').splitlines():
+    name, _, used, _ = l.split('\t')
+    if used == '0':
+      snapshots.append(name)
+
+  snapshots = {k: list(g) for k, g in
+               groupby(snapshots, lambda x: x.split('@', 1)[0])}
+
+  for v in snapshots.values():
+    to_remove = v[:-1]
+    for name in to_remove:
+      print('cleanup', name)
+      subprocess.check_call(['zfs', 'destroy', name])
+
+def main():
+  import argparse
+  parser = argparse.ArgumentParser(
+    description = 'clean up empty snapshots for zfs',
+  )
+  parser.add_argument('filesystem',
+                      help='filesystem to cleanup')
+  args = parser.parse_args()
+
+  cleanup(args.filesystem)
+
+if __name__ == '__main__':
+  main()
