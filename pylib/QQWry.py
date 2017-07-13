@@ -245,8 +245,7 @@ def update(q):
     wget = ['wget']
     if q:
       wget.append('-q')
-    p = subprocess.Popen(wget + [copywrite_url])
-    p.wait()
+    subprocess.run(wget + [copywrite_url], check=True)
     d = open('copywrite.rar', 'rb').read()
     info = unpack_meta(d)
     date = _extract_date(info['text'])
