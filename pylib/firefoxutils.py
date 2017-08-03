@@ -26,6 +26,9 @@ class NSSDecryptor:
     nss = self.nss = ctypes.CDLL('libnss3.so')
     nss.PR_ErrorToString.restype = ctypes.c_char_p
     nss.PR_ErrorToName.restype = ctypes.c_char_p
+    nss.PK11_GetInternalKeySlot.restype = ctypes.c_void_p
+    nss.PK11_CheckUserPassword.argtypes = [
+      ctypes.c_void_p, ctypes.c_char_p]
 
     ret = nss.NSS_Init(profile_dir.encode('utf-8'))
     if ret != 0:
