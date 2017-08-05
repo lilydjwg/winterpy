@@ -77,7 +77,7 @@ class RequestsBase:
       h.setdefault('Referer', self.lasturl)
 
     if method is None:
-      if 'data' in kwargs or 'files' in kwargs:
+      if 'data' in kwargs or 'files' in kwargs or 'json' in kwargs:
         method = 'post'
       else:
         method = 'get'
