@@ -38,10 +38,12 @@ def main():
   # Kernel, send me SIGCHLDs please!
   signal.signal(signal.SIGCHLD, sigchld)
   continued = False
+
+  tty = os.open('/dev/tty', os.O_RDWR)
   while True:
     if not continued:
       # fg the Vim process (which has its group id the same as its pid)
-      os.tcsetpgrp(0, vim.pid)
+      os.tcsetpgrp(tty, vim.pid)
       # continue it in case it's outputed some text before we make it the
       # foreground process
       vim.send_signal(signal.SIGCONT)
@@ -49,7 +51,7 @@ def main():
     siginfo = signal.sigwaitinfo([signal.SIGCHLD])
     if siginfo.si_status == signal.SIGTSTP:
       # fg ourself
-      os.tcsetpgrp(0, os.getpgid(0))
+      os.tcsetpgrp(tty, os.getpgid(0))
       # suspend ourself
       os.kill(0, signal.SIGTSTP)
       continued = False
