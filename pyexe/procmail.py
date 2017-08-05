@@ -10,7 +10,7 @@ from mailutils import decode_multiline_header
 
 reply = Token(r'R[Ee]:\s?|[回答][复覆][：:]\s?', 're')
 ottag = Token(r'\[OT\]\s?', 'ot', flags=re.I)
-tag = Token(r'\[([\w._-]+)[^]]*\]\s?', 'tag')
+tag = Token(r'\[([\w._/-]+)[^]]*\]\s?', 'tag')
 lex = Lex((reply, ottag, tag))
 
 def reformat(s):
