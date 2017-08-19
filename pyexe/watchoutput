@@ -52,6 +52,9 @@ if __name__ == '__main__':
   parser.add_argument('--wait-before-retry', type=int, metavar='SEC',
                       default=1,
                       help='wait SEC seconds before retrying')
+  parser.add_argument('--max-retries', type=int, metavar='N',
+                      default=1000,
+                      help='max retries before giving up')
   parser.add_argument('--ignore-stderr',
                       default=False, action='store_true',
                       help='ignore stderr messages')
@@ -67,12 +70,17 @@ if __name__ == '__main__':
   except ValueError:
     parser.error('--retry-on-exit: expected comma-seperated exit codes')
 
+  retries = 0
   try:
     while True:
       try:
         do_work(remaining, args.ignore_stderr)
+        retries = 0
       except SystemExit as e:
         if e.code in codes:
+          retries += 1
+          if retries > args.max_retries:
+            raise
           time.sleep(args.wait_before_retry)
         else:
           raise
