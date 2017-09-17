@@ -54,7 +54,6 @@ class FileSize(int):
 
 def humantime(t):
   '''seconds -> XhYmZs'''
-  units = 'hms'
   m, s = divmod(t, 60)
   h, m = divmod(m, 60)
   ret = ''
@@ -65,19 +64,6 @@ def humantime(t):
   if s:
     ret += '%ds' % s
   return ret
-
-def input_t(timeout, prompt=''):
-  '''带有超时的输入，使用 select() 实现
-
-  超时返回 None'''
-  from select import select
-
-  # 也可以用多进程/signal 实现
-  # 但 signal 不能在非主线程中调用
-  sys.stdout.write(prompt)
-  sys.stdout.flush()
-  if select([sys.stdin.fileno()], [], [], timeout)[0]:
-    return input()
 
 def _timed_read(file, timeout):
   from select import select
