@@ -48,6 +48,7 @@ class Issue:
     self._data = data
     self.number = data['number']
     self.title = data['title']
+    self.labels = [x['name'] for x in data['labels']]
     self.updated_at = parse_datetime(data['updated_at'])
     self._api_url = f"{data['repository_url']}/issues/{data['number']}"
 
