@@ -276,3 +276,11 @@ def lock_file(path):
     logger.warning('Waiting for lock to release...')
     fcntl.flock(lock, fcntl.LOCK_EX)
 
+@contextlib.contextmanager
+def file_lock(file):
+  lock = os.open(file, os.O_WRONLY | os.O_CREAT, 0o600)
+  try:
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    yield
+  finally:
+    os.close(lock)
