@@ -270,3 +270,29 @@ def file_lock(file):
     yield
   finally:
     os.close(lock)
+
+def dict_bytes_to_str(d):
+  ret = {}
+  for k, v in d.items():
+    if isinstance(k, bytes):
+      try:
+         k = k.decode()
+      except UnicodeDecodeError:
+        pass
+
+    if isinstance(v, bytes):
+      try:
+         v = v.decode()
+      except UnicodeDecodeError:
+        pass
+    elif isinstance(v, dict):
+      v = dict_bytes_to_str
+    elif isinstance(v, list):
+      try:
+         v = [x.decode() for x in v]
+      except UnicodeDecodeError:
+        pass
+
+    ret[k] = v
+
+  return ret
