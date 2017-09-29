@@ -3,6 +3,7 @@
 '''
 
 import os, sys
+import re
 import datetime
 import time
 from functools import lru_cache, wraps
@@ -64,6 +65,18 @@ def humantime(t):
   if s:
     ret += '%ds' % s
   return ret
+
+def dehumantime(s):
+  '''XhYmZs -> seconds'''
+  m = re.match(r'(?:(?P<h>\d+)h)?(?:(?P<m>\d+)m)?(?:(?P<s>\d+)s)?$', s)
+  if m:
+    return (
+      int(m.group('h') or 0) * 3600 +
+      int(m.group('m') or 0) * 60 +
+      int(m.group('h') or 0)
+    )
+  else:
+    raise ValueError(s)
 
 def _timed_read(file, timeout):
   from select import select
@@ -286,7 +299,7 @@ def dict_bytes_to_str(d):
       except UnicodeDecodeError:
         pass
     elif isinstance(v, dict):
-      v = dict_bytes_to_str
+      v = dict_bytes_to_str(v)
     elif isinstance(v, list):
       try:
          v = [x.decode() for x in v]
