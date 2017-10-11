@@ -57,7 +57,10 @@ def humantime(t):
   '''seconds -> XhYmZs'''
   m, s = divmod(t, 60)
   h, m = divmod(m, 60)
+  d, h = divmod(h, 24)
   ret = ''
+  if d:
+    ret += '%dd' % d
   if h:
     ret += '%dh' % h
   if m:
@@ -68,9 +71,10 @@ def humantime(t):
 
 def dehumantime(s):
   '''XhYmZs -> seconds'''
-  m = re.match(r'(?:(?P<h>\d+)h)?(?:(?P<m>\d+)m)?(?:(?P<s>\d+)s)?$', s)
+  m = re.match(r'(?:(?P<d>\d+)d)?(?:(?P<h>\d+)h)?(?:(?P<m>\d+)m)?(?:(?P<s>\d+)s)?$', s)
   if m:
     return (
+      int(m.group('d') or 0) * 3600 * 24 +
       int(m.group('h') or 0) * 3600 +
       int(m.group('m') or 0) * 60 +
       int(m.group('h') or 0)
