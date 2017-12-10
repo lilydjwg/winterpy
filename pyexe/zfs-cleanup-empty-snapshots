@@ -10,7 +10,7 @@ def cleanup(path):
   snapshots = []
   for l in out.decode('utf-8').splitlines():
     name, _, used, _ = l.split('\t')
-    if used == '0':
+    if used == '0B':
       snapshots.append(name)
 
   snapshots = {k: list(g) for k, g in
