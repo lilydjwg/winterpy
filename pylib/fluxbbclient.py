@@ -49,7 +49,7 @@ class FluxBB(RequestsBase):
       'users': users,
     }
     res = self.request('/admin_users.php', data=post)
-    body = res.text
+    res.text
     return True
 
   def edit_post(self, post_id, body, *, subject=None, sticky=False):
@@ -102,7 +102,7 @@ class FluxBB(RequestsBase):
   def get_user_topic_ids(self, user_id):
     r = self.request('/search.php?action=show_user_topics&user_id=%d' % user_id)
     doc = parse_document_from_requests(r)
-    links = doc.xpath('//td[@class="tcl"]/div[@class="tclcon"]/div/strong/a')
+    links = doc.xpath('//td[@class="tcl"]/div[@class="tclcon"]/div//a')
     tids = [int(x.get('href').split('=', 1)[-1])
             for x in links]
     return tids
