@@ -4,7 +4,6 @@ import sys
 import os
 from pprint import pprint
 import subprocess
-import datetime
 import argparse
 import urllib.parse
 
@@ -33,6 +32,8 @@ def displayfunc(value):
     pprint(value, stream=p.stdin)
     p.stdin.close()
     p.wait()
+  if isinstance(value, pymongo.results.InsertOneResult):
+    print(f'<InsertOneResult: acknowledged: {value.acknowledged}, inserted_id: {value.inserted_id!r}>')
   else:
     pprint(value)
   v['_'] = value
