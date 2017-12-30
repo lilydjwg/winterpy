@@ -3,6 +3,7 @@ import time
 
 class ExpiringDict(UserDict):
   def __init__(self, expiration, maxsize=100):
+    super().__init__()
     self.expiration = expiration
     self.maxsize = maxsize
 
