@@ -9,6 +9,7 @@ class ExpiringDict(UserDict):
 
   def __getitem__(self, key):
     item, t = self.data[key]
+    return item
 
   def __setitem__(self, key, value):
     t = time.time()
