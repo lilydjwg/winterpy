@@ -46,6 +46,7 @@ class Issue:
   def __init__(self, data, gh):
     self.gh = weakref.proxy(gh)
     self._data = data
+    self.body = data['body']
     self.number = data['number']
     self.title = data['title']
     self.labels = [x['name'] for x in data['labels']]
