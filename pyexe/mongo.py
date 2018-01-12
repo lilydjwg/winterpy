@@ -32,8 +32,10 @@ def displayfunc(value):
     pprint(value, stream=p.stdin)
     p.stdin.close()
     p.wait()
-  if isinstance(value, pymongo.results.InsertOneResult):
+  elif isinstance(value, pymongo.results.InsertOneResult):
     print(f'<InsertOneResult: acknowledged: {value.acknowledged}, inserted_id: {value.inserted_id!r}>')
+  elif isinstance(value, pymongo.results.DeleteResult):
+    print(f'<DeleteResult: acknowledged: {value.acknowledged}, deleted_count: {value.deleted_count}>')
   else:
     pprint(value)
   v['_'] = value
