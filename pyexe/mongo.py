@@ -9,7 +9,6 @@ import urllib.parse
 
 from pymongo import MongoClient
 import pymongo.cursor
-from bson import ObjectId
 
 from cli import repl
 
@@ -35,6 +34,8 @@ def displayfunc(value):
     p.wait()
   elif isinstance(value, pymongo.results.InsertOneResult):
     print(f'<InsertOneResult: acknowledged: {value.acknowledged}, inserted_id: {value.inserted_id!r}>')
+  elif isinstance(value, pymongo.results.InsertManyResult):
+    print(f'<InsertManyResult: acknowledged: {value.acknowledged}, inserted_ids: {value.inserted_ids!r}>')
   elif isinstance(value, pymongo.results.DeleteResult):
     print(f'<DeleteResult: acknowledged: {value.acknowledged}, deleted_count: {value.deleted_count}>')
   elif isinstance(value, pymongo.results.UpdateResult):
