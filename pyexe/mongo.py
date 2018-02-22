@@ -9,6 +9,8 @@ import urllib.parse
 
 from pymongo import MongoClient
 import pymongo.cursor
+from bson import ObjectId
+assert ObjectId
 
 from cli import repl
 
