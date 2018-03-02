@@ -1,6 +1,6 @@
 #include<Python.h>
 #include<cv.h>
-#include<highgui.h>
+#include<opencv2/imgcodecs/imgcodecs_c.h>
 
 typedef struct {
   PyObject_HEAD

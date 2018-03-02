@@ -68,7 +68,7 @@ def parse_document_from_requests(response, session=None, *, encoding=None):
     r.encoding = encoding
 
   # fromstring handles bytes well
-  # http://stackoverflow.com/a/15305248/296473
+  # https://stackoverflow.com/a/15305248/296473
   parser = html.HTMLParser(encoding=encoding or r.encoding)
   doc = html.fromstring(r.content, base_url=r.url, parser=parser)
   doc.make_links_absolute()
