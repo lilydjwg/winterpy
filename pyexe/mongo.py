@@ -13,6 +13,8 @@ from bson import ObjectId
 assert ObjectId
 
 from cli import repl
+from yamlutils import edit_as_yaml
+assert edit_as_yaml
 
 import locale
 locale.setlocale(locale.LC_ALL, '')
@@ -45,6 +47,9 @@ def displayfunc(value):
   else:
     pprint(value)
   v['_'] = value
+
+def find_by_id(collection, id):
+  return db[collection].find_one({'_id': ObjectId(id)})
 
 def main(url, kwargs):
   global db, conn

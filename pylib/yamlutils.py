@@ -47,3 +47,26 @@ def represent_this_key_first_dict(key, self, data):
     value.append((node_key, node_value))
 
   return yaml.nodes.MappingNode(u'tag:yaml.org,2002:map', value)
+
+def edit_as_yaml(doc, editor='vim'):
+  import tempfile
+  import subprocess
+  import os
+  import time
+
+  with tempfile.NamedTemporaryFile(
+    mode='w+', encoding='utf-8', suffix='.yaml', delete=False) as f:
+    name = f.name
+    try:
+      dump(doc, f)
+      f.close()
+      now = time.time()
+      subprocess.check_call([editor, '--', name])
+      st = os.stat(name)
+      if st.st_mtime > now:
+        with open(name, 'r', encoding='utf-8') as f:
+          return load(f)
+      else:
+        return doc
+    finally:
+      os.unlink(name)
