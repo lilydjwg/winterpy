@@ -313,3 +313,13 @@ def dict_bytes_to_str(d):
     ret[k] = v
 
   return ret
+
+def xsel(input=None):
+  import subprocess
+
+  if input is None:
+    return subprocess.getoutput('xsel')
+  else:
+    p = subprocess.Popen('xsel', stdin=subprocess.PIPE)
+    p.communicate(input.encode())
+    return p.wait()
