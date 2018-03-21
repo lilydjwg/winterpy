@@ -104,5 +104,7 @@ class FluxBB(RequestsBase):
     doc = parse_document_from_requests(r)
     links = doc.xpath('//td[@class="tcl"]/div[@class="tclcon"]/div//a')
     tids = [int(x.get('href').split('=', 1)[-1])
-            for x in links]
+            for x in links
+            if x.getparent().tag != 'span'
+           ]
     return tids
