@@ -36,10 +36,11 @@ def safe_overwrite(fname, data, *, method='write', mode='w', encoding=None):
 
 def filesize(size):
   '''将 数字 转化为 xxKiB 的形式'''
-  units = 'KMGT'
+  units = 'KMGTPEZY'
   left = abs(size)
   unit = -1
-  while left > 1100 and unit < 3:
+  n = len(units)
+  while left > 1100 and unit < n:
     left = left / 1024
     unit += 1
   if unit == -1:
