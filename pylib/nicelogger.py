@@ -41,13 +41,22 @@ class TornadoLogFormatter(logging.Formatter):
       record.message = "Bad message (%r): %r" % (e, record.__dict__)
     record.asctime = time.strftime(
       "%m-%d %H:%M:%S", self.converter(record.created))
-    record.asctime += '.%03d' % ((record.created % 1) * 1000)
-    prefix = '[%(levelname)1.1s %(asctime)s %(module)s:%(lineno)d]' % \
+    prefix = '[%(levelname)1.1s %(asctime)s.%(msecs)03d %(module)s:%(lineno)d]' % \
       record.__dict__
     if self._color:
       prefix = (self._colors.get(record.levelno, self._normal) +
             prefix + self._normal)
     formatted = prefix + " " + record.message
+
+    formatted += ''.join(
+      ' %s=%s' % (k, v) for k, v in record.__dict__.items()
+      if k not in {
+        'levelname', 'asctime', 'module', 'lineno', 'args', 'message',
+        'filename', 'exc_info', 'exc_text', 'created', 'funcName',
+        'processName', 'process', 'msecs', 'relativeCreated', 'thread',
+        'threadName', 'name', 'levelno', 'msg', 'pathname', 'stack_info',
+      })
+
     if record.exc_info:
       if not record.exc_text:
         record.exc_text = self.formatException(record.exc_info)
