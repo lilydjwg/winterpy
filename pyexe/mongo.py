@@ -49,7 +49,7 @@ def displayfunc(value):
   v['_'] = value
 
 def find_by_id(collection, id):
-  return db[collection].find_one({'_id': ObjectId(id)})
+  return collection.find_one({'_id': ObjectId(id)})
 
 def main(url, kwargs):
   global db, conn
