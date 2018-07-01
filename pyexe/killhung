@@ -17,11 +17,11 @@ def new_group():
   os.setpgrp()
 
 def main(args):
-  path = os.path.join('/dev/shm', '_'.join(args).replace('/', '-'))
-  if not os.path.exists(path):
-    os.mkfifo(path, 0o600)
-  pipe = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
-  p = subprocess.Popen(['strace', '-o', path, '-e', 'trace=network'] + args, preexec_fn=new_group)
+  strace_fifo = os.path.join('/tmp', '.' + '_'.join(args).replace('/', '-'))
+  if not os.path.exists(strace_fifo):
+    os.mkfifo(strace_fifo, 0o600)
+  strace_out = os.open(strace_fifo, os.O_RDONLY | os.O_NONBLOCK)
+  p = subprocess.Popen(['strace', '-o', strace_fifo, '-e', 'trace=network'] + args, preexec_fn=new_group)
 
   try:
     sig = 15
@@ -35,13 +35,13 @@ def main(args):
       ret = p.poll()
       if ret is not None:
         return ret
-      rs, ws, xs = select.select([pipe], (), (), timeout)
+      rs, ws, xs = select.select([strace_out], (), (), timeout)
       if not rs:
         print('subprocess met network problem, killing with signal %d...' % sig, file=sys.stderr)
         os.kill(-p.pid, sig)
         sig = 9
       else:
-        os.read(pipe, 1024)
+        os.read(strace_out, 1024)
   except KeyboardInterrupt:
     os.kill(-p.pid, 15)
 
