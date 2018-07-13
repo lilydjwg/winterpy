@@ -1,5 +1,4 @@
 import datetime
-import json
 import weakref
 
 import requestsutils
@@ -23,11 +22,7 @@ class GitHub(requestsutils.RequestsBase):
     h.setdefault('Authorization', self.token)
 
     if data:
-      data = json.dumps(data, ensure_ascii=False).encode('utf-8')
-      if method == 'get':
-        method = 'post'
-      h.setdefault('Content-Type', 'application/json')
-      kwargs['data'] = data
+      kwargs['json'] = data
 
     return self.request(path, method=method, *args, **kwargs)
 
