@@ -8,11 +8,6 @@ import datetime
 import time
 from functools import lru_cache, wraps
 import logging
-try:
-  import ipaddress
-except ImportError:
-  # Python 3.2-
-  ipaddress = None
 import contextlib
 import signal
 import hashlib
@@ -232,9 +227,7 @@ def msg2(msg):
   print('\x1b[1;34m  ->\x1b[1;37m %s\x1b[0m' % msg)
 
 def is_internal_ip(ip):
-  if ipaddress is None:
-    return False
-
+  import ipaddress
   ip = ipaddress.ip_address(ip)
   return ip.is_loopback or ip.is_private or ip.is_reserved or ip.is_link_local
 
