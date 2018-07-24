@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import yaml
 try:
   from yaml import CLoader as Loader
@@ -11,20 +13,22 @@ def load(src):
 def load_all(src):
   return yaml.load_all(src, Loader=Loader)
 
+class PrettyDumper(Dumper): pass
+
 def dump(data, stream=None, **kwargs):
   mykwargs = {
     'allow_unicode': True,
     'default_flow_style': False,
   }
   mykwargs.update(kwargs)
-  return yaml.dump(data, stream=stream, Dumper=Dumper, **mykwargs)
+  return yaml.dump(data, stream=stream, Dumper=PrettyDumper, **mykwargs)
 
 def represent_multiline_str(self, data):
   style = '|' if '\n' in data else None
   return self.represent_scalar(
     'tag:yaml.org,2002:str', data, style=style)
 
-Dumper.add_representer(str, represent_multiline_str)
+PrettyDumper.add_representer(str, represent_multiline_str)
 
 def represent_this_key_first_dict(key, self, data):
   '''
@@ -70,3 +74,18 @@ def edit_as_yaml(doc, editor='vim'):
         return doc
     finally:
       os.unlink(name)
+
+def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
+  # https://stackoverflow.com/a/21912744/296473
+  class OrderedLoader(Loader):
+    pass
+
+  def construct_mapping(loader, node):
+    loader.flatten_mapping(node)
+    return object_pairs_hook(loader.construct_pairs(node))
+
+  OrderedLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    construct_mapping)
+
+  return yaml.load(stream, OrderedLoader)
