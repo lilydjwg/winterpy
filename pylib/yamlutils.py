@@ -28,7 +28,12 @@ def represent_multiline_str(self, data):
   return self.represent_scalar(
     'tag:yaml.org,2002:str', data, style=style)
 
+def _represent_mapping(self, data):
+  return self.represent_mapping(
+    'tag:yaml.org,2002:map', data.items())
+
 PrettyDumper.add_representer(str, represent_multiline_str)
+PrettyDumper.add_representer(OrderedDict, _represent_mapping)
 
 def represent_this_key_first_dict(key, self, data):
   '''
