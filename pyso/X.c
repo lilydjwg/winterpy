@@ -134,7 +134,7 @@ static PyObject *xtest_key(xlib_displayObject* self, PyObject* args){
   PyObject* key;
   PyObject* obj;
   const char* keystr;
-  KeySym keysym, key_lower, key_upper;
+  KeySym keysym = NoSymbol, key_lower, key_upper;
   KeyCode shiftkeycode = 0;
 
   if(!PyArg_ParseTuple(args, "O|ik", &key, &is_press, &delay))
