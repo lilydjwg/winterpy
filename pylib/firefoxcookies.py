@@ -1,6 +1,7 @@
 import sqlite3
 import encodings.idna
 from urllib.parse import urlsplit
+import os, tempfile, shutil
 
 import tldextract
 
@@ -23,8 +24,20 @@ def domain_to_ascii(domain):
     ).decode('ascii')
 
 class FirefoxCookies:
+  _file_to_delete = None
+
+  def __del__(self):
+    if self._file_to_delete:
+      os.unlink(self._file_to_delete)
+
   def __init__(self, cookiefile):
-    self._db = sqlite3.connect(cookiefile)
+    with open(cookiefile, 'rb') as db, tempfile.NamedTemporaryFile(delete=False) as tmp:
+      shutil.copyfileobj(db, tmp)
+      tmp.flush()
+
+    self._file_to_delete = tmp.name
+    self._db = sqlite3.connect(tmp.name)
+    # self._db = sqlite3.connect(cookiefile)
     self._extract = tldextract.TLDExtract(include_psl_private_domains=True)
     try:
       self._db.execute("select 1 from moz_cookies where originAttributes = '' limit 1").fetchall()
