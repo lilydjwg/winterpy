@@ -31,7 +31,8 @@ class FirefoxCookies:
       os.unlink(self._file_to_delete)
 
   def __init__(self, cookiefile):
-    with open(cookiefile, 'rb') as db, tempfile.NamedTemporaryFile(delete=False) as tmp:
+    with open(cookiefile, 'rb') as db, \
+        tempfile.NamedTemporaryFile(delete=False, prefix='fxcookie-') as tmp:
       shutil.copyfileobj(db, tmp)
       tmp.flush()
 
