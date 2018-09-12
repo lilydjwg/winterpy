@@ -62,10 +62,6 @@ def main(url, kwargs):
     dbname = 'test'
   db = conn[dbname]
 
-  rc = os.path.expanduser('~/.mongorc.py')
-  if os.path.isfile(rc):
-    exec(compile(open(rc, 'rb').read(), '.mongorc.py', 'exec'))
-
   global v
   v = globals().copy()
   v.update(locals())
@@ -73,8 +69,12 @@ def main(url, kwargs):
   del v['repl'], v['kwargs'], v['main']
   del v['displayfunc'], v['subprocess'], v['env']
   del v['__name__'], v['__cached__'], v['__doc__'], v['__file__'], v['__package__']
-  del v['rc'], v['argparse']
+  del v['argparse']
   sys.displayhook = displayfunc
+
+  rc = os.path.expanduser('~/.mongorc.py')
+  if os.path.isfile(rc):
+    exec(compile(open(rc, 'rb').read(), '.mongorc.py', 'exec'), v)
 
   repl(
     v, os.path.expanduser('~/.mongo_history'),
