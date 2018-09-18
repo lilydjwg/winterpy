@@ -2,6 +2,7 @@ import sqlite3
 import encodings.idna
 from urllib.parse import urlsplit
 import os, tempfile, shutil
+import glob
 
 import tldextract
 
@@ -29,6 +30,9 @@ class FirefoxCookies:
   def __del__(self):
     if self._file_to_delete:
       os.unlink(self._file_to_delete)
+      wal_and_shm = glob.glob(self._file_to_delete + '*')
+      for f in wal_and_shm:
+        os.unlink(f)
 
   def __init__(self, cookiefile):
     with open(cookiefile, 'rb') as db, \
