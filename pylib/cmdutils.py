@@ -4,6 +4,7 @@
 call external tools to do things.
 '''
 
+import os
 import re
 import subprocess
 from functools import lru_cache
@@ -67,3 +68,19 @@ def get_entropy(input):
   data = [float(x) for x in data.split(',')[1:]]
   data[0] = int(data[0])
   return {h: d for h, d in zip(header, data)}
+
+def so_depends(sopath):
+  env = os.environ.copy()
+  env['LANG'] = env['LC_ALL'] = 'C'
+  out = subprocess.check_output(
+    ['objdump', '-p', sopath],
+    env=env, encoding='utf-8')
+
+  libs = []
+
+  for line in out.splitlines():
+    line = line.strip()
+    if line.startswith('NEEDED '):
+      libs.append(line.split(None, 1)[-1])
+
+  return libs
