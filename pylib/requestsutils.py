@@ -1,12 +1,14 @@
 import os
 from http.cookiejar import MozillaCookieJar
 from urllib.parse import urljoin
+from typing import Optional, BinaryIO
 
 import requests
 
 CHUNK_SIZE = 40960
 
-def download_into(session, url, file, process_func=None):
+def download_into(session: requests.Session,
+                  url: str, file: BinaryIO, process_func=None) -> None:
   r = session.get(url, stream=True)
   length = int(r.headers.get('Content-Length') or 0)
   received = 0
@@ -21,7 +23,7 @@ def download_into(session, url, file, process_func=None):
 def download_into_with_progressbar(url, dest):
   import time
   from functools import partial
-  from termutils import download_process, get_terminal_size
+  from termutils import download_process
 
   w = os.get_terminal_size()[1]
   with open(dest, 'wb') as f:
@@ -30,10 +32,10 @@ def download_into_with_progressbar(url, dest):
 
 class RequestsBase:
   _session = None
-  userAgent = None
-  lasturl = None
-  auto_referer = False
-  baseurl = None
+  userAgent: Optional[str] = None
+  lasturl: Optional[str] = None
+  auto_referer: bool = False
+  baseurl: Optional[str] = None
 
   @property
   def session(self):
@@ -58,7 +60,7 @@ class RequestsBase:
     self._has_cookiefile = bool(cookiefile)
     self.initialize()
 
-  def initialize(self):
+  def initialize(self) -> None:
     '''subclasss can override this to change initialization behavior.'''
     pass
 
@@ -66,7 +68,8 @@ class RequestsBase:
     if self._has_cookiefile:
       self.session.cookies.save()
 
-  def request(self, url, method=None, *args, **kwargs):
+  def request(self, url: str, method: Optional[str] = None, *args, **kwargs
+             ) -> requests.Response:
     if self.baseurl:
       url = urljoin(self.baseurl, url)
 

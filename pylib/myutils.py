@@ -13,6 +13,7 @@ import signal
 import hashlib
 import base64
 import fcntl
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +283,7 @@ def file_lock(file):
   finally:
     os.close(lock)
 
-def dict_bytes_to_str(d):
+def dict_bytes_to_str(d: Dict[Any, Any]) -> Dict[Any, Any]:
   ret = {}
   for k, v in d.items():
     if isinstance(k, bytes):
