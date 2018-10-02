@@ -168,7 +168,7 @@ def save_html_mail(msg):
   else:
     raise NotImplementedError('type %s not recognized' % mailtype)
 
-  from lxml.html import fromstring, tostring
+  from lxml.html import fromstring, tostring # type: ignore
   from lxml.html import builder as E
 
   div = fromstring(mailbody)

@@ -13,11 +13,12 @@ import signal
 import hashlib
 import base64
 import fcntl
-from typing import Dict, Any
+from typing import Union, Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-def safe_overwrite(fname, data, *, method='write', mode='w', encoding=None):
+def safe_overwrite(fname: str, data: Union[bytes, str], *,
+                   method: str = 'write', mode: str = 'w', encoding: Optional[str] = None) -> None:
   # FIXME: directory has no read perm
   # FIXME: symlinks and hard links
   tmpname = fname + '.tmp'
@@ -30,10 +31,10 @@ def safe_overwrite(fname, data, *, method='write', mode='w', encoding=None):
   # if the above write failed (because disk is full etc), the old data should be kept
   os.rename(tmpname, fname)
 
-def filesize(size):
+def filesize(size: int) -> str:
   '''将 数字 转化为 xxKiB 的形式'''
   units = 'KMGTPEZY'
-  left = abs(size)
+  left: Union[int, float] = abs(size)
   unit = -1
   n = len(units)
   while left > 1100 and unit < n:
@@ -47,10 +48,10 @@ def filesize(size):
     return '%.1f%siB' % (left, units[unit])
 
 class FileSize(int):
-  def __str__(self):
+  def __str__(self) -> str:
     return filesize(self).rstrip('iB')
 
-def humantime(t):
+def humantime(t: int) -> str:
   '''seconds -> XhYmZs'''
   m, s = divmod(t, 60)
   h, m = divmod(m, 60)
@@ -66,7 +67,7 @@ def humantime(t):
     ret += '%ds' % s
   return ret
 
-def dehumantime(s):
+def dehumantime(s: str) -> int:
   '''XhYmZs -> seconds'''
   m = re.match(r'(?:(?P<d>\d+)d)?(?:(?P<h>\d+)h)?(?:(?P<m>\d+)m)?(?:(?P<s>\d+)s)?$', s)
   if m:
@@ -90,8 +91,10 @@ def getchar(prompt, hidden=False, end='\n', timeout=None):
   sys.stdout.write(prompt)
   sys.stdout.flush()
   fd = sys.stdin.fileno()
+  ch: Optional[str]
 
-  def _read():
+  def _read() -> Optional[str]:
+    ch: Optional[str]
     if timeout is None:
       ch = sys.stdin.read(1)
     else:

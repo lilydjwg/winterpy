@@ -1,11 +1,13 @@
 import os
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 import subprocess
 import re
+from typing import Tuple, List, Dict
 
 from pkg_resources import parse_version as _parse_version
+from packaging.version import Version # type: ignore
 
-def parse_arch_version(v):
+def parse_arch_version(v: str) -> Tuple[int, Version]:
   if ':' in v:
     epoch = int(v.split(':', 1)[0])
   else:
@@ -13,31 +15,31 @@ def parse_arch_version(v):
   return epoch, _parse_version(v)
 
 class PkgNameInfo(namedtuple('PkgNameInfo', 'name, version, release, arch')):
-  def __lt__(self, other):
+  def __lt__(self, other) -> bool:
     if self.name != other.name or self.arch != other.arch:
       return NotImplemented
     if self.version != other.version:
       return parse_arch_version(self.version) < parse_arch_version(other.version)
     return float(self.release) < float(other.release)
 
-  def __gt__(self, other):
+  def __gt__(self, other) -> bool:
     # No, try the other side please.
     return NotImplemented
 
   @property
-  def fullversion(self):
+  def fullversion(self) -> str:
     return '%s-%s' % (self.version, self.release)
 
   @classmethod
-  def parseFilename(cls, filename):
+  def parseFilename(cls, filename: str) -> 'PkgNameInfo':
     return cls(*trimext(filename, 3).rsplit('-', 3))
 
-def trimext(name, num=1):
+def trimext(name: str, num: int = 1) -> str:
   for i in range(num):
     name = os.path.splitext(name)[0]
   return name
 
-def get_pkgname_with_bash(PKGBUILD):
+def get_pkgname_with_bash(PKGBUILD: str) -> str:
   script = '''\
 . '%s'
 echo ${pkgname[*]}''' % PKGBUILD
@@ -51,7 +53,7 @@ echo ${pkgname[*]}''' % PKGBUILD
       ret, ['bash'], output)
   return output.split()
 
-def _run_bash(script):
+def _run_bash(script: str) -> None:
   p = subprocess.Popen(['bash'], stdin=subprocess.PIPE)
   p.communicate(script.encode('latin1'))
   ret = p.wait()
@@ -59,7 +61,7 @@ def _run_bash(script):
     raise subprocess.CalledProcessError(
       ret, ['bash'])
 
-def get_aur_pkgbuild_with_bash(name):
+def get_aur_pkgbuild_with_bash(name: str) -> None:
   script = '''\
 . /usr/lib/yaourt/util.sh
 . /usr/lib/yaourt/aur.sh
@@ -67,7 +69,7 @@ init_color
 aur_get_pkgbuild '%s' ''' % name
   _run_bash(script)
 
-def get_abs_pkgbuild_with_bash(name):
+def get_abs_pkgbuild_with_bash(name: str) -> None:
   script = '''\
 . /usr/lib/yaourt/util.sh
 . /usr/lib/yaourt/abs.sh
@@ -80,15 +82,15 @@ abs_get_pkgbuild "$arg" ''' % name
 
 pkgfile_pat = re.compile(r'(?:^|/).+-[^-]+-[\d.]+-(?:\w+)\.pkg\.tar\.xz$')
 
-def _strip_ver(s):
+def _strip_ver(s: str) -> str:
   return re.sub(r'[<>=].*', '', s)
 
-def get_package_dependencies(name):
+def get_package_dependencies(name: str) -> List[str]:
   out = subprocess.check_output(["package-query", "-Sii", "-f", "%D", name])
   out = out.decode('latin1')
   return [_strip_ver(x) for x in out.split() if x != '-']
 
-def get_package_info(name, local=False):
+def get_package_info(name: str, local: bool = False) -> Dict[str, str]:
   old_lang = os.environ['LANG']
   os.environ['LANG'] = 'C'
   args = '-Qi' if local else '-Si'
@@ -111,7 +113,7 @@ def get_package_info(name, local=False):
       ret[key] += ' ' + l.strip()
   return ret
 
-def get_package_repository(name):
+def get_package_repository(name: str) -> str:
   try:
     out = subprocess.check_output(["package-query", "-Sii", "-f", "%r", name])
     repo = out.strip().decode('latin1')
@@ -119,6 +121,6 @@ def get_package_repository(name):
     repo = 'local'
   return repo
 
-def is_official(name):
+def is_official(name: str) -> bool:
   repo = get_package_repository(name)
   return repo in ('core', 'extra', 'community', 'multilib', 'testing')
