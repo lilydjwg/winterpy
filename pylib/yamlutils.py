@@ -2,8 +2,8 @@ from collections import OrderedDict
 
 import yaml
 try:
-  from yaml import CLoader as Loader
-  from yaml import CDumper as Dumper
+  from yaml import CLoader as Loader # type: ignore
+  from yaml import CDumper as Dumper # type: ignore
 except ImportError:
   from yaml import Loader, Dumper
 
