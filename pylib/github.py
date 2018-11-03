@@ -10,8 +10,11 @@ def parse_datetime(s):
 class GitHub(requestsutils.RequestsBase):
   baseurl = 'https://api.github.com/'
 
-  def __init__(self, token, *, session=None):
-    self.token = f'token {token}'
+  def __init__(self, token=None, *, session=None):
+    if token:
+      self.token = f'token {token}'
+    else:
+      self.token = None
     super().__init__(session=session)
 
   def api_request(self, path, *args, method='get', data=None, **kwargs):
@@ -19,7 +22,8 @@ class GitHub(requestsutils.RequestsBase):
     if not h:
       h = kwargs['headers'] = {}
     h.setdefault('Accept', 'application/vnd.github.v3+json')
-    h.setdefault('Authorization', self.token)
+    if self.token:
+      h.setdefault('Authorization', self.token)
 
     if data:
       kwargs['json'] = data
@@ -36,6 +40,10 @@ class GitHub(requestsutils.RequestsBase):
     while 'next' in r.links:
       r = self.api_request(r.links['next'])
       yield from (Issue(x, self) for x in r.json())
+
+  def get_user_info(self, username):
+    r = self.api_request(f'/users/{username}')
+    return r.json()
 
 class Issue:
   def __init__(self, data, gh):
