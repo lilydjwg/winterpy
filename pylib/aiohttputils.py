@@ -1,6 +1,7 @@
 import os
 from http.cookiejar import MozillaCookieJar
 from urllib.parse import urljoin
+from typing import Optional
 
 import aiohttp
 
@@ -9,7 +10,7 @@ class ClientBase:
   userAgent = None
   lasturl = None
   auto_referer = False
-  baseurl = None
+  baseurl: Optional[str] = None
   __our_session = False
 
   @property
