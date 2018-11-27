@@ -3,6 +3,7 @@ import json
 import weakref
 import asyncio
 import logging
+from typing import AsyncGenerator
 
 import aiohttputils
 
@@ -65,6 +66,23 @@ class GitHub(aiohttputils.ClientBase):
       for x in r:
         yield Issue(x, self)
 
+  async def get_issue(self, repo: str, issue_nr: int) -> 'Issue':
+    r = await self.api_request(f'/repos/{repo}/issues/{issue_nr}')
+    return Issue(r, self)
+
+  async def get_issue_comments(
+    self, repo: str, issue_nr: int,
+  ) -> AsyncGenerator['Comment', None]:
+    r = await self.api_request(f'/repos/{repo}/issues/{issue_nr}/comments')
+
+    for x in r:
+      yield Comment(x, self)
+
+    while 'next' in r.links:
+      r = await self.api_request(r.links['next'])
+      for x in r:
+        yield Comment(x, self)
+
   async def create_issue(self, repo, title, body=None, labels=()):
     data = {
       'title': title,
@@ -115,3 +133,17 @@ class Issue:
 
   def __repr__(self):
     return f'<Issue {self.number}: {self.title!r}>'
+
+class Comment:
+  def __init__(self, data, gh: GitHub):
+    self.gh = weakref.proxy(gh)
+    self._data = data
+    self.author = data['user']['login']
+    self.html_url = data['html_url']
+    self.url = data['url']
+
+  async def delete(self) -> None:
+    await self.gh.api_request(self.url, method = 'DELETE')
+
+  def __repr__(self):
+    return f'<Comment by {self.author}: {self.html_url}>'
