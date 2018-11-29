@@ -112,6 +112,7 @@ class Issue:
     self.labels = [x['name'] for x in data['labels']]
     self.updated_at = parse_datetime(data['updated_at'])
     self._api_url = f"{data['repository_url']}/issues/{data['number']}"
+    self.closed = data['state'] == 'closed'
 
   async def comment(self, comment):
     return await self.gh.api_request(f'{self._api_url}/comments', data = {'body': comment})
@@ -127,9 +128,15 @@ class Issue:
     payload = {'assignees': assignees}
     return await self.gh.api_request(f'{self._api_url}/assignees', data = payload)
 
-  async def close(self):
-    return await self.gh.api_request(f'{self._api_url}', method = 'patch',
-                               data = {'state': 'closed'})
+  async def close(self) -> None:
+    self._data = data = await self.gh.api_request(
+      f'{self._api_url}', method = 'patch', data = {'state': 'closed'})
+    self.closed = data['state'] == 'closed'
+
+  async def reopen(self) -> None:
+    self._data = data = await self.gh.api_request(
+      f'{self._api_url}', method = 'patch', data = {'state': 'closed'})
+    self.closed = data['state'] == 'closed'
 
   def __repr__(self):
     return f'<Issue {self.number}: {self.title!r}>'
