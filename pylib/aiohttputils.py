@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 from typing import Optional
 
 import aiohttp
+from aiohttp.client import ClientResponse
 
 class ClientBase:
   _session = None
@@ -40,7 +41,9 @@ class ClientBase:
     if self.__our_session:
       self.session.close()
 
-  async def request(self, url, method=None, *args, **kwargs):
+  async def request(
+    self, url: str, method: Optional[str] = None, **kwargs,
+  ) -> ClientResponse:
     if self.baseurl:
       url = urljoin(self.baseurl, url)
 
@@ -62,7 +65,7 @@ class ClientBase:
       else:
         method = 'get'
 
-    response = await self.session.request(method, url, *args, **kwargs)
+    response = await self.session.request(method, url, **kwargs)
     # url may have been changed due to redirection
     self.lasturl = str(response.url)
     return response

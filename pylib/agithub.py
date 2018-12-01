@@ -3,11 +3,17 @@ import json
 import weakref
 import asyncio
 import logging
-from typing import AsyncGenerator
+import time
+from typing import (
+  AsyncGenerator, Tuple, Any, Dict, Optional, List,
+)
 
+from aiohttp.client import ClientResponse
 import aiohttputils
 
 logger = logging.getLogger(__name__)
+
+Json = Dict[str, Any]
 
 def parse_datetime(s):
   dt = datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%SZ')
@@ -26,7 +32,10 @@ class GitHub(aiohttputils.ClientBase):
     self.token = f'token {token}'
     super().__init__(session = session)
 
-  async def api_request(self, path, *args, method='get', data=None, **kwargs):
+  async def api_request(
+    self, path: str, method: str = 'get',
+    data: Optional[Json] = None, **kwargs,
+  ) -> Tuple[Json, ClientResponse]:
     h = kwargs.get('headers', None)
     if not h:
       h = kwargs['headers'] = {}
@@ -34,57 +43,64 @@ class GitHub(aiohttputils.ClientBase):
     h.setdefault('Authorization', self.token)
 
     if data:
-      data = json.dumps(data, ensure_ascii=False).encode('utf-8')
+      binary_data = json.dumps(data, ensure_ascii=False).encode('utf-8')
       if method == 'get':
         method = 'post'
       h.setdefault('Content-Type', 'application/json')
-      kwargs['data'] = data
+      kwargs['data'] = binary_data
 
     for _ in range(3):
-      res = await self.request(path, method=method, *args, **kwargs)
+      res = await self.request(path, method=method, **kwargs)
       j = await res.json()
       if 'message' in j:
         if res.status == 403 and int(res.headers.get('X-RateLimit-Remaining')) == 0:
-          reset = int(res.headers.get('X-RateLimit-Reset')) - asyncio.time() + 1
+          reset = int(res.headers.get('X-RateLimit-Reset')) - time.time() + 1
           logger.warn('rate limited; sleeping for %ds: %s', reset, j['message'])
           await asyncio.sleep(reset)
           continue
         raise GitHubError(j['message'], j['documentation_url'], res.status)
-      return j
+      return j, res
 
-  async def get_repo_issues(self, repo, *, state='open', labels=''):
+    raise Exception('unreachable')
+
+  async def get_repo_issues(
+    self, repo: str, *, state: str = 'open', labels: str = '',
+  ) -> AsyncGenerator['Issue', None]:
     params = {'state': state}
     if labels:
       params['labels'] = labels
-    r = await self.api_request(f'/repos/{repo}/issues', params = params)
+    j, r = await self.api_request(f'/repos/{repo}/issues', params = params)
 
-    for x in r:
+    for x in j:
       yield Issue(x, self)
 
     while 'next' in r.links:
-      r = await self.api_request(r.links['next'])
-      for x in r:
+      j, r = await self.api_request(r.links['next'])
+      for x in j:
         yield Issue(x, self)
 
   async def get_issue(self, repo: str, issue_nr: int) -> 'Issue':
-    r = await self.api_request(f'/repos/{repo}/issues/{issue_nr}')
-    return Issue(r, self)
+    j, _ = await self.api_request(f'/repos/{repo}/issues/{issue_nr}')
+    return Issue(j, self)
 
   async def get_issue_comments(
     self, repo: str, issue_nr: int,
   ) -> AsyncGenerator['Comment', None]:
-    r = await self.api_request(f'/repos/{repo}/issues/{issue_nr}/comments')
+    j, r = await self.api_request(f'/repos/{repo}/issues/{issue_nr}/comments')
 
-    for x in r:
+    for x in j:
       yield Comment(x, self)
 
     while 'next' in r.links:
-      r = await self.api_request(r.links['next'])
-      for x in r:
+      j, r = await self.api_request(r.links['next'])
+      for x in j:
         yield Comment(x, self)
 
-  async def create_issue(self, repo, title, body=None, labels=()):
-    data = {
+  async def create_issue(
+    self, repo: str, title: str, body: Optional[str] = None,
+    labels: List[str] = [],
+  ) -> 'Issue':
+    data: Json = {
       'title': title,
     }
     if body:
@@ -92,11 +108,11 @@ class GitHub(aiohttputils.ClientBase):
     if labels:
       data['labels'] = labels
 
-    issue = await self.api_request(f'/repos/{repo}/issues', data = data)
+    issue, _ = await self.api_request(f'/repos/{repo}/issues', data = data)
     return Issue(issue, self)
 
-  async def find_login_by_email(self, email):
-    j = await self.api_request(f'/search/users?q={email}')
+  async def find_login_by_email(self, email: str) -> str:
+    j, _ = await self.api_request(f'/search/users?q={email}')
     try:
       return j['items'][0]['login']
     except IndexError:
@@ -114,28 +130,29 @@ class Issue:
     self._api_url = f"{data['repository_url']}/issues/{data['number']}"
     self.closed = data['state'] == 'closed'
 
-  async def comment(self, comment):
-    return await self.gh.api_request(f'{self._api_url}/comments', data = {'body': comment})
+  async def comment(self, comment: str) -> Json:
+    j, _ = await self.gh.api_request(f'{self._api_url}/comments', data = {'body': comment})
+    return j
 
-  async def add_labels(self, labels):
-    if not isinstance(labels, (list, tuple)):
-      raise TypeError('labels should be a list')
-    return await self.gh.api_request(f'{self._api_url}/labels', data = labels)
+  async def add_labels(self, labels: List[str]) -> Json:
+    j, _ = await self.gh.api_request(f'{self._api_url}/labels', data = labels)
+    return j
 
-  async def assign(self, assignees):
-    if not isinstance(assignees, (list, tuple)):
-      raise TypeError('assignees should be a list')
+  async def assign(self, assignees: List[str]) -> Json:
     payload = {'assignees': assignees}
-    return await self.gh.api_request(f'{self._api_url}/assignees', data = payload)
+    j, _ = await self.gh.api_request(f'{self._api_url}/assignees', data = payload)
+    return j
 
   async def close(self) -> None:
-    self._data = data = await self.gh.api_request(
+    data, _ = await self.gh.api_request(
       f'{self._api_url}', method = 'patch', data = {'state': 'closed'})
+    self._data = data
     self.closed = data['state'] == 'closed'
 
   async def reopen(self) -> None:
-    self._data = data = await self.gh.api_request(
+    data, _ = await self.gh.api_request(
       f'{self._api_url}', method = 'patch', data = {'state': 'closed'})
+    self._data = data
     self.closed = data['state'] == 'closed'
 
   def __repr__(self):
