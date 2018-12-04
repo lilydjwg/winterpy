@@ -55,18 +55,13 @@ def assemble_mail(
   if html is None and text is None:
     raise TypeError('no message given')
 
-  html_msg: Optional[MIMEText]
-  text_msg: Optional[MIMEText]
+  html_msg: Optional[MIMEText] = None
+  text_msg: Optional[MIMEText] = None
 
   if html:
     html_msg = MIMEText(html, 'html', 'utf-8')
-  else:
-    html_msg = None
-
   if text:
     text_msg = MIMEText(text, 'plain', 'utf-8')
-  else:
-    text_msg = None
 
   msg: Message
   if html_msg and text_msg:
