@@ -3,7 +3,7 @@ import weakref
 
 import requestsutils
 
-def parse_datetime(s):
+def parse_datetime(s: str) -> datetime.datetime:
   dt = datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%SZ')
   return dt.replace(tzinfo=datetime.timezone.utc)
 
@@ -64,9 +64,9 @@ class Issue:
       raise TypeError('labels should be a list')
     return self.gh.api_request(f'{self._api_url}/labels', data = labels)
 
-  def close(self):
-    return self.gh.api_request(f'{self._api_url}', method = 'patch',
-                               data = {'state': 'closed'})
+  def close(self) -> None:
+    self.gh.api_request(f'{self._api_url}', method = 'patch',
+                        data = {'state': 'closed'})
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return f'<Issue {self.number}: {self.title!r}>'

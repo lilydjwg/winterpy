@@ -1,7 +1,3 @@
-'''
-一些常用短小的函数/类
-'''
-
 import os, sys
 import re
 import datetime
@@ -269,7 +265,7 @@ def base64_encode(s):
     s = s.encode()
   return base64.b64encode(s).decode('ascii')
 
-def lock_file(path):
+def lock_file(path: os.PathLike) -> None:
   lock = os.open(path, os.O_WRONLY | os.O_CREAT, 0o600)
   try:
     fcntl.flock(lock, fcntl.LOCK_EX|fcntl.LOCK_NB)

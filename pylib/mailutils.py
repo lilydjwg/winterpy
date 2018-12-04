@@ -9,6 +9,8 @@ import email.header
 from email.header import Header
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.message import Message
+from typing import Union, Iterable, Optional, cast
 
 addr_re = re.compile(r'(.*?)\s+(<[^>]+>)($|,\s*)')
 
@@ -46,26 +48,38 @@ def decode_payload(m, *, binary=False):
       data = data.decode(charset)
     return data
 
-def assemble_mail(subject, to, from_, html=None, text=None):
+def assemble_mail(
+  subject: str, to: Union[str, Iterable[str]], from_: str,
+  html: Optional[str] = None, text: Optional[str] = None,
+):
   if html is None and text is None:
     raise TypeError('no message given')
 
-  if html:
-    html = MIMEText(html, 'html', 'utf-8')
-  if text:
-    text = MIMEText(text, 'plain', 'utf-8')
+  html_msg: Optional[MIMEText]
+  text_msg: Optional[MIMEText]
 
-  if html and text:
-    msg = MIMEMultipart('alternative', _subparts = [text, html])
+  if html:
+    html_msg = MIMEText(html, 'html', 'utf-8')
   else:
-    msg = html or text
+    html_msg = None
+
+  if text:
+    text_msg = MIMEText(text, 'plain', 'utf-8')
+  else:
+    text_msg = None
+
+  msg: Message
+  if html_msg and text_msg:
+    msg = MIMEMultipart('alternative', _subparts = [text_msg, html_msg])
+  else:
+    msg = cast(Message, html_msg or text_msg)
 
   msg['Subject'] = encode_header(subject)
   msg['From'] = encode_header_address(from_)
-  if isinstance(to, (list, tuple, set, frozenset)):
-    msg['To'] = ', '.join(encode_header_address(x) for x in to)
-  else:
+  if isinstance(to, str):
     msg['To'] = encode_header_address(to)
+  else:
+    msg['To'] = ', '.join(encode_header_address(x) for x in to)
 
   return msg
 
