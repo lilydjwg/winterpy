@@ -12,7 +12,7 @@ import logging
 
 class TornadoLogFormatter(logging.Formatter):
   def __init__(self, color, *args, **kwargs):
-    super(TornadoLogFormatter, self).__init__(self, *args, **kwargs)
+    super(TornadoLogFormatter, self).__init__(*args, **kwargs)
     self._color = color
     if color:
       import curses
