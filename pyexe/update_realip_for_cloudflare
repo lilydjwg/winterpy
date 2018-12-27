@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import urllib.request
+from subprocess import check_call
 
 def get_ips():
   urls = ['https://www.cloudflare.com/ips-v4', 'https://www.cloudflare.com/ips-v6']
@@ -21,6 +22,7 @@ def main(target_file):
       f.write("set_real_ip_from %s;\n" % ip)
     f.write("real_ip_header CF-Connecting-IP;\n")
   os.rename(tmpfile, target_file)
+  check_call(['systemctl', 'try-reload-or-restart', 'nginx'])
 
 if __name__ == '__main__':
   if len(sys.argv) != 2:
