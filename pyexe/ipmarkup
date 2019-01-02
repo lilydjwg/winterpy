@@ -19,7 +19,7 @@ def lookupip(ip):
   if '.' in ip:
     return ''.join(Q[ip][2:])
   else:
-    return ''.join(D.lookup(ip).info)
+    return ' '.join(D.lookup(ip).info)
 
 def transformline(l):
   shift = 0

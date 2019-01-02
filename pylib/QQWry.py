@@ -277,7 +277,7 @@ def main():
     if ips[0] == '-': #参数只有一个“-”时，从标准输入读取IP
       print(''.join(Q[input()][2:]))
     else: #参数只有一个IP时，只输出简要的信息
-      print(''.join(Q[sys.argv[1]][2:]))
+      print(' '.join(Q[sys.argv[1]][2:]))
   else:
     for i in ips:
       print(Q[i])

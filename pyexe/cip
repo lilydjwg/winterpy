@@ -11,7 +11,7 @@ def main(args):
       print(''.join(Q[ip][2:]))
     else:
       D = ipdb.IPDB(ipdb.DEFAULT_FILE_LOCATION)
-      print(''.join(D.lookup(ip).info))
+      print(' '.join(D.lookup(ip).info))
     return
 
   Q = QQWry()
