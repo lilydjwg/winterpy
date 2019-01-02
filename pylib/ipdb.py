@@ -17,6 +17,7 @@ from collections import namedtuple
 import logging
 
 logger = logging.getLogger(__name__)
+DEFAULT_FILE_LOCATION = os.path.expanduser('~/etc/data/ipv6wry.db')
 
 class DatabaseError(Exception): pass
 
@@ -224,7 +225,6 @@ def update(file, q):
     shutil.rmtree(tmp_dir)
 
 def main():
-  DEFAULT_FILE_LOCATION = os.path.expanduser('~/etc/data/ipv6wry.db')
   import argparse
   parser = argparse.ArgumentParser(description='zxinc IP数据库查询与更新')
   parser.add_argument('IP', nargs='*',
