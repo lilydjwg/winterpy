@@ -5,13 +5,13 @@ import ipdb
 
 def main(args):
   if len(args) == 1:
-    ip = args[1]
+    ip = args[0]
     if '.' in ip:
       Q = QQWry()
       print(''.join(Q[ip][2:]))
     else:
       D = ipdb.IPDB(ipdb.DEFAULT_FILE_LOCATION)
-      print(' '.join(D.lookup(ip).info))
+      print(''.join(D.lookup(ip).info))
     return
 
   Q = QQWry()
@@ -23,4 +23,5 @@ def main(args):
       print(D.lookup(ip))
 
 if __name__ == '__main__':
-  main()
+  import sys
+  main(sys.argv[1:])
