@@ -255,6 +255,8 @@ def main():
   ips = args.IP
   if not ips:
     print(D)
+  elif len(ips) == 1:
+    print(' '.join(D.lookup(ips[0]).info))
   else:
     for ip in ips:
       print(D.lookup(ip))
