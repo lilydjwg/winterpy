@@ -83,7 +83,7 @@ class QQWry:
     si = 0
     ei = self.count
     if ip < self._readIndex(si)[0]:
-      raise LookupError('IP NOT Found.')
+      raise LookupError('IP not found.')
     elif ip >= self._readIndex(ei)[0]:
       si = ei
     else: # keep si <= ip < ei
@@ -139,13 +139,13 @@ class QQWry:
 
   def _read_cstring(self, start: int) -> Tuple[str, int]:
     if start == 0:
-      return 'Unknown', start
+      return 'Unknown', start + 1
 
     end = self.f.find(b'\x00', start)
     if end < 0:
       raise Exception('fail to read C string')
     data = self.f[start:end]
-    return data.decode(self.charset, errors='replace'), end
+    return data.decode(self.charset, errors='replace'), end + 1
 
   def _readIndex(self, n: int) -> Tuple[int, int]:
     pos = self.indexBaseOffset + 7 * n
