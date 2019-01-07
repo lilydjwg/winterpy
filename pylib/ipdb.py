@@ -202,7 +202,7 @@ def update(file, q):
       return
     else:
       if q != 2:
-        print(D and D.version_info()[1] or '', f'{date}版', '开始下载...',
+        print(D and D.version_info()[0] or '', f'{date}版', '开始下载...',
               file=sys.stderr, flush=True)
 
     wget = ['wget']
