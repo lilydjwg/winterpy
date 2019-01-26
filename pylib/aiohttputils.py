@@ -2,6 +2,7 @@ import os
 from http.cookiejar import MozillaCookieJar
 from urllib.parse import urljoin
 from typing import Optional
+import asyncio
 
 import aiohttp
 from aiohttp.client import ClientResponse
@@ -39,7 +40,7 @@ class ClientBase:
     if self._has_cookiefile:
       self.session.cookies.save()
     if self.__our_session:
-      self.session.close()
+      asyncio.run(self.session.close())
 
   async def request(
     self, url: str, method: Optional[str] = None, **kwargs,
@@ -77,6 +78,5 @@ async def test():
   print(res, client.lasturl)
 
 if __name__ == '__main__':
-  import asyncio
   loop = asyncio.get_event_loop()
   loop.run_until_complete(test())
