@@ -2,10 +2,10 @@ from collections import OrderedDict
 
 import yaml
 try:
-  from yaml import CLoader as Loader # type: ignore
+  from yaml import CLoader as Loader
   from yaml import CDumper as Dumper # type: ignore
 except ImportError:
-  from yaml import Loader, Dumper
+  from yaml import Loader, Dumper # type: ignore
 
 def load(src):
   return yaml.load(src, Loader=Loader)
