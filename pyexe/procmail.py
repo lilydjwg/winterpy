@@ -56,7 +56,11 @@ def reformat(s):
 def stripSeq(input):
   subject = None
   while True:
-    l = next(input)
+    try:
+      l = next(input)
+    except StopIteration:
+      return
+
     if l.startswith('Subject: '):
       # Subject appears
       subject = l
