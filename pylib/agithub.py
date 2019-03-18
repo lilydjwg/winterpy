@@ -79,7 +79,8 @@ class GitHub(aiohttputils.ClientBase):
       yield Issue(x, self)
 
     while 'next' in r.links:
-      j, r = await self.api_request(r.links['next'])
+      url = str(r.links['next']['url'])
+      j, r = await self.api_request(url)
       for x in j:
         yield Issue(x, self)
 
@@ -96,7 +97,8 @@ class GitHub(aiohttputils.ClientBase):
       yield Comment(x, self)
 
     while 'next' in r.links:
-      j, r = await self.api_request(r.links['next'])
+      url = str(r.links['next']['url'])
+      j, r = await self.api_request(url)
       for x in j:
         yield Comment(x, self)
 
@@ -165,13 +167,24 @@ class Issue:
 class Comment:
   def __init__(self, data, gh: GitHub):
     self.gh = weakref.proxy(gh)
+    self._update(data)
+
+  def _update(self, data):
     self._data = data
     self.author = data['user']['login']
     self.html_url = data['html_url']
     self.url = data['url']
+    self.body = data['body']
 
   async def delete(self) -> None:
     await self.gh.api_request(self.url, method = 'DELETE')
+
+  async def edit(self, body):
+    data, _ = await self.gh.api_request(
+      self.url, method = 'PATCH',
+      data = {'body': body},
+    )
+    self._update(data)
 
   def __repr__(self):
     return f'<Comment by {self.author}: {self.html_url}>'
