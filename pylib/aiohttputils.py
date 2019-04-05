@@ -40,7 +40,12 @@ class ClientBase:
     if self._has_cookiefile:
       self.session.cookies.save()
     if self.__our_session:
-      asyncio.run(self.session.close())
+      loop = asyncio.get_event_loop()
+      closer = self.session.close()
+      if loop.is_running():
+        asyncio.ensure_future(closer)
+      else:
+        asyncio.run(closer)
 
   async def request(
     self, url: str, method: Optional[str] = None, **kwargs,
