@@ -157,7 +157,7 @@ class Issue:
 
   async def reopen(self) -> None:
     data, _ = await self.gh.api_request(
-      f'{self._api_url}', method = 'patch', data = {'state': 'closed'})
+      f'{self._api_url}', method = 'patch', data = {'state': 'open'})
     self._data = data
     self.closed = data['state'] == 'closed'
 
