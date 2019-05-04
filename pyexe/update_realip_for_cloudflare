@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 import os
 import sys
@@ -10,7 +10,10 @@ def get_ips():
   urls = ['https://www.cloudflare.com/ips-v4', 'https://www.cloudflare.com/ips-v6']
   ret = []
   for url in urls:
-    ret.extend(urllib.request.urlopen(url).read().decode('utf-8').split())
+    req = urllib.request.Request(
+      url, headers = {'User-Agent': 'curl/7.64.1' },
+    )
+    ret.extend(urllib.request.urlopen(req).read().decode('utf-8').split())
   return ret
 
 def main(target_file):
