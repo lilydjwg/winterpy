@@ -84,3 +84,13 @@ def so_depends(sopath):
       libs.append(line.split(None, 1)[-1])
 
   return libs
+
+def diff_text(a, b):
+  import tempfile
+  with tempfile.NamedTemporaryFile(mode='w') as af, \
+      tempfile.NamedTemporaryFile(mode='w') as bf:
+    af.write(a)
+    af.flush()
+    bf.write(b)
+    bf.flush()
+    subprocess.run(['git', 'diff', '--', af.name, bf.name])
