@@ -1,18 +1,15 @@
-#!/usr/bin/env python3
-# fileencoding=utf-8
-
-'''
-找出文件系统中所有链接数大于1的文件
-
-2010年8月6日
-'''
+#!/usr/bin/python3
 
 import os, sys, subprocess
 
-def getfilelist(path):
+def getfilelist(paths):
   '''使用 find 命令找出所有链接数大于1的文件，返回此列表'''
-  cmd = "find '%s' -type f -links +1 2> /dev/null" % path
-  return subprocess.getoutput(cmd).split('\n')
+  out = subprocess.check_output(
+    ['find'] + paths + ['-type', 'f', '-links', '+1'],
+    stderr = subprocess.DEVNULL,
+    text = True,
+  )
+  return out.splitlines()
 
 def findsamefile(l):
   '''找出 l 中的文件中，哪些是同一文件'''
@@ -28,30 +25,19 @@ def findsamefile(l):
 
   return ret
 
-def print2file(l, file=sys.stdout):
-  '''把 findsamefile 的结果格式化输出'''
-  sys.stdout = file
+def print_result(l):
   for i in l:
     for j in i:
       print(j)
     print()
-  sys.stdout = sys.__stdout__
 
 if __name__ == '__main__':
-  if len(sys.argv) not in (2, 3):
-    print('用法：%s 路径 [输出目标]' % os.path.basename(sys.argv[0]),
+  if len(sys.argv) < 2:
+    print('用法：%s 路径 [...]' % os.path.basename(sys.argv[0]),
         file=sys.stderr)
     sys.exit(1)
 
-  if len(sys.argv) == 3:
-    f = open(sys.argv[2], 'w')
-  else:
-    f = None
-
-  l = getfilelist(sys.argv[1])
+  l = getfilelist(sys.argv[1:])
   result = findsamefile(l)
-  if f:
-    print2file(result, f)
-  else:
-    print2file(result)
+  print_result(result)
 
