@@ -19,6 +19,5 @@ makeamod () {
 }
 
 makeamod X.c -lX11 -lXtst -lXss
-makeamod myopencv.c `pkg-config --cflags --libs opencv`
 makeamod mysysutil.c
-makeamod mytermutil.c `pkg-config --cflags --libs ncursesw`
+makeamod mytermutil.c $(pkg-config --cflags --libs ncursesw)

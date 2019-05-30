@@ -1,7 +1,8 @@
 import os
 from time import sleep
 
-from myopencv import Image
+import cv2 as cv
+
 import X
 import gdkutils
 
@@ -60,7 +61,7 @@ class XAuto:
 
   def find(self, img, threshold=None, rect=None, repeat=1, interval=0.2):
     if isinstance(img, str):
-      img = Image(img)
+      img = cv.imread(img, 0)
     if rect is None:
       rect = self.default_rect or (0, 0) + self.screensize
     if threshold is None:
@@ -69,13 +70,16 @@ class XAuto:
 
     for _ in range(repeat):
       gdkutils.screenshot(tmp_img, rect)
-      sc = Image(tmp_img)
-      (x, y), similarity = sc.match(img)
+      sc = cv.imread(tmp_img, 0)
+      res = cv.matchTemplate(img, sc, cv.TM_CCOEFF_NORMED)
+      _min_val, max_val, _min_loc, max_loc = cv.minMaxLoc(res)
+      similarity = max_val
+      x, y = max_loc
       if similarity > threshold:
         x += rect[0]
         y += rect[1]
-        x += img.width // 2
-        y += img.height // 2
+        x += img.shape[1] // 2
+        y += img.shape[0] // 2
         return x, y
       sleep(interval)
 
