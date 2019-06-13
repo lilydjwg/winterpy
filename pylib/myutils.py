@@ -61,6 +61,8 @@ def humantime(t: int) -> str:
     ret += '%dm' % m
   if s:
     ret += '%ds' % s
+  if not ret:
+    ret = '0s'
   return ret
 
 def dehumantime(s: str) -> int:
