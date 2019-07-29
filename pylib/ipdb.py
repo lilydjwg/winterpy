@@ -106,6 +106,30 @@ class IPDB:
     info = self._read_rec(hit)
     return IpInfo(self._int_to_ip(loip), self._int_to_ip(hiip), info)
 
+  def iter(self):
+    read_index = self._read_index
+    read_rec = self._read_rec
+    int_to_ip = self._int_to_ip
+    count = self.count
+
+    last_ip, offset = read_index(0)
+    info = read_rec(offset)
+    i = 1
+    while i < count:
+      ip, offset = read_index(i)
+      yield IpInfo(int_to_ip(last_ip), int_to_ip(ip), info)
+
+      last_ip = ip
+      info = read_rec(offset)
+      i += 1
+
+    if self.ip_version == 4:
+      hiip = 0xffff_ffff
+    else:
+      hiip = 0xffff_ffff_ffff_ffff
+
+    yield IpInfo(int_to_ip(last_ip), int_to_ip(hiip), info)
+
   def _int_to_ip_v4(self, i: int) -> ipaddress.IPv4Address:
     return ipaddress.IPv4Address(i)
 
@@ -232,6 +256,8 @@ def main():
   parser.add_argument('-f', '--file',
                       default=DEFAULT_FILE_LOCATION,
                       help='数据库文件路径')
+  parser.add_argument('-A', '--all', action='store_true', default=False,
+                      help='显示所有记录')
   parser.add_argument('-u', '--update', action='store_true', default=False,
                       help='更新数据库')
   parser.add_argument('-q', '--quiet', action='store_true', default=False,
@@ -254,7 +280,12 @@ def main():
 
   ips = args.IP
   if not ips:
-    print(D)
+    if not args.all:
+      print(D)
+    else:
+      for info in D.iter():
+        loc = ' '.join(info.info).strip()
+        print(f'{info.start} - {info.end} {loc}')
   elif len(ips) == 1:
     print(' '.join(D.lookup(ips[0]).info))
   else:
