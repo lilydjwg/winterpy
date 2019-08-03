@@ -1,4 +1,3 @@
-import os
 import stat
 import datetime
 import re
@@ -6,11 +5,11 @@ import re
 class FileEntry:
   '''For ``StaticFileHandler`` with directory index enabled'''
   isdir = False
-  def __init__(self, path, file):
-    st = os.stat(os.path.join(path, file))
+  def __init__(self, path):
+    st = path.stat()
     self.time = datetime.datetime.fromtimestamp(st[stat.ST_MTIME])
-    self.name = file
-    self.filename = file
+    self.name = path.name
+    self.filename = path.name
     if stat.S_ISDIR(st[stat.ST_MODE]):
       self.isdir = True
       self.filename += '/'

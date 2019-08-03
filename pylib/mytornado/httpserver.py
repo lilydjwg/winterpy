@@ -1,40 +1,23 @@
-from __future__ import print_function
-
 import os
 import sys
-import re
-import datetime
-import stat
-import mimetypes
-import threading
-import email.utils
 import time
-import socket
-try:
-  import http.client as httpclient
-except ImportError:
-  import httplib as httpclient
+import http.client as httpclient
 import traceback
 import tempfile
-from functools import partial
+from pathlib import Path
+from typing import Optional
 
 from tornado.web import (
   HTTPError, RequestHandler,
-  asynchronous, GZipContentEncoding,
+  StaticFileHandler,
 )
 import tornado.web
 import tornado.escape
 import tornado.httpserver
-from tornado.log import app_log, gen_log
-try:
-  from tornado.web import stream_request_body
-  _streaming_body = True
-except ImportError:
-  _streaming_body = False
+from tornado.log import gen_log
+from tornado.web import stream_request_body
 
 from .util import FileEntry
-
-_legal_range = re.compile(r'bytes=(\d*)-(\d*)$')
 
 class ErrorHandlerMixin:
   '''nicer error page'''
@@ -87,284 +70,51 @@ call in its ``__init__`` method.
     RequestHandler.write_error = cls.write_error
     RequestHandler.error_page = cls.error_page
 
-class StaticFileHandler(RequestHandler):
-  """A simple handler that can serve static content from a directory.
-
-  Why prefer this than the one in Tornado 3.1?
-
-  1. Etag is not md5sum, so it's quick on large files;
-  2. Read file chunk by chunk, so it won't eat all your memory on huge files.
-
-  To map a path to this handler for a static data directory ``/var/www``,
-  you would add a line to your application like::
-
-    application = web.Application([
-      (r"/static/(.*)", web.StaticFileHandler, {
-        "path": "/var/www",
-        "default_filenames": ["index.html"], #optional
-        "dirindex": "dirlisting", #optional template name for directory listing
-      }),
-    ])
-
-  The local root directory of the content should be passed as the ``path``
-  argument to the handler.
-
-  The `dirindex` template will receive the following parameters:
-    - `url`: the requested path
-    - `files`, a list of ``FileEntry``; override ``FileEntry`` attribute to
-      customize (it must be comparable)
-    - `decodeURIComponent`, a decoding function
-
-  To support aggressive browser caching, if the argument ``v`` is given
-  with the path, we set an infinite HTTP expiration header. So, if you
-  want browsers to cache a file indefinitely, send them to, e.g.,
-  ``/static/images/myimage.png?v=xxx``. Override `get_cache_time` method for
-  more fine-grained cache control.
-  """
-  CACHE_MAX_AGE = 86400 * 365 * 10  # 10 years
-  BLOCK_SIZE = 40960 # 4096 is too slow; this value works great here
-  FileEntry = FileEntry
-
-  _static_hashes = {}
-  _lock = threading.Lock()  # protects _static_hashes
-
-  def initialize(self, path=None, default_filenames=None, dirindex=None):
-    if path is not None:
-      self.root = os.path.abspath(path) + os.path.sep
+class MyStaticFileHandler(StaticFileHandler):
+  def initialize(self, path, dirindex_tpl='dir.html'):
+    super().initialize(path=path, default_filename='index.html')
+    if dirindex_tpl:
+      self.dirindex_tpl = dirindex_tpl
     else:
-      self.root = None
-    self.default_filenames = default_filenames
-    self.dirindex = dirindex
+      self.dirindex_tpl = None
 
-  @classmethod
-  def reset(cls):
-    with cls._lock:
-      cls._static_hashes = {}
+  async def get(self, path, include_body=True):
+    if self.dirindex_tpl:
+      self.path = self.parse_url_path(path)
+      absolute_path = self.get_absolute_path(self.root, self.path)
 
-  def head(self, path):
-    self.get(path, include_body=False)
-
-  def get(self, path, include_body=True):
-    if os.path.sep != "/":
-      path = path.replace("/", os.path.sep)
-    abspath = os.path.abspath(os.path.join(self.root, path))
-    # os.path.abspath strips a trailing /
-    # it needs to be temporarily added back for requests to root/
-    if not (abspath + os.path.sep).startswith(self.root):
-      raise HTTPError(403, "%s is not in root static directory", path)
-    self.send_file(abspath, include_body)
-
-  def send_file(self, abspath, include_body=True, path=None, download=False):
-    '''
-    send a static file to client
-
-    ``abspath``: the absolute path of the file on disk
-    ``path``: the path to use as if requested, if given
-    ``download``: whether we should try to persuade the client to download the
-                  file. This can be either ``True`` or the intended filename
-
-    If you use ``send_file`` directly and want to use another file as default
-    index, you should set this parameter.
-    '''
-    # we've found the file
-    found = False
-    # use @asynchronous on a seperate method so that HTTPError won't get
-    # messed up
-    if path is None:
-      path = self.request.path
-    if os.path.isdir(abspath):
-      # need to look at the request.path here for when path is empty
-      # but there is some prefix to the path that was already
-      # trimmed by the routing
-      if not path.endswith("/"):
-        redir = path + '/'
-        if self.request.query:
-          redir += '?' + self.request.query
-        self.redirect(redir, permanent=True)
+      root = os.path.abspath(self.root)
+      if not root.endswith(os.path.sep):
+          root += os.path.sep
+      if not (absolute_path + os.path.sep).startswith(root):
+        raise HTTPError(403, "%s is not in root static directory", self.path)
+      if absolute_path is None:
         return
 
-      # check if we have a default available
-      if self.default_filenames is not None:
-        for i in self.default_filenames:
-          abspath_ = os.path.join(abspath, i)
-          if os.path.exists(abspath_):
-            abspath = abspath_
-            found = True
-            break
+      p = Path(absolute_path)
+      if p.is_dir() and not (p / self.default_filename).exists():
+        self.absolute_path = None
+        return self.render_index(p)
 
-      if not found:
-        # try dir listing
-        if self.dirindex is not None:
-          if not include_body:
-            raise HTTPError(405)
-          self.renderIndex(abspath)
-          return
-        else:
-          raise HTTPError(403, "Directory Listing Not Allowed")
+    await super().get(path, include_body=include_body)
 
-    if not os.path.exists(abspath):
-      # failed to figure out the file to send
-      raise HTTPError(404)
-    if not os.path.isfile(abspath):
-      raise HTTPError(403, "%s is not a file", self.request.path)
-
-    if download is not False:
-      if download is True:
-        filename = os.path.split(path)[1]
-      else:
-        filename = download
-      # See http://kb.mozillazine.org/Filenames_with_spaces_are_truncated_upon_download
-      self.set_header('Content-Disposition', 'attachment; filename="%s"' % filename.replace('"', r'\"'))
-
-    self._send_file_async(path, abspath, include_body)
-
-  @asynchronous
-  def _send_file_async(self, path, abspath, include_body=True):
-    stat_result = os.stat(abspath)
-    modified = datetime.datetime.fromtimestamp(stat_result[stat.ST_MTIME])
-    self.set_header("Last-Modified", modified)
-    set_length = True
-
-    mime_type, encoding = mimetypes.guess_type(abspath)
-    if not mime_type:
-      # default is plain text
-      mime_type = 'text/plain'
-    self.set_header("Content-Type", mime_type)
-
-    # make use of gzip when possible
-    if self.settings.get("gzip") and \
-        mime_type in GZipContentEncoding.CONTENT_TYPES:
-      set_length = False
-
-    file_length = stat_result[stat.ST_SIZE]
-    if set_length:
-      self.set_header("Content-Length", file_length)
-      self.set_header('Accept-Ranges', 'bytes')
-
-    cache_time = self.get_cache_time(path, modified, mime_type)
-
-    if cache_time > 0:
-      self.set_header("Expires", datetime.datetime.utcnow() +
-                      datetime.timedelta(seconds=cache_time))
-      self.set_header("Cache-Control", "max-age=" + str(cache_time))
-
-    self.set_extra_headers(path)
-
-    # Check the If-Modified-Since, and don't send the result if the
-    # content has not been modified
-    ims_value = self.request.headers.get("If-Modified-Since")
-    if ims_value is not None:
-      date_tuple = email.utils.parsedate(ims_value)
-      if_since = datetime.datetime.fromtimestamp(time.mktime(date_tuple))
-      if if_since >= modified:
-        self.set_status(304)
-        self.finish()
-        return
-
-    # Check for range requests
-    ranges = None
-    if set_length:
-      ranges = self.request.headers.get("Range")
-      if ranges:
-        range_match = _legal_range.match(ranges)
-        if range_match:
-          start = range_match.group(1)
-          start = start and int(start) or 0
-          stop = range_match.group(2)
-          stop = stop and int(stop) or file_length-1
-          if start >= file_length:
-            raise HTTPError(416)
-          self.set_status(206)
-          self.set_header('Content-Range', '%d-%d/%d' % (
-            start, stop, file_length))
-
-    if not include_body:
-      self.finish()
+  def compute_etag(self) -> Optional[str]:
+    if self.absolute_path is None:
       return
+    return super().compute_etag()
 
-    file = open(abspath, "rb")
-    if ranges:
-      if start:
-        file.seek(start, os.SEEK_SET)
-      self._write_chunk(file, length=stop-start+1)
-    else:
-      self._write_chunk(file, length=file_length)
-    self.request.connection.stream.set_close_callback(partial(self._close_on_error, file))
-
-  def renderIndex(self, path):
+  def render_index(self, path):
     files = []
-    for i in os.listdir(path):
+    for i in path.iterdir():
       try:
-        info = self.FileEntry(path, i)
+        info = FileEntry(i)
         files.append(info)
       except OSError:
         continue
 
     files.sort()
-    self.render(self.dirindex, files=files, url=self.request.path,
-               decodeURIComponent=tornado.escape.url_unescape)
-
-  def _write_chunk(self, file, length):
-    size = min(length, self.BLOCK_SIZE)
-    left = length - size
-    chunk = file.read(size)
-    self.write(chunk)
-    if left != 0:
-      cb = partial(self._write_chunk, file, length=left)
-    else:
-      cb = self.finish
-      file.close()
-    self.flush(callback=cb)
-
-  def _close_on_error(self, file):
-    gen_log.info('closing %d on connection close.', file.fileno())
-    file.close()
-
-  def set_extra_headers(self, path):
-    """For subclass to add extra headers to the response"""
-    pass
-
-  def get_cache_time(self, path, modified, mime_type):
-    """Override to customize cache control behavior.
-
-    Return a positive number of seconds to make the result
-    cacheable for that amount of time or 0 to mark resource as
-    cacheable for an unspecified amount of time (subject to
-    browser heuristics).
-
-    By default returns cache expiry of 10 years for resources requested
-    with ``v`` argument.
-    """
-    return self.CACHE_MAX_AGE if "v" in self.request.arguments else 0
-
-  @classmethod
-  def make_static_url(cls, settings, path):
-    """Constructs a versioned url for the given path.
-
-    This method may be overridden in subclasses (but note that it is
-    a class method rather than an instance method).
-
-    ``settings`` is the `Application.settings` dictionary.  ``path``
-    is the static path being requested.  The url returned should be
-    relative to the current host.
-    """
-    abs_path = os.path.join(settings["static_path"], path)
-    with cls._lock:
-      hashes = cls._static_hashes
-      if abs_path not in hashes:
-        try:
-          f = open(abs_path, "rb")
-          hashes[abs_path] = hashlib.md5(f.read()).hexdigest()
-          f.close()
-        except Exception:
-          gen_log.error("Could not open static file %r", path)
-          hashes[abs_path] = None
-      hsh = hashes.get(abs_path)
-    static_url_prefix = settings.get('static_url_prefix', '/static/')
-    if hsh:
-      return static_url_prefix + path + "?v=" + hsh[:5]
-    else:
-      return static_url_prefix + path
+    self.render(self.dirindex_tpl, files=files, url=self.request.path,
+                decodeURIComponent=tornado.escape.url_unescape)
 
 def apache_style_log(handler):
   request = handler.request
@@ -451,175 +201,48 @@ def _read_into(self, fp, data, from_handler = False):
       # or we'll recurse too deep
       self._read_content_body(fp)
 
-if _streaming_body:
+@stream_request_body
+class TmpFilesHandler(RequestHandler):
+  _boundary = None
+  _buffer = b''
+  _reading_body_into = None
+  _reading_headers = False
 
-  @stream_request_body
-  class TmpFilesHandler(RequestHandler):
-    _boundary = None
-    _buffer = b''
-    _reading_body_into = None
-    _reading_headers = False
+  def data_received(self, chunk):
+    self._buffer += chunk
 
-    def data_received(self, chunk):
-      self._buffer += chunk
+    if self._boundary is None and self.request.method in ("POST", "PUT"):
+      self._request = self.request
+      content_type = self.request.headers.get('Content-Type', '')
+      if content_type.startswith('multipart/form-data'):
+        self._content_length_left = int(
+          self.request.headers.get('Content-Length'))
+        fields = content_type.split(";")
+        for field in fields:
+          k, sep, v = field.strip().partition("=")
+          if k == "boundary" and v:
+            if v.startswith('"') and v.endswith('"'):
+              v = v[1:-1]
+            self._boundary = b'--' + v.encode('latin1')
+            self._boundary_buffer = b''
+            self._boundary_len = len(self._boundary)
+            break
 
-      if self._boundary is None and self.request.method in ("POST", "PUT"):
-        self._request = self.request
-        content_type = self.request.headers.get('Content-Type', '')
-        if content_type.startswith('multipart/form-data'):
-          self._content_length_left = int(
-            self.request.headers.get('Content-Length'))
-          fields = content_type.split(";")
-          for field in fields:
-            k, sep, v = field.strip().partition("=")
-            if k == "boundary" and v:
-              if v.startswith('"') and v.endswith('"'):
-                v = v[1:-1]
-              self._boundary = b'--' + v.encode('latin1')
-              self._boundary_buffer = b''
-              self._boundary_len = len(self._boundary)
-              break
+    if self._boundary:
+      if self._reading_headers:
+        pos = self._buffer.find(b'\r\n\r\n')
+        if pos != -1:
+          self._reading_headers = False
+          _on_content_headers(self, self._buffer[:pos])
+          self._buffer = self._buffer[pos:]
+      else:
+        self._read_content_body(self._reading_body_into)
 
-      if self._boundary:
-        if self._reading_headers:
-          pos = self._buffer.find(b'\r\n\r\n')
-          if pos != -1:
-            self._reading_headers = False
-            _on_content_headers(self, self._buffer[:pos])
-            self._buffer = self._buffer[pos:]
-        else:
-          self._read_content_body(self._reading_body_into)
+    if self._buffer:
+      self.data_received(b'')
 
-      if self._buffer:
-        self.data_received(b'')
+  def _read_content_body(self, fp):
+    data = self._buffer
+    self._buffer = b''
+    _read_into(self, fp, data, from_handler = True)
 
-    def _read_content_body(self, fp):
-      data = self._buffer
-      self._buffer = b''
-      _read_into(self, fp, data, from_handler = True)
-
-  class HTTPServer(tornado.httpserver.HTTPServer):
-    def __init__(self, *args, **kwargs):
-      if 'max_body_size' not in kwargs:
-        kwargs['max_body_size'] = sys.maxsize
-      super().__init__(*args, **kwargs)
-
-else:
-
-  class TmpFilesHandler(RequestHandler):
-    use_tmp_files = True
-
-  class HTTPConnection(tornado.httpserver.HTTPConnection):
-    _recv_a_time = 8192
-    def _on_headers(self, data):
-      try:
-        data = data.decode('latin1')
-        eol = data.find("\r\n")
-        start_line = data[:eol]
-        try:
-          method, uri, version = start_line.split(" ")
-        except ValueError:
-          raise tornado.httpserver._BadRequestException("Malformed HTTP request line")
-        if not version.startswith("HTTP/"):
-          raise tornado.httpserver._BadRequestException("Malformed HTTP version in HTTP Request-Line")
-        headers = tornado.httputil.HTTPHeaders.parse(data[eol:])
-
-        # HTTPRequest wants an IP, not a full socket address
-        if self.address_family in (socket.AF_INET, socket.AF_INET6):
-          remote_ip = self.address[0]
-        else:
-          # Unix (or other) socket; fake the remote address
-          remote_ip = '0.0.0.0'
-
-        self._request = tornado.httpserver.HTTPRequest(
-          connection=self, method=method, uri=uri, version=version,
-          headers=headers, remote_ip=remote_ip, protocol=self.protocol)
-
-        content_length = headers.get("Content-Length")
-        if content_length:
-          content_length = int(content_length)
-          use_tmp_files = self._get_handler_info()
-          if not use_tmp_files and content_length > self.stream.max_buffer_size:
-            raise tornado.httpserver._BadRequestException("Content-Length too long")
-          if headers.get("Expect") == "100-continue":
-            self.stream.write(b"HTTP/1.1 100 (Continue)\r\n\r\n")
-          if use_tmp_files:
-            gen_log.debug('using temporary files for uploading')
-            self._receive_content(content_length)
-          else:
-            gen_log.debug('using memory for uploading')
-            self.stream.read_bytes(content_length, self._on_request_body)
-          return
-
-        self.request_callback(self._request)
-      except tornado.httpserver._BadRequestException as e:
-        gen_log.info("Malformed HTTP request from %s: %s",
-              self.address[0], e)
-        self.close()
-        return
-
-    def _receive_content(self, content_length):
-      if self._request.method in ("POST", "PUT"):
-        content_type = self._request.headers.get("Content-Type", "")
-        if content_type.startswith("multipart/form-data"):
-          self._content_length_left = content_length
-          fields = content_type.split(";")
-          for field in fields:
-            k, sep, v = field.strip().partition("=")
-            if k == "boundary" and v:
-              if v.startswith('"') and v.endswith('"'):
-                v = v[1:-1]
-              self._boundary = b'--' + v.encode('latin1')
-              self._boundary_buffer = b''
-              self._boundary_len = len(self._boundary)
-              break
-          self.stream.read_until(b"\r\n\r\n", self._on_content_headers)
-        else:
-          self.stream.read_bytes(content_length, self._on_request_body)
-
-    _on_content_headers = _on_content_headers
-    _read_into = _read_into
-
-    def _read_content_body(self, fp):
-      self.stream.read_bytes(
-        min(self._recv_a_time, self._content_length_left),
-        partial(self._read_into, fp)
-      )
-
-    def _get_handler_info(self):
-      request = self._request
-      app = self.request_callback
-      handlers = app._get_host_handlers(request)
-      handler = None
-      for spec in handlers:
-        match = spec.regex.match(request.path)
-        if match:
-          handler = spec.handler_class(app, request, **spec.kwargs)
-          if spec.regex.groups:
-            # None-safe wrapper around url_unescape to handle
-            # unmatched optional groups correctly
-            def unquote(s):
-              if s is None:
-                return s
-              return tornado.escape.url_unescape(s, encoding=None)
-            # Pass matched groups to the handler.  Since
-            # match.groups() includes both named and unnamed groups,
-            # we want to use either groups or groupdict but not both.
-            # Note that args are passed as bytes so the handler can
-            # decide what encoding to use.
-
-            if spec.regex.groupindex:
-              kwargs = dict(
-                (str(k), unquote(v))
-                for (k, v) in match.groupdict().iteritems())
-            else:
-              args = [unquote(s) for s in match.groups()]
-          break
-      if handler:
-        return getattr(handler, 'use_tmp_files', False)
-
-  class HTTPServer(tornado.httpserver.HTTPServer):
-    '''HTTPServer that supports uploading files to temporary files'''
-    def handle_stream(self, stream, address):
-      HTTPConnection(stream, address, self.request_callback,
-                    self.no_keep_alive, self.xheaders)
