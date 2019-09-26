@@ -92,9 +92,13 @@ class MyStaticFileHandler(StaticFileHandler):
         return
 
       p = Path(absolute_path)
-      if p.is_dir() and not (p / self.default_filename).exists():
-        self.absolute_path = None
-        return self.render_index(p)
+      if p.is_dir():
+        if not path.endswith('/'):
+          return self.redirect(self.request.path + '/')
+
+        if not (p / self.default_filename).exists():
+          self.absolute_path = None
+          return self.render_index(p)
 
     await super().get(path, include_body=include_body)
 
