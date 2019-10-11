@@ -2,16 +2,15 @@ from collections import OrderedDict
 
 import yaml
 try:
-  from yaml import CLoader as Loader
   from yaml import CDumper as Dumper # type: ignore
 except ImportError:
-  from yaml import Loader, Dumper # type: ignore
+  from yaml import Dumper # type: ignore
 
 def load(src):
-  return yaml.load(src, Loader=Loader)
+  return yaml.safe_load(src)
 
 def load_all(src):
-  return yaml.load_all(src, Loader=Loader)
+  return yaml.safe_load_all(src)
 
 class PrettyDumper(Dumper): pass
 
