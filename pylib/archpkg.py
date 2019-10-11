@@ -39,7 +39,7 @@ def trimext(name: str, num: int = 1) -> str:
     name = os.path.splitext(name)[0]
   return name
 
-def get_pkgname_with_bash(PKGBUILD: str) -> str:
+def get_pkgname_with_bash(PKGBUILD: str) -> List[str]:
   script = '''\
 . '%s'
 echo ${pkgname[*]}''' % PKGBUILD
@@ -86,8 +86,8 @@ def _strip_ver(s: str) -> str:
   return re.sub(r'[<>=].*', '', s)
 
 def get_package_dependencies(name: str) -> List[str]:
-  out = subprocess.check_output(["package-query", "-Sii", "-f", "%D", name])
-  out = out.decode('latin1')
+  outb = subprocess.check_output(["package-query", "-Sii", "-f", "%D", name])
+  out = outb.decode('latin1')
   return [_strip_ver(x) for x in out.split() if x != '-']
 
 def get_package_info(name: str, local: bool = False) -> Dict[str, str]:
@@ -95,8 +95,8 @@ def get_package_info(name: str, local: bool = False) -> Dict[str, str]:
   os.environ['LANG'] = 'C'
   args = '-Qi' if local else '-Si'
   try:
-    out = subprocess.check_output(["pacman", args, name])
-    out = out.decode('latin1')
+    outb = subprocess.check_output(["pacman", args, name])
+    out = outb.decode('latin1')
   finally:
     os.environ['LANG'] = old_lang
 
