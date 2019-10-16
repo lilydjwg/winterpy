@@ -80,7 +80,7 @@ RSYNCOPT="$RSYNCOPT -O"
 abs_get_pkgbuild "$arg" ''' % name
   _run_bash(script)
 
-pkgfile_pat = re.compile(r'(?:^|/).+-[^-]+-[\d.]+-(?:\w+)\.pkg\.tar\.xz$')
+pkgfile_pat = re.compile(r'(?:^|/).+-[^-]+-[\d.]+-(?:\w+)\.pkg\.tar\.(?:xz|zst)$')
 
 def _strip_ver(s: str) -> str:
   return re.sub(r'[<>=].*', '', s)
