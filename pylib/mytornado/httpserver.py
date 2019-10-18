@@ -85,7 +85,7 @@ class MyStaticFileHandler(StaticFileHandler):
 
       root = os.path.abspath(self.root)
       if not root.endswith(os.path.sep):
-          root += os.path.sep
+        root += os.path.sep
       if not (absolute_path + os.path.sep).startswith(root):
         raise HTTPError(403, "%s is not in root static directory", self.path)
       if absolute_path is None:
@@ -93,7 +93,7 @@ class MyStaticFileHandler(StaticFileHandler):
 
       p = Path(absolute_path)
       if p.is_dir():
-        if not path.endswith('/'):
+        if path and not path.endswith('/'):
           return self.redirect(self.request.path + '/')
 
         if not (p / self.default_filename).exists():
