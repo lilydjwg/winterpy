@@ -215,7 +215,7 @@ def update(file, q):
       print('注意：原数据文件无法打开：', e, file=sys.stderr)
       D = None
 
-    req = urllib.request.urlopen('http://ip.zxinc.org/index.htm')
+    req = urllib.request.urlopen('http://ip.ss.zxinc.org/index.htm')
     page = req.read().decode('utf-8')
     date = re.findall(r'版本(\d{8})', page)[0]
     date = int(date)
