@@ -19,5 +19,4 @@ makeamod () {
 }
 
 makeamod X.c -lX11 -lXtst -lXss
-makeamod mysysutil.c
 makeamod mytermutil.c $(pkg-config --cflags --libs ncursesw)

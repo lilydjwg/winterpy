@@ -11,7 +11,7 @@ import signal
 import hashlib
 import base64
 import fcntl
-from typing import Union, Optional, Dict, Any
+from typing import Union, Optional, Dict, Any, Generator
 
 logger = logging.getLogger(__name__)
 
@@ -236,7 +236,7 @@ def is_internal_ip(ip):
   return ip.is_loopback or ip.is_private or ip.is_reserved or ip.is_link_local
 
 @contextlib.contextmanager
-def at_dir(d):
+def at_dir(d: os.PathLike) -> Generator[None, None, None]:
   old_dir = os.getcwd()
   os.chdir(d)
   try:

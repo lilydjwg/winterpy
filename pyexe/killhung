@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 '''wait and kill subprocess if it doesn't response (from network)'''
 
@@ -7,9 +7,7 @@ import sys
 import select
 import subprocess
 
-# my cron environment doesn't have this
-sys.path.append(os.path.expanduser('~/scripts/python/pylib'))
-from mysysutil import subreap
+import prctl
 
 timeout = 60
 
@@ -54,5 +52,6 @@ if __name__ == '__main__':
     del setproctitle
   except ImportError:
     pass
-  subreap(True)
+
+  prctl.set_child_subreaper(1)
   sys.exit(main(sys.argv[1:]))
