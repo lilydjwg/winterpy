@@ -207,7 +207,7 @@ def update(q):
       Q = None
     os.chdir(tmp_dir)
 
-    wget = ['wget']
+    wget = ['wget', '-U', 'Mozilla/3.0 (compatible; Indy Library)']
     if q:
       wget.append('-q')
     subprocess.run(wget + [copywrite_url], check=True)
@@ -221,7 +221,7 @@ def update(q):
     else:
       if q != 2:
         print(info['text'], '开始下载...', file=sys.stderr, flush=True)
-    p = subprocess.Popen(['wget', data_url])
+    p = subprocess.Popen(['wget', '-U', 'Mozilla/3.0 (compatible; Indy Library)', data_url])
     p.wait()
     d = open('qqwry.rar', 'rb').read()
     d = decipher_data(info['key'], d)
