@@ -137,6 +137,7 @@ class Issue:
     self.updated_at = parse_datetime(data['updated_at'])
     self._api_url = f"{data['repository_url']}/issues/{data['number']}"
     self.closed = data['state'] == 'closed'
+    self.author = data['user']['login']
 
   async def comment(self, comment: str) -> Json:
     j, _ = await self.gh.api_request(f'{self._api_url}/comments', data = {'body': comment})
