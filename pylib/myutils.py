@@ -51,6 +51,12 @@ class FileSize(int):
 
 def humantime(t: int) -> str:
   '''seconds -> XhYmZs'''
+  if t < 0:
+    sign = '-'
+    t = -t
+  else:
+    sign = ''
+
   m, s = divmod(t, 60)
   h, m = divmod(m, 60)
   d, h = divmod(h, 24)
@@ -65,7 +71,7 @@ def humantime(t: int) -> str:
     ret += '%ds' % s
   if not ret:
     ret = '0s'
-  return ret
+  return sign + ret
 
 def dehumantime(s: str) -> int:
   '''XhYmZs -> seconds'''
