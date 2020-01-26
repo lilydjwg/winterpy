@@ -54,25 +54,25 @@ class FirefoxCookies:
     """
     Return a list of cookies to be returned to server.
 
-    Ref: https://dxr.mozilla.org/mozilla-central/source/netwerk/cookie/nsCookieService.cpp#3081
+    Ref: https://searchfox.org/mozilla-central/source/netwerk/cookie/nsCookieService.cpp#2952
     """
     us = urlsplit(url)
     base_domain = self._extract(us.hostname).registered_domain
     base_domain = domain_to_ascii(base_domain)
+    domain = domain_to_ascii(us.hostname)
 
     sql = '''select name, value, host, path from moz_cookies
-             where baseDomain = ?'''
+             where (host = ? or host like ?)'''
     if us.scheme != 'https':
       sql += ' and isSecure != 1'''
     if self._origin:
       sql += " and originAttributes = ''"
 
-    cursor = self._db.execute(sql, (base_domain,))
+    cursor = self._db.execute(sql, (domain, f'%.{base_domain}'))
     candidates = cursor.fetchall()
 
     path = us.path or '/'
-    domain = domain_to_ascii(us.hostname)
-    candidates = [x for x in candidates if domain.endswith(x[2])]
+    candidates = [x for x in candidates if domain == x[2] or (x[2][0] == '.' and domain.endswith(x[2]))]
     candidates = [x for x in candidates if path_matches(x[3], path)]
 
     return {x[0]: x[1] for x in candidates}
