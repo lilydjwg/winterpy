@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 import os, tempfile, shutil
 import glob
 
-import tldextract
+import tldextractutils
 
 def path_matches(cookie_path, req_path):
   # https://dxr.mozilla.org/mozilla-central/source/netwerk/cookie/nsCookieService.cpp#3047
@@ -43,7 +43,7 @@ class FirefoxCookies:
     self._file_to_delete = tmp.name
     self._db = sqlite3.connect(tmp.name)
     # self._db = sqlite3.connect(cookiefile)
-    self._extract = tldextract.TLDExtract(include_psl_private_domains=True)
+    self._extract = tldextractutils.extract(include_psl_private_domains=True)
     try:
       self._db.execute("select 1 from moz_cookies where originAttributes = '' limit 1").fetchall()
       self._origin = True
