@@ -43,7 +43,6 @@ class FirefoxCookies:
     self._file_to_delete = tmp.name
     self._db = sqlite3.connect(tmp.name)
     # self._db = sqlite3.connect(cookiefile)
-    self._extract = tldextractutils.extract(include_psl_private_domains=True)
     try:
       self._db.execute("select 1 from moz_cookies where originAttributes = '' limit 1").fetchall()
       self._origin = True
@@ -57,7 +56,10 @@ class FirefoxCookies:
     Ref: https://searchfox.org/mozilla-central/source/netwerk/cookie/nsCookieService.cpp#2952
     """
     us = urlsplit(url)
-    base_domain = self._extract(us.hostname).registered_domain
+    base_domain = tldextractutils.extract(
+      us.hostname,
+      include_psl_private_domains = True,
+    ).registered_domain
     base_domain = domain_to_ascii(base_domain)
     domain = domain_to_ascii(us.hostname)
 
