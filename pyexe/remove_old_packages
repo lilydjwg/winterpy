@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 import argparse
 import os
@@ -58,7 +58,7 @@ class RpmPkgInfo(object):
 def parse_filename(f):
   if f.endswith('.rpm'):
     cls = RpmPkgInfo
-  elif f.endswith('.pkg.tar.xz'):
+  elif f.endswith(('.pkg.tar.xz', '.pkg.tar.zst')):
     cls = ArchPkgInfo
   else:
     raise Exception('unknown package name style: %s' % f)
