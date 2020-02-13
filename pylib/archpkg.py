@@ -7,9 +7,8 @@ import re
 from typing import Tuple, List, Dict
 
 from pkg_resources import parse_version as _parse_version
-from packaging.version import Version # type: ignore
 
-def parse_arch_version(v: str) -> Tuple[int, Version]:
+def parse_arch_version(v: str) -> Tuple[int, Tuple[str, ...]]:
   if ':' in v:
     epoch = int(v.split(':', 1)[0])
   else:
