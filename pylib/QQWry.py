@@ -127,7 +127,7 @@ class QQWry:
           area = ''
         return IpInfo(sip, eip, country, area)
       else:
-        raise KeyError('INDEX OUT OF RANGE.')
+        raise IndexError
     elif isinstance(key, str):
       return self.Lookup(key).normalize()
     else:
