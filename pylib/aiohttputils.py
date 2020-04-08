@@ -13,7 +13,7 @@ class ClientBase:
   lasturl = None
   auto_referer = False
   baseurl: Optional[str] = None
-  __our_session = False
+  __our_session: bool = False
 
   @property
   def session(self):
