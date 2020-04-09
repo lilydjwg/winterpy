@@ -1,4 +1,5 @@
 from typing import Tuple, Optional, Dict, Any
+import asyncio
 
 from aiohttp import FormData
 from aiohttputils import ClientBase
@@ -48,9 +49,9 @@ class VirusTotal(ClientBase):
       raise
     return _get_stats(j, 'last_analysis_stats')
 
-  async def check_bytes(
+  async def submit_file(
     self, content: bytes, filename: str,
-  ) -> Tuple[int, int]:
+  ) -> str:
     data = FormData()
     data.add_field(
       'file', content,
@@ -59,8 +60,17 @@ class VirusTotal(ClientBase):
     )
     j = await self.api_request('files', data=data)
     _check_error(j)
-    aid = j['data']['id']
+    return j['data']['id']
 
-    j = await self.api_request(f'analyses/{aid}')
-    _check_error(j)
+  async def check_bytes(
+    self, content: bytes, filename: str,
+  ) -> Tuple[int, int]:
+    aid = await self.submit_file(content, filename)
+
+    while True:
+      j = await self.api_request(f'analyses/{aid}')
+      _check_error(j)
+      if j['data']['attributes']['status'] == 'queued':
+        await asyncio.sleep(5)
+
     return _get_stats(j, 'stats')
