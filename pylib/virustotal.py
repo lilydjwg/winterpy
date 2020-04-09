@@ -72,5 +72,7 @@ class VirusTotal(ClientBase):
       _check_error(j)
       if j['data']['attributes']['status'] == 'queued':
         await asyncio.sleep(5)
+      else:
+        break
 
     return _get_stats(j, 'stats')
