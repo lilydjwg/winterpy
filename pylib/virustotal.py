@@ -65,7 +65,6 @@ class VirusTotal(ClientBase):
       content_type = 'application/octet-stream',
     )
     j = await self.api_request(endpoint, data=data)
-    _check_error(j)
     return j['data']['id']
 
   async def check_bytes(
@@ -75,8 +74,7 @@ class VirusTotal(ClientBase):
 
     while True:
       j = await self.api_request(f'analyses/{aid}')
-      _check_error(j)
-      if j['data']['attributes']['status'] == 'queued':
+      if j['data']['attributes']['status'] != 'completed':
         await asyncio.sleep(5)
       else:
         break
