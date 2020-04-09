@@ -17,8 +17,8 @@ class VirusTotalError(Exception):
 
 def _get_stats(j: Json, key: str) -> Tuple[int, int]:
   stat = j['data']['attributes'][key]
-  total = sum(stat.values())
-  return stat['malicious'], total
+  return (stat['malicious'] + stat['suspicious'],
+          stat['undetected'] + stat['harmless'])
 
 def _check_error(j: Json) -> None:
   if 'error' in j:
