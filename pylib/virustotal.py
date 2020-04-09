@@ -52,13 +52,19 @@ class VirusTotal(ClientBase):
   async def submit_file(
     self, content: bytes, filename: str,
   ) -> str:
+    if len(content) > 32 * 1024 ** 2:
+      endpoint = await self.api_request('files/upload_url')
+      endpoint = endpoint['data']
+    else:
+      endpoint = 'files'
+
     data = FormData()
     data.add_field(
       'file', content,
       filename = filename,
       content_type = 'application/octet-stream',
     )
-    j = await self.api_request('files', data=data)
+    j = await self.api_request(endpoint, data=data)
     _check_error(j)
     return j['data']['id']
 
