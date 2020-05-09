@@ -3,7 +3,7 @@
 '''
 Parse IPDB database files.
 
-Get it here: http://ip.zxinc.org/index.htm
+Get it here: http://ip.zxinc.org/
 
 License: GPLv3 or later
 '''
@@ -215,8 +215,13 @@ def update(file, q):
       print('注意：原数据文件无法打开：', e, file=sys.stderr)
       D = None
 
-    req = urllib.request.urlopen('http://ip.ss.zxinc.org/index.htm')
-    page = req.read().decode('utf-8')
+    req = urllib.request.Request(
+      'http://ip.lsy.cn/',
+      headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0',
+      })
+    res = urllib.request.urlopen(req)
+    page = res.read().decode('utf-8')
     date = re.findall(r'版本(\d{8})', page)[0]
     date = int(date)
 
@@ -232,8 +237,10 @@ def update(file, q):
     wget = ['wget']
     if q:
       wget.append('-q')
-    subprocess.run(['wget', 'http://ip.zxinc.org/ip.7z'], check=True,
-                   cwd=tmp_dir)
+    subprocess.run([
+      'wget', '-U', 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0',
+      'http://ip.lsy.cn/ip.7z',
+    ], check=True, cwd=tmp_dir)
     subprocess.run(['7z', 'x', 'ip.7z'], check=True, cwd=tmp_dir)
 
     with open(os.path.join(tmp_dir, 'ipv6wry.db'), 'rb') as f:
