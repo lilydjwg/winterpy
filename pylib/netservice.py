@@ -77,37 +77,6 @@ def getTitle(url, headers={}, timeout=5):
 
   return title or None
 
-def ubuntuPaste(poster='', screenshot='', code2='',
-    klass='bash', filename=None):
-  '''
-  paste 到 http://paste.ubuntu.org.cn/
-  screenshot 是文件路径
-
-  返回查看此帖子的 URL （字符串）
-  '''
-  from httpsession import Session
-  paste_url = 'http://paste.ubuntu.org.cn/'
-  fields = [
-    ('paste',  'send'),
-    ('poster', poster),
-    ('code2',  code2),
-    ('class',  klass),
-  ]
-  if screenshot:
-    files = (
-      ('screenshot', filename or os.path.split(screenshot)[1], open(screenshot, 'rb').read()),
-    )
-  else:
-    files = ()
-
-  data = encode_multipart_formdata(fields, files)
-  s = Session()
-  r = s.request(paste_url, data[1], headers={
-    'Content-Type': data[0],
-    'Expect': '100-continue',
-  })
-  return r.geturl()
-
 @lru_cache(maxsize=100)
 def taobaoip(ip):
   res = urllib.request.urlopen('http://ip.taobao.com/service/getIpInfo.php?ip=' + ip)
