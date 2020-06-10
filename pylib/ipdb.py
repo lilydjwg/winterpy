@@ -206,6 +206,7 @@ def update(file, q):
   import re
 
   from myutils import safe_overwrite
+  host = 'http://ip.zxinc.org'
 
   try:
     tmp_dir = tempfile.mkdtemp(prefix='IPDB')
@@ -216,7 +217,7 @@ def update(file, q):
       D = None
 
     req = urllib.request.Request(
-      'http://ip.lsy.cn/',
+      host,
       headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0',
       })
@@ -239,7 +240,7 @@ def update(file, q):
       wget.append('-q')
     subprocess.run([
       'wget', '-U', 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0',
-      'http://ip.lsy.cn/ip.7z',
+      f'{host}/ip.7z',
     ], check=True, cwd=tmp_dir)
     subprocess.run(['7z', 'x', 'ip.7z'], check=True, cwd=tmp_dir)
 
