@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import weakref
+from typing import Any, Iterator
 
 import requestsutils
 
@@ -51,9 +52,16 @@ class GitHub(requestsutils.RequestsBase):
       r = self.api_request(r.links['next'])
       yield from (Issue(x, self) for x in r.json())
 
-  def get_user_info(self, username):
+  def get_user_info(self, username: str) -> Any:
     r = self.api_request(f'/users/{username}')
     return r.json()
+
+  def get_actions_artifacts(self, repo: str) -> Iterator[Any]:
+    r = self.api_request(f'/repos/{repo}/actions/artifacts')
+    yield from r.json()['artifacts']
+    while 'next' in r.links:
+      r = self.api_request(r.links['next'])
+      yield from r.json()['artifacts']
 
 class Issue:
   def __init__(self, data, gh):
