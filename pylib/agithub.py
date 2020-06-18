@@ -146,6 +146,7 @@ class Issue:
     self._api_url = f"{data['repository_url']}/issues/{data['number']}"
     self.closed = data['state'] == 'closed'
     self.author = data['user']['login']
+    self.closed_by = data['closed_by'] and data['closed_by']['login'] or None
 
   async def comment(self, comment: str) -> JsonDict:
     j, _ = await self.gh.api_request(f'{self._api_url}/comments', data = {'body': comment})
