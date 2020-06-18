@@ -15,8 +15,8 @@ import aiohttputils
 
 logger = logging.getLogger(__name__)
 
-Json = Union[List[JsonDict], JsonDict]
 JsonDict = Dict[str, Any]
+Json = Union[List[JsonDict], JsonDict]
 
 def parse_datetime(s):
   dt = datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%SZ')
