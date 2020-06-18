@@ -7,7 +7,7 @@ import asyncio
 import logging
 import time
 from typing import (
-  AsyncGenerator, Tuple, Any, Dict, Optional, List,
+  AsyncGenerator, Tuple, Any, Dict, Optional, List, Union,
 )
 
 from aiohttp.client import ClientResponse
@@ -15,7 +15,8 @@ import aiohttputils
 
 logger = logging.getLogger(__name__)
 
-Json = Dict[str, Any]
+Json = Union[List[JsonDict], JsonDict]
+JsonDict = Dict[str, Any]
 
 def parse_datetime(s):
   dt = datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%SZ')
@@ -36,7 +37,7 @@ class GitHub(aiohttputils.ClientBase):
 
   async def api_request(
     self, path: str, method: str = 'get',
-    data: Optional[Json] = None, **kwargs,
+    data: Optional[JsonDict] = None, **kwargs,
   ) -> Tuple[Json, ClientResponse]:
     h = kwargs.get('headers', None)
     if not h:
@@ -53,7 +54,7 @@ class GitHub(aiohttputils.ClientBase):
 
     for _ in range(3):
       res = await self.request(path, method=method, **kwargs)
-      j: Json
+      j: JsonDict
       if res.status == 204:
         j = {}
       else:
@@ -76,6 +77,7 @@ class GitHub(aiohttputils.ClientBase):
     if labels:
       params['labels'] = labels
     j, r = await self.api_request(f'/repos/{repo}/issues', params = params)
+    assert isinstance(j, list)
 
     for x in j:
       yield Issue(x, self)
@@ -83,11 +85,13 @@ class GitHub(aiohttputils.ClientBase):
     while 'next' in r.links:
       url = str(r.links['next']['url'])
       j, r = await self.api_request(url)
+      assert isinstance(j, list)
       for x in j:
         yield Issue(x, self)
 
   async def get_issue(self, repo: str, issue_nr: int) -> 'Issue':
     j, _ = await self.api_request(f'/repos/{repo}/issues/{issue_nr}')
+    assert isinstance(j, dict)
     return Issue(j, self)
 
   async def get_issue_comments(
@@ -95,12 +99,14 @@ class GitHub(aiohttputils.ClientBase):
   ) -> AsyncGenerator['Comment', None]:
     j, r = await self.api_request(f'/repos/{repo}/issues/{issue_nr}/comments')
 
+    assert isinstance(j, list)
     for x in j:
       yield Comment(x, self)
 
     while 'next' in r.links:
       url = str(r.links['next']['url'])
       j, r = await self.api_request(url)
+      assert isinstance(j, list)
       for x in j:
         yield Comment(x, self)
 
@@ -108,7 +114,7 @@ class GitHub(aiohttputils.ClientBase):
     self, repo: str, title: str, body: Optional[str] = None,
     labels: List[str] = [],
   ) -> 'Issue':
-    data: Json = {
+    data: JsonDict = {
       'title': title,
     }
     if body:
@@ -117,17 +123,19 @@ class GitHub(aiohttputils.ClientBase):
       data['labels'] = labels
 
     issue, _ = await self.api_request(f'/repos/{repo}/issues', data = data)
+    assert isinstance(issue, dict)
     return Issue(issue, self)
 
   async def find_login_by_email(self, email: str) -> str:
     j, _ = await self.api_request(f'/search/users?q={email}')
+    assert isinstance(j, dict)
     try:
       return j['items'][0]['login']
     except IndexError:
       raise LookupError(email)
 
 class Issue:
-  def __init__(self, data, gh):
+  def __init__(self, data: JsonDict, gh: GitHub) -> None:
     self.gh = weakref.proxy(gh)
     self._data = data
     self.body = data['body']
@@ -139,15 +147,15 @@ class Issue:
     self.closed = data['state'] == 'closed'
     self.author = data['user']['login']
 
-  async def comment(self, comment: str) -> Json:
+  async def comment(self, comment: str) -> JsonDict:
     j, _ = await self.gh.api_request(f'{self._api_url}/comments', data = {'body': comment})
     return j
 
-  async def add_labels(self, labels: List[str]) -> Json:
+  async def add_labels(self, labels: List[str]) -> JsonDict:
     j, _ = await self.gh.api_request(f'{self._api_url}/labels', data = labels)
     return j
 
-  async def assign(self, assignees: List[str]) -> Json:
+  async def assign(self, assignees: List[str]) -> JsonDict:
     payload = {'assignees': assignees}
     j, _ = await self.gh.api_request(f'{self._api_url}/assignees', data = payload)
     return j
@@ -168,11 +176,11 @@ class Issue:
     return f'<Issue {self.number}: {self.title!r}>'
 
 class Comment:
-  def __init__(self, data, gh: GitHub):
+  def __init__(self, data: JsonDict, gh: GitHub) -> None:
     self.gh = weakref.proxy(gh)
     self._update(data)
 
-  def _update(self, data):
+  def _update(self, data: JsonDict) -> None:
     self._data = data
     self.author = data['user']['login']
     self.html_url = data['html_url']
@@ -182,12 +190,12 @@ class Comment:
   async def delete(self) -> None:
     await self.gh.api_request(self.url, method = 'DELETE')
 
-  async def edit(self, body):
+  async def edit(self, body: str) -> None:
     data, _ = await self.gh.api_request(
       self.url, method = 'PATCH',
       data = {'body': body},
     )
     self._update(data)
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return f'<Comment by {self.author}: {self.html_url}>'
