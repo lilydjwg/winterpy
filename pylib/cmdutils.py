@@ -1,5 +1,3 @@
-# vim:fileencoding=utf-8
-
 '''
 call external tools to do things.
 '''
@@ -9,6 +7,7 @@ import re
 import subprocess
 from functools import lru_cache
 from collections import namedtuple
+from typing import List
 
 @lru_cache(maxsize=20)
 def lookupip(ip, cmd='cip'):
@@ -69,7 +68,7 @@ def get_entropy(input):
   data[0] = int(data[0])
   return {h: d for h, d in zip(header, data)}
 
-def so_depends(sopath):
+def so_depends(sopath: os.PathLike) -> List[str]:
   env = os.environ.copy()
   env['LANG'] = env['LC_ALL'] = 'C'
   out = subprocess.check_output(
