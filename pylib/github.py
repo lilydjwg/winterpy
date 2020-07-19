@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import datetime
 import weakref
-from typing import Any, Iterator
+from typing import Any, Iterator, Dict
 
 import requestsutils
+from requests import Response
+
+JsonDict = Dict[str, Any]
 
 def parse_datetime(s: str) -> datetime.datetime:
   dt = datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%SZ')
@@ -63,8 +66,16 @@ class GitHub(requestsutils.RequestsBase):
       r = self.api_request(r.links['next'])
       yield from r.json()['artifacts']
 
+  def add_issue_comment(
+    self, repo: str, issue_nr: int, comment: str,
+  ) -> Response:
+    return self.api_request(
+      f'/repos/{repo}/issues/{issue_nr}/comments',
+      data = {'body': comment},
+    )
+
 class Issue:
-  def __init__(self, data, gh):
+  def __init__(self, data: JsonDict, gh: GitHub) -> None:
     self.gh = weakref.proxy(gh)
     self._data = data
     self.body = data['body']
@@ -74,7 +85,7 @@ class Issue:
     self.updated_at = parse_datetime(data['updated_at'])
     self._api_url = f"{data['repository_url']}/issues/{data['number']}"
 
-  def comment(self, comment):
+  def comment(self, comment: str) -> Response:
     return self.gh.api_request(f'{self._api_url}/comments', data = {'body': comment})
 
   def add_labels(self, labels):
