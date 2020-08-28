@@ -52,7 +52,7 @@ class GitHub(requestsutils.RequestsBase):
 
     yield from (Issue(x, self) for x in r.json())
     while 'next' in r.links:
-      r = self.api_request(r.links['next'])
+      r = self.api_request(r.links['next']['url'])
       yield from (Issue(x, self) for x in r.json())
 
   def get_user_info(self, username: str) -> Any:
@@ -63,7 +63,7 @@ class GitHub(requestsutils.RequestsBase):
     r = self.api_request(f'/repos/{repo}/actions/artifacts')
     yield from r.json()['artifacts']
     while 'next' in r.links:
-      r = self.api_request(r.links['next'])
+      r = self.api_request(r.links['next']['url'])
       yield from r.json()['artifacts']
 
   def add_issue_comment(
