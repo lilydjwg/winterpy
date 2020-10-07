@@ -1,5 +1,7 @@
 '''一些算法'''
 
+import bisect
+
 def LevenshteinDistance(s, t):
   '''字符串相似度算法（Levenshtein Distance算法）
   
@@ -60,35 +62,6 @@ def mprint(matrix, width=3):
       print('{0:>{1}}'.format(j, width), end='')
     print()
 
-def primes(start, stop):
-  '''生成质数'''
-  if start > stop:
-    start, stop = stop, start
-  if start <= 1:
-    start = 2
-  if start == 2:
-    yield 2
-    start += 1
-
-  while start <= stop:
-    for i in range(3, int(start**0.5), 2):
-      if start % i == 0:
-        break
-    else:
-      yield start
-    start += 2
-
-def 分解质因数(num):
-  if num < 2:
-    raise ValueError('需要大于 1 的整数')
-
-  factors = []
-  for i in primes(2, num+1):
-    while num % i == 0:
-      num /= i
-      factors.append(i)
-  return factors
-
 def nmin(s, howmany):
   '''选取 howmany 个最小项
   
@@ -105,57 +78,11 @@ def between(seq, start, end):
 
 seq 应当已经排序过，并且是递增的'''
 
-  l = 二分搜索(seq, start)
+  l = bisect.bisect_left(seq, start)
   if l < 0:
     l = 0
-  r = 二分搜索(seq, end)
-  try:
-    while end == seq[r]:
-      r += 1
-  except IndexError:
-    pass
+  r = bisect.bisect_right(seq, end)
   return seq[l:r]
-
-def 二分搜索(l, tgt, gt=None):
-  '''查找 l 中不比 tgt 小的位置
-  
-l 应当已经排序过，并且是递增的
-lt(tgt,l[i]) 当 tgt 比 l[i] 大时返回真
-'''
-  # tgt 在 l 中存在
-  # if tgt in l:
-    # return l.index(tgt)
-  # 这样很耗时的
-
-  left = 0
-  right = len(l)-1
-  middle = -1
-  if not gt:
-    # 放在这里，只需要判断一次
-    while left <= right:
-      middle = (left+right) // 2
-      if not tgt > l[middle]:
-        right = middle - 1
-      else:
-        left = middle + 1
-    try:
-      while tgt == l[middle] and middle >= 0:
-        middle -= 1
-    except IndexError:
-      pass
-  else:
-    while left <= right:
-      middle = (left+right) // 2
-      if not gt(tgt, l[middle]):
-        right = middle - 1
-      else:
-        left = middle + 1
-    try:
-      while not gt(tgt, l[middle]) and middle >= 0:
-        middle -= 1
-    except IndexError:
-      pass
-  return middle+1
 
 def 球面坐标到直角坐标(r, alpha, beta):
   from math import cos, sin

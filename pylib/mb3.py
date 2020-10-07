@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
-# vim:fileencoding=utf-8:sw=2
-
 '''操作 fcitx 的码表文件（第三版，针对UTF-8版）'''
+
 import sys
 import struct
+import bisect
+
 import algorithm
 
 version = 0.3
@@ -255,10 +255,9 @@ class mbTable:
     '''获取 record 的位置。如果它不存在，获取它应当被插入的位置
 
 record 可以是 Record 对象或者表示编码的字符串'''
-    if isinstance(record, Record):
-      return algorithm.二分搜索(self.数据, record)
-    else:
-      return algorithm.二分搜索(self.数据, record, (lambda x, y: x > y.code))
+    if not isinstance(record, Record):
+      record = Record(record, '')
+    return bisect.bisect_left(self.数据, record)
 
   def getbycode(self, code):
     '''获取 code 对应的数据'''
