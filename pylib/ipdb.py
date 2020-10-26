@@ -26,11 +26,9 @@ class IpInfo(namedtuple('IpInfo', 'start end info')):
 
 class IPDB:
   def __init__(self, dbfile, charset='utf-8'):
-    if isinstance(dbfile, (str, bytes, os.PathLike)):
-      dbfile = open(dbfile, 'rb')
-
     self.charset = charset
-    self.f = f = mmap.mmap(dbfile.fileno(), 0, access=mmap.MAP_SHARED)
+    with open(dbfile, 'rb') as dbfile:
+      self.f = f = mmap.mmap(dbfile.fileno(), 0, access=mmap.MAP_SHARED)
 
     magic = f[0:4]
     if magic != b'IPDB':

@@ -57,11 +57,9 @@ class IpInfo(namedtuple('IpInfo', 'sip eip country area')):
 
 class QQWry:
   def __init__(self, dbfile=DataFileName, charset='gbk'):
-    if isinstance(dbfile, (str, bytes)):
-      dbfile = open(dbfile, 'rb')
-
     self.charset = charset
-    self.f = mmap.mmap(dbfile.fileno(), 0, access=mmap.MAP_SHARED)
+    with open(dbfile, 'rb') as dbfile:
+      self.f = mmap.mmap(dbfile.fileno(), 0, access=mmap.MAP_SHARED)
     self.indexBaseOffset = unpack('<L', self.f[0:4])[0] #索引区基址
     self.count = (unpack('<L', self.f[4:8])[0]
                   - self.indexBaseOffset) // 7 # 索引数-1
@@ -211,7 +209,8 @@ def update(q):
     if q:
       wget.append('-q')
     subprocess.run(wget + [copywrite_url], check=True)
-    d = open('copywrite.rar', 'rb').read()
+    with open('copywrite.rar', 'rb') as f:
+      d = f.read()
     info = unpack_meta(d)
     date = _extract_date(info['text'])
     if Q and date <= Q.getDate():
