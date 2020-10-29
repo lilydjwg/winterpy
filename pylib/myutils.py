@@ -59,7 +59,7 @@ def parse_filesize(s: str) -> int:
   try:
     idx = UNITS.index(last)
   except ValueError:
-    return int(s1)
+    return int(float(s1))
 
   v = float(s1[:-1]) * 1024 ** (idx+1)
   return int(v)
