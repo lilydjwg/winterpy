@@ -44,7 +44,7 @@ def transformline(l):
       inspos = end + shift
       l = '%s(%s)%s' % (l[:inspos], addr, l[inspos:])
       shift += len(addr) + 2
-    except:
+    except Exception:
       pass
   return l
 
