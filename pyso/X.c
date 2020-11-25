@@ -251,6 +251,70 @@ static PyObject* scrnsaver_state(xlib_displayObject* self){
   }
 }
 
+static PyObject *xlib_getimage(xlib_displayObject* self, PyObject* args, PyObject* kwds){
+  int x, y;
+  unsigned width, height;
+  int bgr;
+  PyObject* py_bgr;
+
+  static char *kwlist[] = {"x", "y", "width", "height", "bgr", NULL};
+
+  if(!PyArg_ParseTupleAndKeywords(args, kwds, "iiII|O!", kwlist, &x, &y, &width, &height, &py_bgr))
+    return NULL;
+
+  Display* display = self->dpy;
+  bgr = py_bgr == Py_True;
+
+  int size = width * height * 3;
+  char* data = malloc(size);
+  if(!data) {
+    return PyErr_NoMemory();
+  }
+
+  Py_BEGIN_ALLOW_THREADS
+
+  Window root = DefaultRootWindow(display);
+  XImage *image = XGetImage(display, root, x, y, width, height, AllPlanes, ZPixmap);
+
+  unsigned long red_mask   = image->red_mask;
+  unsigned long green_mask = image->green_mask;
+  unsigned long blue_mask  = image->blue_mask;
+  int ix, iy;
+  int i = 0;
+  int r, g, b;
+  if(bgr) {
+    b = 0;
+    g = 1;
+    r = 2;
+  } else {
+    r = 0;
+    g = 1;
+    b = 2;
+  }
+
+  for(iy=0; iy<height; iy++) {
+    for(ix=0; ix<width; ix++) {
+      unsigned long pixel = XGetPixel(image, ix, iy);
+      unsigned char blue  = (pixel & blue_mask);
+      unsigned char green = (pixel & green_mask) >> 8;
+      unsigned char red   = (pixel & red_mask) >> 16;
+
+      data[i+r] = red;
+      data[i+g] = green;
+      data[i+b] = blue;
+      i += 3;
+    }
+  }
+  XDestroyImage(image);
+  XDestroyWindow(display, root);
+
+  Py_END_ALLOW_THREADS
+
+  PyObject* ret = PyBytes_FromStringAndSize(data, size);
+  free(data);
+  return ret;
+}
+
 static PyMethodDef xlib_display_methods[] = {
   {
     "button", (PyCFunction)xtest_button, METH_VARARGS,
@@ -289,6 +353,10 @@ static PyMethodDef xlib_display_methods[] = {
     "screensaver_state", (PyCFunction)scrnsaver_state, METH_NOARGS,
     "get the screensaver state, returns a tuple of (state, kind)\n" \
       "`state` can be 0 for off, 1 for on, -1 for disabled, and -2 for others"
+  },
+  {
+    "get_image", (PyCFunction)xlib_getimage, METH_VARARGS | METH_KEYWORDS,
+    "get the specified range starting at (x, y) with `width` and `height` as a bytes"
   },
   {NULL}  /* Sentinel */
 };
@@ -366,8 +434,3 @@ PyMODINIT_FUNC PyInit_X(void){
   PyModule_AddObject(m, "WHEEL_DOWN", PyLong_FromLong(5));
   return m;
 }
-/* ===================================================================== *
- * vim modeline                                                          *
- * vim:se fdm=expr foldexpr=getline(v\:lnum)=~'^\\S.*{'?'>1'\:1:         *
- * vim: se path+=/usr/include/python3.2mu:                               *
- * ===================================================================== */
