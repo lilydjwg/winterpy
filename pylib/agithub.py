@@ -72,7 +72,7 @@ class GitHub(aiohttputils.ClientBase):
 
   async def get_repo_issues(
     self, repo: str, *, state: str = 'open', labels: str = '',
-  ) -> AsyncGenerator['Issue', None]:
+  ) -> AsyncGenerator[Issue, None]:
     params = {'state': state}
     if labels:
       params['labels'] = labels
@@ -96,7 +96,7 @@ class GitHub(aiohttputils.ClientBase):
 
   async def get_issue_comments(
     self, repo: str, issue_nr: int,
-  ) -> AsyncGenerator['Comment', None]:
+  ) -> AsyncGenerator[Comment, None]:
     j, r = await self.api_request(f'/repos/{repo}/issues/{issue_nr}/comments')
 
     assert isinstance(j, list)
