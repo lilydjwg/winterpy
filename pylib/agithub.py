@@ -60,8 +60,8 @@ class GitHub(aiohttputils.ClientBase):
       else:
         j = await res.json()
         if 'message' in j:
-          if res.status == 403 and int(res.headers.get('X-RateLimit-Remaining')) == 0:
-            reset = int(res.headers.get('X-RateLimit-Reset')) - time.time() + 1
+          if res.status == 403 and int(res.headers.get('X-RateLimit-Remaining', -1)) == 0:
+            reset = int(res.headers['X-RateLimit-Reset']) - time.time() + 1
             logger.warn('rate limited; sleeping for %ds: %s', reset, j['message'])
             await asyncio.sleep(reset)
             continue
