@@ -157,6 +157,12 @@ class Issue:
     return j
 
   async def assign(self, assignees: List[str]) -> JsonDict:
+    # one request can assign at most 10 assignees
+    for i in range(len(assignees) // 10 + 1):
+      j = await self._one_assign(assignees[i*10:(i+1)*10])
+    return j
+
+  async def _one_assign(self, assignees: List[str]) -> JsonDict:
     payload = {'assignees': assignees}
     j, _ = await self.gh.api_request(f'{self._api_url}/assignees', data = payload)
     return j
