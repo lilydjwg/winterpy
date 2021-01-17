@@ -219,7 +219,7 @@ def update(file, q):
       headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0',
       })
-    res = urllib.request.urlopen(req)
+    res = urllib.request.urlopen(req, timeout=30)
     page = res.read().decode('utf-8')
     date = re.findall(r'版本(\d{8})', page)[0]
     date = int(date)
