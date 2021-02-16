@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 import os, tempfile, shutil
 import glob
 
-import tldextractutils
+import publicsuffix2 as ps2
 
 def path_matches(cookie_path, req_path):
   # https://dxr.mozilla.org/mozilla-central/source/netwerk/cookie/nsCookieService.cpp#3047
@@ -56,11 +56,7 @@ class FirefoxCookies:
     Ref: https://searchfox.org/mozilla-central/source/netwerk/cookie/nsCookieService.cpp#2952
     """
     us = urlsplit(url)
-    base_domain = tldextractutils.extract(
-      us.hostname,
-      include_psl_private_domains = True,
-    ).registered_domain
-    base_domain = domain_to_ascii(base_domain)
+    base_domain = ps2.get_sld(domain_to_ascii(us.hostname))
     domain = domain_to_ascii(us.hostname)
 
     sql = '''select name, value, host, path from moz_cookies
