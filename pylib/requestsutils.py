@@ -44,8 +44,6 @@ class RequestsBase:
   def session(self):
     if not self._session:
       s = requests.Session()
-      if self.userAgent:
-        s.headers['User-Agent'] = self.userAgent
       self.__our_session = True
       self._session = s
     return self._session
@@ -79,10 +77,12 @@ class RequestsBase:
     if self.baseurl:
       url = urljoin(self.baseurl, url)
 
+    h = kwargs.get('headers', None)
+    if not h:
+      h = kwargs['headers'] = {}
+    if self.userAgent:
+      h.setdefault('User-Agent', self.userAgent)
     if self.auto_referer and self.lasturl:
-      h = kwargs.get('headers', None)
-      if not h:
-        h = kwargs['headers'] = {}
       h.setdefault('Referer', self.lasturl)
 
     if method is None:
