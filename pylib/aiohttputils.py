@@ -8,36 +8,33 @@ import aiohttp
 from aiohttp.client import ClientResponse
 
 class ClientBase:
-  _session = None
+  session = None
   userAgent = None
   lasturl = None
   auto_referer = False
   baseurl: Optional[str] = None
+  cookiefile: Optional[os.PathLike] = None
   __our_session: bool = False
-
-  @property
-  def session(self):
-    if not self._session:
-      s = aiohttp.ClientSession()
-      self.__our_session = True
-      self._session = s
-    return self._session
 
   def __init__(self, *, baseurl=None, cookiefile=None, session=None):
     if baseurl is not None:
       self.baseurl = baseurl
-    self._session = session
+    self.session = session
+    self.cookiefile = cookiefile
 
-    s = self.session
-    if cookiefile:
-      s.cookies = MozillaCookieJar(cookiefile)
-      if os.path.exists(cookiefile):
-        s.cookies.load()
+  async def async_init(self) -> None:
+    if not self.session:
+      s = aiohttp.ClientSession()
+      self.__our_session = True
+      self.session = s
 
-    self._has_cookiefile = bool(cookiefile)
+      if self.cookiefile:
+        s.cookies = MozillaCookieJar(self.cookiefile)
+        if os.path.exists(self.cookiefile):
+          s.cookies.load()
 
   def __del__(self):
-    if self._has_cookiefile:
+    if self.cookiefile:
       self.session.cookies.save()
     if self.__our_session:
       loop = asyncio.get_event_loop()
@@ -50,6 +47,9 @@ class ClientBase:
   async def request(
     self, url: str, method: Optional[str] = None, **kwargs,
   ) -> ClientResponse:
+    if not self.session:
+      await self.async_init()
+
     if self.baseurl:
       url = urljoin(self.baseurl, url)
 
