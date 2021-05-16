@@ -217,12 +217,13 @@ def update(file, q):
     req = urllib.request.Request(
       host,
       headers = {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0',
       })
     res = urllib.request.urlopen(req, timeout=30)
     page = res.read().decode('utf-8')
-    date = re.findall(r'版本(\d{8})', page)[0]
-    date = int(date)
+    m = re.search(r'href="([^"]+)".*?版本(\d{8})', page)
+    date = int(m.group(2))
+    remote_file = m.group(1)
 
     if D and date <= D.version_date():
       if not q:
@@ -238,9 +239,9 @@ def update(file, q):
       wget.append('-q')
     subprocess.run([
       'wget', '-U', 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0',
-      f'{host}/ip.7z',
+      f'{host}/{remote_file}',
     ], check=True, cwd=tmp_dir)
-    subprocess.run(['7z', 'x', 'ip.7z'], check=True, cwd=tmp_dir)
+    subprocess.run(['7z', 'x', remote_file], check=True, cwd=tmp_dir)
 
     with open(os.path.join(tmp_dir, 'ipv6wry.db'), 'rb') as f:
       d = f.read()
