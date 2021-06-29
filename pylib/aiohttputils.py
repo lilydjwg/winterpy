@@ -31,7 +31,7 @@ class ClientBase:
       if self.cookiefile:
         s.cookies = MozillaCookieJar(self.cookiefile)
         if os.path.exists(self.cookiefile):
-          s.cookies.load()
+          s.cookies.load() # type: ignore
 
   def __del__(self):
     if self.cookiefile:
@@ -71,7 +71,7 @@ class ClientBase:
       else:
         method = 'get'
 
-    response = await self.session.request(method, url, **kwargs)
+    response = await self.session.request(method, url, **kwargs) # type: ignore
     # url may have been changed due to redirection
     self.lasturl = str(response.url)
     return response
