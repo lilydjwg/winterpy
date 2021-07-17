@@ -170,8 +170,8 @@ def restart_if_failed(func, max_tries, args=(), kwargs={}, secs=60, sleep=None):
   while True:
     dq.append(time.time())
     try:
-      func(*args, **kwargs)
-    except:
+      return func(*args, **kwargs)
+    except Exception:
       traceback.print_exc()
       if len(dq) == max_tries and time.time() - dq[0] < secs:
         break
