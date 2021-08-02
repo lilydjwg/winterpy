@@ -12,20 +12,21 @@ def get_screen_size():
   screen = Gdk.Screen.get_default()
   return screen.width(), screen.height()
 
-def get_monitor_size(n=None, screen=None):
-  if screen is None:
-    screen = Gdk.Screen.get_default()
+def get_monitor_size(display=None):
+  if display is None:
+    display = Gdk.Display.get_default()
 
-  if n is None:
-    n = get_mouse_monitor()
-
-  return Gdk.Screen.get_monitor_workarea(screen, n)
+  mon = get_mouse_monitor(display)
+  return mon.get_workarea()
 
 def get_mouse_monitor(display=None):
   if display is None:
     display = Gdk.Display.get_default()
-  screen, x, y, _ = Gdk.Display.get_pointer(display)
-  return Gdk.Screen.get_monitor_at_point(screen, x, y)
+  seat = display.get_default_seat()
+  pointer = seat.get_pointer()
+  screen, x, y = pointer.get_position()
+  mon = display.get_monitor_at_point(x, y)
+  return mon
 
 def screenshot(filename, rect=None, filetype=None):
   screen = Gdk.Screen.get_default()
