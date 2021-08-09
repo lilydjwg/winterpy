@@ -47,7 +47,7 @@ echo ${pkgname[*]}''' % PKGBUILD
   # Python 3.4 has 'input' arg for check_output
   p = subprocess.Popen(
     ['bwrap', '--unshare-all', '--ro-bind', '/', '/', '--tmpfs', '/home',
-     '--tmpfs', '/run',
+     '--tmpfs', '/run', '--die-with-parent',
      '--tmpfs', '/tmp', '--proc', '/proc', '--dev', '/dev', '/bin/bash'],
     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
   )
