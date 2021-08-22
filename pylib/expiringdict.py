@@ -12,7 +12,7 @@ class ExpiringDict(UserDict):
     return item
 
   def __setitem__(self, key, value):
-    self.set_item[key] = value
+    self.set_item(key, value)
 
   def set_item(self, key, value, ttl=None):
     if ttl is None:
