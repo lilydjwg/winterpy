@@ -83,6 +83,7 @@ class Issue:
     self.title = data['title']
     self.labels = [x['name'] for x in data['labels']]
     self.updated_at = parse_datetime(data['updated_at'])
+    self.is_pull = bool(data.get('pull_request'))
     self._api_url = f"{data['repository_url']}/issues/{data['number']}"
 
   def comment(self, comment: str) -> Response:
