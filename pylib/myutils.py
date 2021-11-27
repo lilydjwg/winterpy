@@ -11,7 +11,7 @@ import signal
 import hashlib
 import base64
 import fcntl
-from typing import Union, Optional, Dict, Any, Generator
+from typing import Tuple, Union, Optional, Dict, Any, Generator
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,13 @@ def safe_overwrite(fname: str, data: Union[bytes, str], *,
 UNITS = 'KMGTPEZY'
 
 def filesize(size: int) -> str:
-  '''将 数字 转化为 xxKiB 的形式'''
+  amt, unit = filesize_ex(size)
+  if unit:
+    return '%.1f%siB' % (amt, unit)
+  else:
+    return '%dB' % amt
+
+def filesize_ex(size: int) -> Tuple[Union[float, int], str]:
   left: Union[int, float] = abs(size)
   unit = -1
   n = len(UNITS)
@@ -40,11 +46,11 @@ def filesize(size: int) -> str:
     left = left / 1024
     unit += 1
   if unit == -1:
-    return '%dB' % size
+    return size, ''
   else:
     if size < 0:
       left = -left
-    return '%.1f%siB' % (left, UNITS[unit])
+    return left, UNITS[unit]
 
 class FileSize(int):
   def __str__(self) -> str:
