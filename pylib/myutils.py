@@ -343,8 +343,8 @@ def xsel(input=None):
   import subprocess
 
   if input is None:
-    return subprocess.getoutput('xsel')
+    return subprocess.getoutput('uniclip')
   else:
-    p = subprocess.Popen('xsel', stdin=subprocess.PIPE)
+    p = subprocess.Popen(['uniclip', '-i'], stdin=subprocess.PIPE)
     p.communicate(input.encode())
     return p.wait()
