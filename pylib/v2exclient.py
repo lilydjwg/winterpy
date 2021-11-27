@@ -67,5 +67,5 @@ class V2EX(RequestsBase):
     button = buttons[0]
     url = button.get('onclick').split("'")[1]
     r = self.request(urljoin(self.index_url, url))
-    if '已成功领取每日登录奖励' not in r.text:
+    if '每日登录奖励已领取' not in r.text:
       raise V2EXFailure('daily mission failed', r)
