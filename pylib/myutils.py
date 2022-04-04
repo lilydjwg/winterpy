@@ -102,7 +102,7 @@ def dehumantime(s: str) -> int:
       int(m.group('d') or 0) * 3600 * 24 +
       int(m.group('h') or 0) * 3600 +
       int(m.group('m') or 0) * 60 +
-      int(m.group('h') or 0)
+      int(m.group('s') or 0)
     )
   else:
     raise ValueError(s)
