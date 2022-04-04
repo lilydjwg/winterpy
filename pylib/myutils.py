@@ -305,7 +305,7 @@ def lock_file(path: os.PathLike) -> None:
     fcntl.flock(lock, fcntl.LOCK_EX)
 
 @contextlib.contextmanager
-def file_lock(file):
+def file_lock(file: os.PathLike) -> Generator[None, None, None]:
   lock = os.open(file, os.O_WRONLY | os.O_CREAT, 0o600)
   try:
     fcntl.flock(lock, fcntl.LOCK_EX)
