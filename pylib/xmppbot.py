@@ -40,7 +40,7 @@ class AutoAcceptMixin:
 
   @presence_stanza_handler("unsubscribed")
   def handle_presence_unsubscribed(self, stanza):
-    logging.info("{0!r} acknowledged our subscrption cancelation"
+    logging.info("{0!r} acknowledged our subscrption cancellation"
                           .format(stanza.from_jid))
     return True
 
