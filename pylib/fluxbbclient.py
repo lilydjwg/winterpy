@@ -25,7 +25,7 @@ class FluxBB(RequestsBase):
   def delete_unverified_users(self, doc=None, *, msg=None, since=None):
     '''delete inverified users in first page
 
-    doc can be given if you have that page's parsed content alread.
+    doc can be given if you have that page's parsed content already.
     return False if no such users are found.
     '''
     if doc is None:

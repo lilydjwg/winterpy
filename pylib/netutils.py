@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import socket
 import fcntl
 import struct
+from typing import Optional
 
-def get_my_ip(ifname):
+def get_my_ip(ifname: str) -> str:
   ifname = ifname.encode('ascii')
   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -18,7 +21,7 @@ def get_my_ip(ifname):
   ip = socket.inet_ntoa(result)
   return ip
 
-def get_interface_names():
+def get_interface_names() -> list[str]:
   ret = []
   with open('/proc/net/dev') as f:
     for line in f:
@@ -26,3 +29,15 @@ def get_interface_names():
       if first.endswith(':'):
         ret.append(first[:-1])
   return ret
+
+def get_gateway_ipv4() -> Optional[str, str]:
+  with open('/proc/net/route') as f:
+    for l in f:
+      parts = l.split()
+      if parts[1] == '00000000':
+        iface = parts[0]
+        n = socket.ntohl(int(parts[2], 16))
+        gateway = socket.inet_ntoa(n.to_bytes(4, 'big'))
+        return iface, gateway
+
+  return None, None

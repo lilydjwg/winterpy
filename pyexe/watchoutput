@@ -68,7 +68,7 @@ if __name__ == '__main__':
   try:
     codes = [int(x) for x in codes if x]
   except ValueError:
-    parser.error('--retry-on-exit: expected comma-seperated exit codes')
+    parser.error('--retry-on-exit: expected comma-separated exit codes')
 
   retries = 0
   try:

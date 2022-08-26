@@ -11,7 +11,7 @@ class Stat:
   - n: number of numbers that have been added
   - sum: sum
   - avg: average or raise ZeroDivisionError if nothing has been added yet
-  - min: mimimum or None if nothing has been added yet
+  - min: minimum or None if nothing has been added yet
   - max: maximum or None if nothing has been added yet
   - mdev: standard deviation or raise ZeroDivisionError if nothing has been added yet
   - sum2: square sum

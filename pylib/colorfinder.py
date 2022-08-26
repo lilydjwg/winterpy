@@ -198,7 +198,7 @@ def htmltest():
 <title>Terminal Color Approximation Test</title>
 <table>
   <thead>
-    <tr><th>Accurate</th><th>Orignal</th><th>Quick</th><th>Same?</th></tr>
+    <tr><th>Accurate</th><th>Original</th><th>Quick</th><th>Same?</th></tr>
   </thead>
   <tbody>''')
   for i in range(100):

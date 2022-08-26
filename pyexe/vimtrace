@@ -44,7 +44,7 @@ def main():
     if not continued:
       # fg the Vim process (which has its group id the same as its pid)
       os.tcsetpgrp(tty, vim.pid)
-      # continue it in case it's outputed some text before we make it the
+      # continue it in case it's outputted some text before we make it the
       # foreground process
       vim.send_signal(signal.SIGCONT)
 
