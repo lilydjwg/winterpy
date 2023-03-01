@@ -4,8 +4,6 @@
 2011年3月10日
 '''
 
-import myutils
-
 全角字符 = r'！＂＃＄％＆＇（）＊＋，－．／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［＼］＾＿｀ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝～￠￡￢￣￤￥'
 半角字符 = r'''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¢£¬¯¦¥'''
 数字 = '零一二三四五六七八九个十百千万'
@@ -48,24 +46,6 @@ def zhnum(num):
       l.append(数字[int(n)])
     ret += ''.join(l)
   return ret
-
-def 全角转半角(字符串, 仅字母数字=True):
-  if not isinstance(字符串, str):
-    raise TypeError('参数类型不匹配：需要 str 类型参数')
-
-  返回值 = ''
-  for 字符 in 字符串:
-    位置 = 全角字符.find(字符)
-    if 位置 == -1 or 仅字母数字 and not 半角字符[位置].isalnum():
-      返回值 += 字符
-    else:
-      返回值 += 半角字符[位置]
-
-  return 返回值
-
-qjzf = 全角字符
-bjzf = 半角字符
-qjzbj = 全角转半角
 
 # 0 表示未知
 星座 = ['', '水瓶座', '双鱼座', '白羊座', '金牛座', '双子座',
@@ -134,4 +114,4 @@ def CJK_align(字符串, 对齐宽度, 方向='左', 填充=' '):
 def isascii(string):
   return all(ord(ch) < 256 for ch in string)
 
-# vim:tw=78:et:sts=2:fdm=expr:fde=getline(v\:lnum)=~'\\v^\\S.*\:(\\s*#.*)?$'?'>1'\:1
+# vim:tw=78:et:sts=2:
