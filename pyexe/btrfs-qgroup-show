@@ -12,32 +12,22 @@ def get_output_as_lines(cmd):
   output = subprocess.check_output(cmd)
   return output.decode('utf-8', errors='replace').splitlines()
 
-def get_path_for_id(path):
-  output = get_output_as_lines(["btrfs", "subvolume", "list", path])
-  ret = {}
-  for l in output:
-    fs = l.split(None, 8)
-    ret[fs[1]] = fs[-1]
-  return ret
-
 class QuotaRecord:
   qgid = 'qgroupid'
   rfer = 'rfer'
   excl = 'excl'
   path = 'path'
 
-  def __init__(self, id_map, line):
-    self.qgid, self.rfer, self.excl = line.split()
+  def __init__(self, line):
+    self.qgid, self.rfer, self.excl, self.path = line.split()
     self.rfer = FileSize(self.rfer)
     self.excl = FileSize(self.excl)
-    self.path = id_map.get(self.qgid.split('/', 1)[1], '-')
 
 def main(path, sortby):
   output = get_output_as_lines(["btrfs", "qgroup", "show", "--raw", path])
-  id_map = get_path_for_id(path)
 
   fmt = '{0.qgid:9}{0.rfer!s:10}{0.excl!s:10}   {0.path}'
-  data = [QuotaRecord(id_map, l) for l in output[2:]]
+  data = [QuotaRecord(l) for l in output[2:]]
 
   if sortby:
     data = sorted(data, key=lambda d: getattr(d, sortby))
