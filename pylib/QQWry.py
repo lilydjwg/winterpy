@@ -195,6 +195,9 @@ def unpack_meta(data):
   return locals()
 
 def update(q):
+  # no longer available; check here instead:
+  # https://github.com/zu1k/nali/blob/master/pkg/qqwry/qqwry.go
+  # https://99wry.cf/qqwry.dat
   try:
     tmp_dir = tempfile.mkdtemp(prefix='QQWry')
     old_d = os.getcwd()

@@ -1,26 +1,45 @@
 #!/usr/bin/python3
 
+import os
+
 from QQWry import QQWry
 import ipdb
+import geoip2
 
 def main(args):
-  if len(args) == 1:
-    ip = args[0]
-    if '.' in ip:
-      Q = QQWry()
-      print(''.join(Q[ip][2:]))
-    else:
-      D = ipdb.IPDB(ipdb.DEFAULT_FILE_LOCATION)
-      print(' '.join(D.lookup(ip).info).replace('\t', ' '))
-    return
+  if os.path.exists("/var/lib/GeoIP/GeoLite2-City.mmdb"):
+    G = geoip2.GeoIP2(
+      "/var/lib/GeoIP/GeoLite2-City.mmdb",
+      "/var/lib/GeoIP/GeoLite2-ASN.mmdb",
+    )
+  else:
+    G = geoip2.GeoIP2(
+      "~/etc/data/GeoLite2-City.mmdb",
+      "~/etc/data/GeoLite2-ASN.mmdb",
+    )
 
-  Q = QQWry()
-  D = ipdb.IPDB(ipdb.DEFAULT_FILE_LOCATION)
+  Q = None
+  ZX = None
+  verbose = len(args) > 1
   for ip in args:
+    gi = G.lookup(ip)
+    if gi.country_code != 'CN':
+      print(gi.display)
+      if not verbose:
+        continue
+
     if '.' in ip:
-      print(Q[ip])
+      Q = Q or QQWry()
+      if verbose:
+        print(Q[ip])
+      else:
+        print(''.join(Q[ip][2:]))
     else:
-      print(D.lookup(ip))
+      ZX = ZX or ipdb.IPDB(ipdb.DEFAULT_FILE_LOCATION)
+      if verbose:
+        print(ZX.lookup(ip))
+      else:
+        print(' '.join(ZX.lookup(ip).info).replace('\t', ' '))
 
 if __name__ == '__main__':
   import sys
