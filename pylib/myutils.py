@@ -112,7 +112,12 @@ def _timed_read(file, timeout):
   if select([file], [], [], timeout)[0]:
     return file.read(1)
 
-def getchar(prompt, hidden=False, end='\n', timeout=None):
+def getchar(
+  prompt: str,
+  hidden: bool = False,
+  end: str = '\n',
+  timeout: Optional[float] = None,
+):
   '''读取一个字符'''
   import termios
   sys.stdout.write(prompt)
@@ -317,23 +322,17 @@ def dict_bytes_to_str(d: Dict[Any, Any]) -> Dict[Any, Any]:
   ret = {}
   for k, v in d.items():
     if isinstance(k, bytes):
-      try:
+      with contextlib.suppress(UnicodeDecodeError):
          k = k.decode()
-      except UnicodeDecodeError:
-        pass
 
     if isinstance(v, bytes):
-      try:
+      with contextlib.suppress(UnicodeDecodeError):
          v = v.decode()
-      except UnicodeDecodeError:
-        pass
     elif isinstance(v, dict):
       v = dict_bytes_to_str(v)
     elif isinstance(v, list):
-      try:
+      with contextlib.suppress(UnicodeDecodeError):
          v = [x.decode() for x in v]
-      except UnicodeDecodeError:
-        pass
 
     ret[k] = v
 
