@@ -42,7 +42,14 @@ def get_gateway_ipv4() -> Optional[str, str]:
 
   return None, None
 
-AKAMAI_NS_SERVERS = ['193.108.91.133', '184.85.248.64', '2.16.130.66']
+AKAMAI_NS_SERVERS = [
+  '184.85.248.64',  # 东京
+  '95.100.175.65',  # 东京
+  '184.26.161.64',  # 东京
+  '95.100.168.67',  # 东京 -> 台湾
+  '2.16.130.66',    # 新加坡
+  # '193.108.91.133', # 迈阿密
+]
 def get_self_ip_akamai(server):
   import subprocess
   lines = subprocess.check_output(
