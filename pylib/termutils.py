@@ -62,7 +62,7 @@ def download_process(name, startat, got, total, width=80):
 
   avail = width - len(s1) - len(s2) - 1
   if avail < 0:
-    # Sadly, we have too narrow a termial. Let's output something at least
+    # Sadly, we have too narrow a terminal. Let's output something at least
     avail = 2
 
   name2 = ''
