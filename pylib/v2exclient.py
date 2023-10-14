@@ -19,7 +19,7 @@ class MissionNotAvailable(V2EXError):
 
 class V2EX(RequestsBase):
   auto_referer = True
-  userAgent = 'Mozilla/5.0 (X11; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0'
+  userAgent = 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/120.0'
 
   index_url = 'https://www.v2ex.com/'
   login_url = 'https://www.v2ex.com/signin'
