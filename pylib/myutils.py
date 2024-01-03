@@ -18,8 +18,9 @@ logger = logging.getLogger(__name__)
 def safe_overwrite(fname: str, data: Union[bytes, str], *,
                    method: str = 'write', mode: str = 'w', encoding: Optional[str] = None) -> None:
   # FIXME: directory has no read perm
-  # FIXME: symlinks and hard links
-  tmpname = fname + '.tmp'
+  # FIXME: hard links
+  resolved_path = os.path.realpath(fname)
+  tmpname = resolved_path + '.tmp'
   # if not using "with", write can fail without exception
   with open(tmpname, mode, encoding=encoding) as f:
     getattr(f, method)(data)
@@ -27,7 +28,7 @@ def safe_overwrite(fname: str, data: Union[bytes, str], *,
     f.flush()
     os.fsync(f.fileno())
   # if the above write failed (because disk is full etc), the old data should be kept
-  os.rename(tmpname, fname)
+  os.rename(tmpname, resolved_path)
 
 UNITS = 'KMGTPEZY'
 
