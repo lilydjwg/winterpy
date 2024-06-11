@@ -7,6 +7,7 @@ class NewPostInfo:
   title: str
   author: str
   link: str
+  subforum: str
 
 class FluxBB(RequestsBase):
   userAgent = 'A Python Fluxbb Client by lilydjwg'
@@ -130,7 +131,8 @@ class FluxBB(RequestsBase):
       title = a.text
       link = a.get('href')
       author = a.getnext().text.removeprefix('by ')
-      new_posts.append(NewPostInfo(title, author, link))
+      subforum = row.xpath('./td[2]//a')[0].text
+      new_posts.append(NewPostInfo(title, author, link, subforum))
 
     return new_posts, doc
 
