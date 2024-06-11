@@ -1,5 +1,12 @@
 from requestsutils import RequestsBase
-from htmlutils import parse_document_from_requests
+from htmlutils import parse_document_from_requests, html
+from dataclasses import dataclass
+
+@dataclass
+class NewPostInfo:
+  title: str
+  author: str
+  link: str
 
 class FluxBB(RequestsBase):
   userAgent = 'A Python Fluxbb Client by lilydjwg'
@@ -108,3 +115,25 @@ class FluxBB(RequestsBase):
             if x.getparent().tag != 'span'
            ]
     return tids
+
+  def get_new_posts(self) -> tuple[list[NewPostInfo], html.HtmlElement]:
+    r = self.request('/search.php?action=show_new')
+    if r.status_code == 403:
+      raise PermissionError
+
+    doc = parse_document_from_requests(r)
+    rows = doc.xpath('//div[@id="vf"]//tr[contains(@class, "inew")]')
+
+    new_posts = []
+    for row in rows:
+      a = row.xpath('./td//a')[0]
+      title = a.text
+      link = a.get('href')
+      author = a.getnext().text.removeprefix('by ')
+      new_posts.append(NewPostInfo(title, author, link))
+
+    return new_posts, doc
+
+  def mark_all_as_read(self, doc: html.HtmlElement) -> None:
+    a = doc.xpath('//p[@class="subscribelink clearb"]/a')[0]
+    self.request(a.get('href'))
