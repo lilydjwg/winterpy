@@ -9,6 +9,7 @@ import time
 from typing import (
   AsyncGenerator, Tuple, Any, Dict, Optional, List, Union,
 )
+import enum
 
 from aiohttp.client import ClientResponse
 import aiohttputils
@@ -134,6 +135,11 @@ class GitHub(aiohttputils.ClientBase):
     except IndexError:
       raise LookupError(email)
 
+IssueStateReason = enum.StrEnum(
+  'IssueStateReason',
+  ['completed', 'not_planned', 'reopened']
+)
+
 class Issue:
   def __init__(self, data: JsonDict, gh: GitHub) -> None:
     self.gh = weakref.proxy(gh)
@@ -161,9 +167,13 @@ class Issue:
     j, _ = await self.gh.api_request(f'{self._api_url}/assignees', data = payload)
     return j
 
-  async def close(self) -> None:
+  async def close(self, reason: Optional[IssueStateReason] = None) -> None:
+    data = {'state': 'closed'}
+    if reason is not None:
+      data['state_reason'] = str(reason)
+
     data, _ = await self.gh.api_request(
-      f'{self._api_url}', method = 'patch', data = {'state': 'closed'})
+      f'{self._api_url}', method = 'patch', data = data)
     self._data = data
     self.closed = data['state'] == 'closed'
 
