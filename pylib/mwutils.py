@@ -1,6 +1,6 @@
 import re
 import logging
-from typing import Optional
+from typing import Optional, Callable
 import enum
 
 import mwclient # type: ignore
@@ -43,6 +43,7 @@ def search_and_replace(
   summary: Optional[str] = None,
   minor: bool = False,
   limit: Optional[int] = None,
+  confirm: Optional[Callable[[str, str], bool]] = None,
 ) -> None:
   count = 0
   if summary is None:
