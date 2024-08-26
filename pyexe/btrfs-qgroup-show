@@ -19,7 +19,7 @@ class QuotaRecord:
   path = 'path'
 
   def __init__(self, line):
-    self.qgid, self.rfer, self.excl, self.path = line.split()
+    self.qgid, self.rfer, self.excl, self.path = line.split(None, 3)
     self.rfer = FileSize(self.rfer)
     self.excl = FileSize(self.excl)
 
