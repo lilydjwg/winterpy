@@ -6,19 +6,24 @@ import dnslib
 
 def main():
   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  s.settimeout(1)
   s.bind(('224.0.0.251', 5353))
   q = dnslib.DNSRecord.question('_adb-tls-connect._tcp.local', 'PTR')
   s.sendto(q.pack(), ('224.0.0.251', 5353))
   while True:
-    res, peer = s.recvfrom(4096)
+    try:
+      res, peer = s.recvfrom(4096)
+    except TimeoutError:
+      return
     a = dnslib.DNSRecord.parse(res)
     if not a.rr:
       continue
+    # it takes time for old port to disappear and new port to appear
+    # print all responses in hope that one of them will work
     for r in a.ar:
       if r.rtype == dnslib.QTYPE.SRV:
         port = r.rdata.port
         print(f'{peer[0]}:{port}')
-        return
 
 if __name__ == '__main__':
   main()
