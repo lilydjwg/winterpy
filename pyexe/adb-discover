@@ -6,14 +6,17 @@ import dnslib
 
 def main():
   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-  s.bind(('224.0.0.251', 5353))
+  s.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_LOOP, False)
+  mgrp = socket.inet_aton('224.0.0.251') + socket.INADDR_ANY.to_bytes(4, byteorder='big')
+  s.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, mgrp)
+  s.bind(('', 5353))
   q = dnslib.DNSRecord.question('_adb-tls-connect._tcp.local', 'PTR')
+  q.header.id = 0
+  q.header.set_rd(0)
   s.sendto(q.pack(), ('224.0.0.251', 5353))
   while True:
     res, peer = s.recvfrom(4096)
     a = dnslib.DNSRecord.parse(res)
-    if not a.rr: # our request
-      continue
     # print port from last SRV records
     # because it takes time for old port to disappear
     # hopefully we've taken the right one
