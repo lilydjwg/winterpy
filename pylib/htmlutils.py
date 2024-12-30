@@ -4,7 +4,7 @@ import re
 import copy
 from html.entities import entitydefs
 
-from lxml import html # type: ignore
+from lxml import html
 
 def _br2span_inplace(el):
   for br in el.iterchildren(tag='br'):
