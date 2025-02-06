@@ -210,3 +210,29 @@ class Comment:
 
   def __repr__(self) -> str:
     return f'<Comment by {self.author}: {self.html_url}>'
+
+class GitHubLogin:
+  login: str
+  lower: str
+
+  def __init__(self, login: str) -> None:
+    self.login = login
+    self.lower = login.lower()
+
+  def __str__(self) -> str:
+    return self.login
+
+  def __repr__(self) -> str:
+    return f'<GitHub login: {self.login}>'
+
+  def __eq__(self, other: GitHubLogin | str) -> bool:
+    if isinstance(other, GitHubLogin):
+      return self.lower == other.lower
+    else:
+      return self.lower == other.lower()
+
+  def __hash__(self):
+    return hash(self.lower)
+
+  def __lt__(self, other: GitHubLogin) -> bool:
+    return self.lower < other.lower
