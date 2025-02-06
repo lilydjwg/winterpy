@@ -7,7 +7,7 @@ import asyncio
 import logging
 import time
 from typing import (
-  AsyncGenerator, Tuple, Any, Dict, Optional, List, Union,
+  AsyncGenerator, Tuple, Any, Dict, Optional, List, Union, cast,
 )
 import enum
 
@@ -162,8 +162,11 @@ class Issue:
     j, _ = await self.gh.api_request(f'{self._api_url}/labels', data = labels)
     return j
 
-  async def assign(self, assignees: List[str]) -> JsonDict:
-    payload = {'assignees': assignees}
+  async def assign(self, assignees: List[str | GitHubLogin]) -> JsonDict:
+    if isinstance(assignees[0], GitHubLogin):
+      payload = {'assignees': [x.login for x in cast(list[GitHubLogin], assignees)]}
+    else:
+      payload = {'assignees': cast(list[str], assignees)}
     j, _ = await self.gh.api_request(f'{self._api_url}/assignees', data = payload)
     return j
 
@@ -225,7 +228,7 @@ class GitHubLogin:
   def __repr__(self) -> str:
     return f'<GitHub login: {self.login}>'
 
-  def __eq__(self, other: GitHubLogin | str) -> bool:
+  def __eq__(self, other: Any) -> bool:
     if isinstance(other, GitHubLogin):
       return self.lower == other.lower
     else:
