@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# vim:fileencoding=utf-8
+#!/usr/bin/python3
 
 '''
 为Vim的图形界面配色方案生成256色终端版定义
@@ -7,11 +6,10 @@ Generate 256-color definition for Vim's colorscheme
 http://www.vim.org/scripts/script.php?script_id=2778
 '''
 
-__version__ = 3.03
+__version__ = 3.04
 
 import os, sys, re, io
-import math
-from math import *
+from math import sqrt, exp, sin, radians, degrees, atan2, fabs, cos
 import warnings
 
 # Global variables {{{1
@@ -261,7 +259,7 @@ termcolor = { #{{{2
 # regexes {{{2
 highlight_word = re.compile(r"(?P<quote>')?(?(quote)[\w ]|[\w,#])+(?(quote)'|)")
 re_hexcolor = re.compile('^#[0-9a-fA-F]{6}$')
-re_hiline = re.compile('^\s*hi\w*\s+(?!link\b)[A-Z]\w+')
+re_hiline = re.compile(r'^\s*hi\w*\s+(?!link\b)[A-Z]\w+')
 
 # others {{{2
 name2rgb = {}
@@ -277,7 +275,7 @@ def getRgbtxt(): # {{{2
   else:
     try:
       import subprocess
-      rgbfile = io.StringIO(subprocess.check_output(['locate', '-b', '--regex', '-e', '^rgb\.txt$']).decode()).readline().strip()
+      rgbfile = io.StringIO(subprocess.check_output(['locate', '-b', '--regex', '-e', r'^rgb\.txt$']).decode()).readline().strip()
     except:
       warnings.warn("rgb.txt not found, color names will cause errors", Warning)
       rgbfile = None
@@ -290,7 +288,6 @@ def loadRgb(): # {{{2
   rgbfile = getRgbtxt()
   if rgbfile is None:
     return
-  rgbtxt = re.compile('^(\d+)\s+(\d+)\s+(\d+)\s+([\w\s]+)$')
   try:
     for l in open(rgbfile):
       if not l.startswith('!'):
