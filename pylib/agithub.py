@@ -149,7 +149,8 @@ class Issue:
     self.title = data['title']
     self.labels = [x['name'] for x in data['labels']]
     self.updated_at = parse_datetime(data['updated_at'])
-    self._api_url = f"{data['repository_url']}/issues/{data['number']}"
+    # pr or issue
+    self._api_url = data.get('issue_url', data['url'])
     self.closed = data['state'] == 'closed'
     self.author = data['user']['login']
     self.closed_by = data.get('closed_by') and data['closed_by']['login'] or None
@@ -239,3 +240,12 @@ class GitHubLogin:
 
   def __lt__(self, other: GitHubLogin) -> bool:
     return self.lower < other.lower
+
+class PullRequest(Issue):
+  async def compare(self) -> JsonDict:
+    repo_url = self._data['base']['repo']['url']
+    base = self._data['base']['sha']
+    head = self._data['head']['sha']
+    compare_url = f'{repo_url}/compare/{base}...{head}'
+    j, _ = await self.gh.api_request(compare_url)
+    return j
