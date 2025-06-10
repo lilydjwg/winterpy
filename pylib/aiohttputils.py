@@ -41,8 +41,6 @@ class ClientBase:
       closer = self.session.close()
       if loop.is_running():
         asyncio.ensure_future(closer)
-      else:
-        asyncio.run(closer)
 
   async def request(
     self, url: str, method: Optional[str] = None, **kwargs,
