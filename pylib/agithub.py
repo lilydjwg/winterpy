@@ -11,8 +11,8 @@ from typing import (
 )
 import enum
 
-from aiohttp.client import ClientResponse
-import aiohttputils
+from httpx import Response
+import httpxutils
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class GitHubError(Exception):
     self.documentation = documentation
     self.code = code
 
-class GitHub(aiohttputils.ClientBase):
+class GitHub(httpxutils.ClientBase):
   baseurl = 'https://api.github.com/'
 
   def __init__(self, token, session=None):
@@ -39,7 +39,7 @@ class GitHub(aiohttputils.ClientBase):
   async def api_request(
     self, path: str, method: str = 'get',
     data: Optional[JsonDict] = None, **kwargs,
-  ) -> Tuple[Json, ClientResponse]:
+  ) -> Tuple[Json, Response]:
     h = kwargs.get('headers', None)
     if not h:
       h = kwargs['headers'] = {}
