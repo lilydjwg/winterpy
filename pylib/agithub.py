@@ -59,7 +59,8 @@ class GitHub(httpxutils.ClientBase):
       if res.status_code == 204:
         j = {}
       else:
-        j = await res.json()
+        await res.aread()
+        j = res.json()
         if 'message' in j:
           if res.status_code == 403 and int(res.headers.get('X-RateLimit-Remaining', -1)) == 0:
             reset = int(res.headers['X-RateLimit-Reset']) - time.time() + 1
