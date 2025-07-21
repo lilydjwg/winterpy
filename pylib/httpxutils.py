@@ -36,7 +36,7 @@ class ClientBase:
         cookiejar = MozillaCookieJar(self.cookiefile) # type: ignore
         if os.path.exists(self.cookiefile):
           cookiejar.load()
-        s.cookies = cookiejar # type: ignore
+        s.cookies = cookiejar
 
   def __del__(self):
     if self.cookiefile:
