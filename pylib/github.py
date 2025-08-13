@@ -4,9 +4,12 @@ import datetime
 import weakref
 from typing import Any, Iterator, Dict, Optional
 import enum
+import logging
 
 import synchttpxutils
 from httpx import Response
+
+logging.getLogger('httpcore').setLevel(logging.ERROR)
 
 JsonDict = Dict[str, Any]
 
@@ -14,7 +17,7 @@ def parse_datetime(s: str) -> datetime.datetime:
   dt = datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%SZ')
   return dt.replace(tzinfo=datetime.timezone.utc)
 
-class GitHub(synchttpxutils.RequestsBase):
+class GitHub(synchttpxutils.ClientBase):
   baseurl = 'https://api.github.com/'
 
   def __init__(self, token=None, *, session=None):
