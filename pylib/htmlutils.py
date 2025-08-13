@@ -55,9 +55,9 @@ def _sharp2uni(m):
   else:
     return chr(int(s))
 
-def parse_document_from_requests(response, session=None, *, encoding=None):
+def parse_document_from_httpx(response, session=None, *, encoding=None):
   '''
-  ``response``: requests ``Response`` object, or URL
+  ``response``: httpx or requests ``Response`` object, or URL
   ``encoding``: override detected encoding
   '''
   if isinstance(response, str):
@@ -72,10 +72,12 @@ def parse_document_from_requests(response, session=None, *, encoding=None):
   # fromstring handles bytes well
   # https://stackoverflow.com/a/15305248/296473
   parser = html.HTMLParser(encoding=encoding or r.encoding)
-  doc = html.fromstring(r.content, base_url=r.url, parser=parser)
+  doc = html.fromstring(r.content, base_url=str(r.url), parser=parser)
   doc.make_links_absolute()
 
   return doc
+
+parse_document_from_requests = parse_document_from_httpx
 
 def parse_html_with_encoding(data, encoding='utf-8'):
   parser = html.HTMLParser(encoding=encoding)
