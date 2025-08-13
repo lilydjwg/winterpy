@@ -7,6 +7,13 @@ import mwclient # type: ignore
 
 logger = logging.getLogger(__name__)
 
+CATEGORY_RE = re.compile(r'''
+\[\[
+  (?P<prefix>(?:分类|Category):)
+  (?P<cat>[^]|]+)
+  (?P<sorting>\|[^]]+)?
+\]\]''', re.VERBOSE)
+
 class Namespace(enum.IntEnum):
   MAIN = 0
   TALK = 1
