@@ -63,7 +63,7 @@ def parse_document_from_httpx(response, session=None, *, encoding=None):
   if isinstance(response, str):
     if session is None:
       raise ValueError('URL given but no session')
-    r = session.get(response)
+    r = session.get(response, follow_redirects=True)
   else:
     r = response
   if encoding:
