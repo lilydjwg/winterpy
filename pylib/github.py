@@ -9,7 +9,8 @@ import logging
 import synchttpxutils
 from httpx import Response
 
-logging.getLogger('httpcore').setLevel(logging.ERROR)
+logging.getLogger('httpcore').setLevel(logging.INFO)
+logging.getLogger('hpack').setLevel(logging.INFO)
 
 JsonDict = Dict[str, Any]
 
