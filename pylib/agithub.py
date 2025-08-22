@@ -51,7 +51,7 @@ class GitHub(httpxutils.ClientBase):
       if method == 'get':
         method = 'post'
       h.setdefault('Content-Type', 'application/json')
-      kwargs['data'] = binary_data
+      kwargs['content'] = binary_data
 
     for _ in range(3):
       res = await self.request(path, method=method, **kwargs)
