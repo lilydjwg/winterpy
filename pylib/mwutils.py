@@ -67,3 +67,38 @@ def search_and_replace(
       logger.warning('page %s not updated.', page.page_title)
     if limit and count >= limit:
       break
+
+def blame(
+  site: mwclient.Site,
+  revs: list[int],
+  revdata: dict[int, str], # revid => text
+  needle: str,
+) -> int:
+  logger.info('blaming in %d revisions for %s', len(revs), needle)
+
+  def get_content(revid: int) -> str:
+    if (text := revdata.get(revid)) is None:
+      logger.info('fetching content for revid %d', revid)
+      rev = site.revisions([revid], prop='timestamp|content')[0]
+      text = revdata[revid] = rev['*']
+    return text
+
+  new_idx, old_idx = 0, len(revs)-1
+  new = get_content(revs[new_idx])
+  if needle not in new:
+    raise ValueError('needle not found in revs[0]')
+  old = get_content(revs[old_idx])
+  if needle in old:
+    raise ValueError('needle found in revs[-1]')
+
+  while old_idx > new_idx + 1:
+    mid_idx = (old_idx + new_idx) // 2
+    mid = get_content(revs[mid_idx])
+    if needle in mid:
+      logger.info('moving to older half')
+      new_idx = mid_idx
+    else:
+      logger.info('moving to newer half')
+      old_idx = mid_idx
+
+  return new_idx
