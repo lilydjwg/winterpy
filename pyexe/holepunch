@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 import os
-import re
 import sys
 import socket
 import time
@@ -61,9 +60,11 @@ def main(server, prog, name):
   for i in range(1, 5):
     # TODO: require ACK before stop
     try:
+      logging.info('sending to %r', dst)
       sock.sendto(('%s %d' % (sl_ip, sl_port)).encode('utf-8'), dst)
       msg, addr = sock.recvfrom(1024)
       logging.debug('recv from %r: %s', addr, msg)
+      dst = addr
       msg = msg.decode('utf-8', errors='replace')
       pl_ip, pl_port = msg.split()
       pl_port = int(pl_port)
@@ -73,7 +74,7 @@ def main(server, prog, name):
       # peer not ready
       time.sleep(2)
   if pl_ip is None:
-    logging.warn("failed to get peer's address, continue anyway.")
+    logging.warning("failed to get peer's address, continue anyway.")
 
   if server:
     globals()['sprog_' + prog](sock, sl_port, pl_ip, pl_port, se_ip, se_port, pe_ip, pe_port)
@@ -155,7 +156,7 @@ route 10.7.0.0 255.255.255.0
       except socket.timeout:
         pass
     else:
-      logging.warn('ACK not received, starting anyway...')
+      logging.warning('ACK not received, starting anyway...')
   sock.close()
 
   p = subprocess.Popen(['sudo', '/usr/bin/openvpn', '--cd', '/etc/openvpn', '--config', sconfig])
