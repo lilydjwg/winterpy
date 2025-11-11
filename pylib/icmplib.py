@@ -71,6 +71,34 @@ def ping(address):
   _, t = parse_packet_with_time(packet)
   return time.time() - t
 
+async def aping(s, address):
+  import asyncio
+  s.sendto(pack_packet_with_time(1), (address, 0))
+  loop = asyncio.get_running_loop()
+  fu = asyncio.Future()
+  loop.add_reader(s, fu.set_result, None)
+  await fu
+  loop.remove_reader(s)
+  packet, peer = s.recvfrom(1024)
+  _, t = parse_packet_with_time(packet)
+  return time.time() - t
+
+async def amain(address):
+  import asyncio
+  address = _socket.gethostbyname(address)
+  s = socket()
+  s.setblocking(False)
+  while True:
+    try:
+      t = await aping(s, address)
+      print('%9.3fms' % (t * 1000))
+      await asyncio.sleep(1 - t)
+    except BlockingIOError:
+      print('EWOULDBLOCK')
+    except asyncio.CancelledError:
+      print()
+      break
+
 def main():
   import sys
   if len(sys.argv) != 2:
@@ -80,3 +108,5 @@ def main():
 
 if __name__ == '__main__':
   main()
+  # import asyncio, sys
+  # asyncio.run(amain(sys.argv[1]))
