@@ -77,8 +77,10 @@ async def aping(s, address):
   loop = asyncio.get_running_loop()
   fu = asyncio.Future()
   loop.add_reader(s, fu.set_result, None)
-  await fu
-  loop.remove_reader(s)
+  try:
+    await fu
+  finally:
+    loop.remove_reader(s)
   packet, peer = s.recvfrom(1024)
   _, t = parse_packet_with_time(packet)
   return time.time() - t
