@@ -71,18 +71,33 @@ def ping(address):
   _, t = parse_packet_with_time(packet)
   return time.time() - t
 
-async def aping(s, address):
+async def aping(s, address, seq=1):
   import asyncio
-  s.sendto(pack_packet_with_time(1), (address, 0))
+  s.sendto(pack_packet_with_time(seq), (address, 0))
   loop = asyncio.get_running_loop()
-  fu = asyncio.Future()
-  loop.add_reader(s, fu.set_result, None)
-  try:
-    await fu
-  finally:
-    loop.remove_reader(s)
-  packet, peer = s.recvfrom(1024)
-  _, t = parse_packet_with_time(packet)
+
+  while True:
+    fu = asyncio.Future()
+    loop.add_reader(s, fu.set_result, None)
+    try:
+      await fu
+    finally:
+      loop.remove_reader(s)
+
+    t = None
+    while True:
+      try:
+        packet, peer = s.recvfrom(1024)
+        r_seq, r_t = parse_packet_with_time(packet)
+        if r_seq == seq:
+          t = r_t
+      except BlockingIOError:
+        break
+
+    if t:
+      break
+    # else retry read
+
   return time.time() - t
 
 async def amain(address):
@@ -90,11 +105,15 @@ async def amain(address):
   address = _socket.gethostbyname(address)
   s = socket()
   s.setblocking(False)
+  seq = 0
   while True:
     try:
-      t = await aping(s, address)
+      seq += 1
+      t = await asyncio.wait_for(aping(s, address, seq), 2)
       print('%9.3fms' % (t * 1000))
       await asyncio.sleep(1 - t)
+    except TimeoutError:
+      print('timed out.')
     except BlockingIOError:
       print('EWOULDBLOCK')
     except asyncio.CancelledError:
