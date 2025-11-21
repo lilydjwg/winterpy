@@ -43,11 +43,11 @@ _d_size = struct.calcsize('d')
 def pack_packet(seq, payload):
   # Header is type (8), code (8), checksum (16), id (16), sequence (16)
   # The checksum is always recomputed by the kernel, and the id is the port number
-  header = struct.pack('bbHHh', ICMP_ECHO_REQUEST, 0, 0, 0, seq)
+  header = struct.pack('bbHHH', ICMP_ECHO_REQUEST, 0, 0, 0, seq)
   return header + payload
 
 def parse_packet(data):
-  type, code, checksum, packet_id, sequence = struct.unpack('bbHHh', data[:8])
+  type, code, checksum, packet_id, sequence = struct.unpack('bbHHH', data[:8])
   return sequence, data[8:]
 
 def pack_packet_with_time(seq, packetsize=56):
@@ -108,7 +108,7 @@ async def amain(address):
   seq = 0
   while True:
     try:
-      seq += 1
+      seq = (seq + 1) & 0xffff
       t = await asyncio.wait_for(aping(s, address, seq), 2)
       print('%9.3fms' % (t * 1000))
       await asyncio.sleep(1 - t)
