@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 from http.cookiejar import MozillaCookieJar
 from urllib.parse import urljoin
