@@ -3,11 +3,11 @@ from http.cookiejar import MozillaCookieJar
 from urllib.parse import urljoin
 from typing import Optional, BinaryIO
 
-import requests
+import niquests
 
 CHUNK_SIZE = 40960
 
-def download_into(session: requests.Session,
+def download_into(session: niquests.Session,
                   url: str, file: BinaryIO, process_func=None) -> None:
   r = session.get(url, stream=True)
   length = int(r.headers.get('Content-Length') or 0)
@@ -27,7 +27,7 @@ def download_into_with_progressbar(url, dest):
 
   w = os.get_terminal_size()[1]
   with open(dest, 'wb') as f:
-    download_into(requests, url, f, partial(
+    download_into(niquests, url, f, partial(
       download_process, dest, time.time(), width=w))
 
 class RequestsBase:
@@ -41,7 +41,7 @@ class RequestsBase:
   @property
   def session(self):
     if not self._session:
-      s = requests.Session()
+      s = niquests.Session()
       self.__our_session = True
       self._session = s
     return self._session
@@ -71,7 +71,7 @@ class RequestsBase:
       self._session.close()
 
   def request(self, url: str, method: Optional[str] = None, *args, **kwargs
-             ) -> requests.Response:
+             ) -> niquests.Response:
     if self.baseurl:
       url = urljoin(self.baseurl, url)
 
