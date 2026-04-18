@@ -41,7 +41,7 @@ class RequestsBase:
   @property
   def session(self):
     if not self._session:
-      s = niquests.Session()
+      s = niquests.Session(resolver='dou://127.0.0.1', happy_eyeballs=True)
       self.__our_session = True
       self._session = s
     return self._session
