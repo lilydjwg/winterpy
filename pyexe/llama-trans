@@ -97,6 +97,12 @@ def main(args):
     print_streaming_response(r)
 
 if __name__ == '__main__':
+  try:
+    import setproctitle
+    setproctitle.setproctitle('llama-trans')
+  except ImportError:
+    pass
+
   import argparse
   parser = argparse.ArgumentParser()
   parser.add_argument('-m', '--model',

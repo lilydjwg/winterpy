@@ -25,6 +25,12 @@ def main(model):
   interact(client, URL, model, messages)
 
 if __name__ == '__main__':
+  try:
+    import setproctitle
+    setproctitle.setproctitle('llama-talk')
+  except ImportError:
+    pass
+
   import argparse
 
   parser = argparse.ArgumentParser()

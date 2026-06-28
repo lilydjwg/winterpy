@@ -45,4 +45,10 @@ def main():
     print_streaming_response(r)
 
 if __name__ == '__main__':
+  try:
+    import setproctitle
+    setproctitle.setproctitle('llama-ocr')
+  except ImportError:
+    pass
+
   main()

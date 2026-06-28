@@ -80,6 +80,12 @@ def do_request(model, filepath):
   interact(client, URL, model, parts)
 
 if __name__ == '__main__':
+  try:
+    import setproctitle
+    setproctitle.setproctitle('yt-summarize')
+  except ImportError:
+    pass
+
   import argparse
 
   parser = argparse.ArgumentParser()
