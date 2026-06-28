@@ -104,6 +104,7 @@ if __name__ == '__main__':
   parser.add_argument('--orig-lang', action='store_true',
                       help='detect original language')
   parser.add_argument('--api', choices=['local', 'gemini'],
+                      default='local',
                       help='API service to use')
   parser.add_argument('lang', nargs='?',
                       help='target language')
