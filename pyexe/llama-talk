@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+
+import os
+
+import httpx
+
+from myopenai import interact
+
+URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+DEFAULT_MODEL = 'gemini-3.1-flash-lite'
+# DEFAULT_MODEL = 'gemini-3.5-flash'
+# DEFAULT_MODEL = 'gemma-4-26b-a4b-it'
+
+def main(model):
+  client = httpx.Client(
+    http2=True,
+    headers={
+      'Authorization': f'Bearer {os.environ['GEMINI_API_KEY']}',
+    }
+  )
+  messages = [{
+    'role': 'system',
+    'content': '请简洁扼要地回复',
+  }]
+  interact(client, URL, model, messages)
+
+if __name__ == '__main__':
+  import argparse
+
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-m', '--model', default=DEFAULT_MODEL,
+                      help='model name to use')
+  args = parser.parse_args()
+
+  main(args.model)

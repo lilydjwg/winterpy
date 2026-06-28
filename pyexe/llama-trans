@@ -1,0 +1,116 @@
+#!/usr/bin/python3
+
+import sys
+import json
+import os
+
+import httpx
+
+from myopenai import print_streaming_response
+
+API_ENDPOINTS = {
+  'local': 'http://127.0.0.1:8080/v1/chat/completions',
+  'gemini': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+}
+
+DEFAULT_MODEL = {
+  'local': 'Hy-MT2-1.8B',
+  'gemini': 'gemma-4-26b-a4b-it',
+}
+
+def detect_language(client, text, model, api):
+  url = API_ENDPOINTS[api]
+  j = {
+    'model': model,
+    'messages': [{
+      'role': 'system',
+      'content': '你是语言识别器，你会以JSON格式以中文输出用户给出文本的语言名称。',
+    }, {
+      'role': 'user',
+      'content': text,
+    }],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "translation result",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "language": {
+              "type": "string",
+              "description": "原文的语言名称"
+            },
+          },
+          "required": ["language"],
+        }
+      }
+    },
+  }
+  if api == 'local':
+    j['chat_template_kwargs'] = {'enable_thinking': False}
+  elif api == 'gemini':
+    j['reasoning_effort'] = 'minimal'
+
+  r = client.post(url, json=j, timeout=120)
+  r = r.json()['choices'][0]['message']['content']
+  r = json.loads(r)
+  return r['language']
+
+def main(args):
+  model = args.model or DEFAULT_MODEL[args.api]
+  url = API_ENDPOINTS[args.api]
+
+  data = sys.stdin.read()
+  if args.lang is None:
+    prompt = f'将以下文本翻译为简体中文，注意只需要输出翻译后的结果，不要额外解释：\n{data}'
+  else:
+    prompt = f'Translate the following segment into {args.lang}, without additional explanation.\n{data}'
+
+  j = {
+    'model': model,
+    'messages': [{
+      'role': 'system',
+      'content': '你是忠实的语言翻译器',
+    }, {
+      'role': 'user',
+      'content': prompt,
+    }],
+    'stream': True,
+  }
+
+  headers = None
+  if args.api == 'local':
+    j['chat_template_kwargs'] = {'enable_thinking': False}
+  elif args.api == 'gemini':
+    j['reasoning_effort'] = 'minimal'
+    headers = {
+      'Authorization': f'Bearer {os.environ['GEMINI_API_KEY']}',
+    }
+
+  client = httpx.Client(http2=True, headers=headers)
+
+  if args.orig_lang:
+    lang = detect_language(client, data, model, args.api)
+    print(lang)
+
+  with client.stream('POST', url, json=j, timeout=120) as r:
+    print_streaming_response(r)
+
+if __name__ == '__main__':
+  import argparse
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-m', '--model',
+                      help='model name to use')
+  parser.add_argument('--orig-lang', action='store_true',
+                      help='detect original language')
+  parser.add_argument('--api', choices=['local', 'gemini'],
+                      help='API service to use')
+  parser.add_argument('lang', nargs='?',
+                      help='target language')
+  args = parser.parse_args()
+
+  try:
+    main(args)
+  except KeyboardInterrupt:
+    print()
+    sys.exit(130)

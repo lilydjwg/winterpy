@@ -1,0 +1,48 @@
+#!/usr/bin/python3
+
+import sys
+import base64
+
+import httpx
+
+from myopenai import print_streaming_response
+
+def main():
+  import argparse
+  parser = argparse.ArgumentParser()
+  parser.add_argument('prompt', nargs='?',
+                      help='optional prompt')
+  args = parser.parse_args()
+
+  data = sys.stdin.buffer.read()
+  data = base64.b64encode(data).decode('ascii')
+
+  content = []
+  if args.prompt:
+    content.append({
+      'type': 'text',
+      'text': args.prompt,
+    })
+
+  content.append({
+    'type': 'image_url',
+    'image_url': {
+      'url': 'data:image/png;base64,' + data,
+    },
+  })
+
+  j = {
+    'messages': [{
+      'role': 'user',
+      'content': content,
+    }],
+    'stream': True,
+  }
+
+  client = httpx.Client()
+
+  with client.stream('POST', 'http://127.0.0.1:8080/v1/chat/completions', json=j, timeout=120) as r:
+    print_streaming_response(r)
+
+if __name__ == '__main__':
+  main()
