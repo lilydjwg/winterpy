@@ -28,7 +28,7 @@ PROMPT = "\001\033[95m\002LLM>> \001\033[0m\002"
 
 def interact(client, url, model, messages):
   import readline
-  assert readline
+  readline.parse_and_bind('set enable-bracketed-paste on')
   while True:
     try:
       prompt = input(PROMPT).strip()
