@@ -33,7 +33,6 @@ def interact(client, url, model, messages):
     try:
       prompt = input(PROMPT).strip()
     except EOFError:
-      print()
       break
     if not prompt:
       continue
