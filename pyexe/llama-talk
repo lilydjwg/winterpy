@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 
-from myopenai import App, set_process_name
+from myopenai import Client, set_process_name
 
 DEFAULT_MODEL = 'gemini-3.1-flash-lite'
 # DEFAULT_MODEL = 'gemini-3.5-flash'
 # DEFAULT_MODEL = 'gemma-4-26b-a4b-it'
 
 def main(args):
-  app = App(args.api, args.model or DEFAULT_MODEL)
+  app = Client(args.api, args.model or DEFAULT_MODEL)
   messages = [{
     'role': 'system',
     'content': '请简洁扼要地回复',
@@ -20,7 +20,7 @@ if __name__ == '__main__':
   import argparse
 
   parser = argparse.ArgumentParser()
-  App.add_common_argument(parser, default_api='gemini')
+  Client.add_common_argument(parser, default_api='gemini')
   args = parser.parse_args()
 
   main(args)

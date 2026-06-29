@@ -3,14 +3,14 @@
 import sys
 import json
 
-from myopenai import print_streaming_response, App, set_process_name
+from myopenai import print_streaming_response, Client, set_process_name
 
 DEFAULT_MODEL = {
   'local': 'Hy-MT2-1.8B',
   'gemini': 'gemma-4-26b-a4b-it',
 }
 
-def detect_language(app: App, text: str) -> str:
+def detect_language(app: Client, text: str) -> str:
   messages = [{
     'role': 'system',
     'content': '你是语言识别器，你会以JSON格式以中文输出用户给出文本的语言名称。',
@@ -44,7 +44,7 @@ def detect_language(app: App, text: str) -> str:
 
 def main(args) -> None:
   model = args.model or DEFAULT_MODEL[args.api]
-  app = App(args.api, model)
+  app = Client(args.api, model)
 
   data = sys.stdin.read()
   if args.lang is None:
@@ -76,7 +76,7 @@ if __name__ == '__main__':
                       help='detect original language')
   parser.add_argument('lang', nargs='?',
                       help='target language')
-  App.add_common_argument(parser, default_api='local')
+  Client.add_common_argument(parser, default_api='local')
   args = parser.parse_args()
 
   try:

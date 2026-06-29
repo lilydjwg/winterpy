@@ -68,7 +68,7 @@ API_ENDPOINTS = {
 }
 Messages = list[dict[str, Any]]
 
-class App:
+class Client:
   def __init__(self, api: API_TYPE, model: str) -> None:
     self.url = API_ENDPOINTS[api]
     self.model = model

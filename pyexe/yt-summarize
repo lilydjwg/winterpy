@@ -8,7 +8,7 @@ import shlex
 
 import httpx
 
-from myopenai import print_streaming_response, App, set_process_name
+from myopenai import print_streaming_response, Client, set_process_name
 
 DEFAULT_MODEL = 'gemini-3.1-flash-lite'
 # DEFAULT_MODEL = 'gemini-3.5-flash'
@@ -21,7 +21,7 @@ def main(args) -> None:
   else:
     extra_args = []
 
-  app = App(args.api, args.model or DEFAULT_MODEL)
+  app = Client(args.api, args.model or DEFAULT_MODEL)
 
   with tempfile.TemporaryDirectory() as d:
     subprocess.run([
@@ -80,7 +80,7 @@ if __name__ == '__main__':
                       help='choose subtitles language')
   parser.add_argument('--ytdlp-arg',
                       help='extra args to pass to yt-dlp')
-  App.add_common_argument(parser, default_api='gemini')
+  Client.add_common_argument(parser, default_api='gemini')
   args = parser.parse_args()
 
   main(args)
