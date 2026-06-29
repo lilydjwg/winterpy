@@ -1,7 +1,12 @@
-import json
 import argparse
+import os
+import json
+from contextlib import AbstractContextManager
+from typing import Literal, Any, get_args
 
-def print_streaming_response(r):
+import httpx
+
+def print_streaming_response(r: httpx.Response) -> list[str]:
   ret = []
   if r.headers['Content-Type'] == 'text/event-stream':
     for line in r.iter_lines():
@@ -54,12 +59,6 @@ def interact(client, url, model, messages):
         'role': 'assistant',
         'content': ''.join(res),
       })
-
-from typing import Literal, Any, get_args
-import os
-from contextlib import AbstractContextManager
-
-import httpx
 
 API_TYPE = Literal['local', 'gemini']
 API_CHOICES = get_args(API_TYPE)
