@@ -3,17 +3,11 @@
 import sys
 import base64
 
-import httpx
+DEFAULT_MODEL = 'gemma-4-26b-a4b-it'
 
-from myopenai import print_streaming_response
+from myopenai import print_streaming_response, App, set_process_name
 
-def main():
-  import argparse
-  parser = argparse.ArgumentParser()
-  parser.add_argument('prompt', nargs='?',
-                      help='optional prompt')
-  args = parser.parse_args()
-
+def main(args) -> None:
   data = sys.stdin.buffer.read()
   data = base64.b64encode(data).decode('ascii')
 
@@ -31,24 +25,24 @@ def main():
     },
   })
 
-  j = {
-    'messages': [{
-      'role': 'user',
-      'content': content,
-    }],
-    'stream': True,
-  }
+  app = App(args.api, args.model or DEFAULT_MODEL)
 
-  client = httpx.Client()
-
-  with client.stream('POST', 'http://127.0.0.1:8080/v1/chat/completions', json=j, timeout=120) as r:
+  messages = [{
+    'role': 'user',
+    'content': content,
+  }]
+  with app.stream(messages) as r:
     print_streaming_response(r)
 
 if __name__ == '__main__':
-  try:
-    import setproctitle
-    setproctitle.setproctitle('llama-ocr')
-  except ImportError:
-    pass
+  set_process_name('llama-ocr')
 
-  main()
+  import argparse
+
+  parser = argparse.ArgumentParser()
+  parser.add_argument('prompt', nargs='?',
+                      help='optional prompt')
+  App.add_common_argument(parser, default_api='local')
+  args = parser.parse_args()
+
+  main(args)

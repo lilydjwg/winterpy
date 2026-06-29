@@ -5,29 +5,29 @@ import subprocess
 import tempfile
 from pathlib import Path
 import shlex
-import os
 
 import httpx
 
-from myopenai import print_streaming_response, interact
+from myopenai import print_streaming_response, App, set_process_name
 
-URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
 DEFAULT_MODEL = 'gemini-3.1-flash-lite'
 # DEFAULT_MODEL = 'gemini-3.5-flash'
 # DEFAULT_MODEL = 'gemma-4-26b-a4b-it'
 PROMPT = '根据以下字幕文本总结视频内容。总结结果中请不要包含任何赞助商推广信息。'
 
-def main(url, model, sublang, ytdlp_arg):
-  if ytdlp_arg:
-    extra_args = shlex.split(ytdlp_arg)
+def main(args) -> None:
+  if args.ytdlp_arg:
+    extra_args = shlex.split(args.ytdlp_arg)
   else:
     extra_args = []
 
+  app = App(args.api, args.model or DEFAULT_MODEL)
+
   with tempfile.TemporaryDirectory() as d:
     subprocess.run([
-      'yt-dlp', '--sub-langs', sublang, '--write-subs', '--write-auto-subs', '--skip-download',
+      'yt-dlp', '--sub-langs', args.sublang, '--write-subs', '--write-auto-subs', '--skip-download',
       *extra_args,
-      url,
+      args.url,
     ],
       cwd=d,
       check=True,
@@ -41,18 +41,12 @@ def main(url, model, sublang, ytdlp_arg):
 
     for _ in range(2):
       try:
-        do_request(model, file)
+        do_request(app, file)
         break
       except httpx.ReadError as e:
         print(e, file=sys.stderr)
 
-def do_request(model, filepath):
-  client = httpx.Client(
-    http2=True,
-    headers={
-      'Authorization': f'Bearer {os.environ['GEMINI_API_KEY']}',
-    }
-  )
+def do_request(app, filepath: Path) -> None:
   filename = filepath.name
   with filepath.open() as f:
     subtitles = f.read()
@@ -65,38 +59,28 @@ def do_request(model, filepath):
     'content': f'文件名：{filename}\n文件内容：\n{subtitles}',
   }]
 
-  j = {
-    'model': model,
-    'messages': parts,
-    'stream': True,
-  }
-  with client.stream('POST', URL, json=j, timeout=120) as r:
+  with app.stream(parts) as r:
     res = print_streaming_response(r)
 
   parts.append({
     'role': 'assistant',
     'content': ''.join(res),
   })
-  interact(client, URL, model, parts)
+  app.interact(parts)
 
 if __name__ == '__main__':
-  try:
-    import setproctitle
-    setproctitle.setproctitle('yt-summarize')
-  except ImportError:
-    pass
+  set_process_name('yt-summarize')
 
   import argparse
 
   parser = argparse.ArgumentParser()
-  parser.add_argument('URL',
+  parser.add_argument('url',
                       help='YouTube URL')
   parser.add_argument('--lang', default='en',
                       help='choose subtitles language')
-  parser.add_argument('-m', '--model', default=DEFAULT_MODEL,
-                      help='model name to use')
   parser.add_argument('--ytdlp-arg',
                       help='extra args to pass to yt-dlp')
+  App.add_common_argument(parser, default_api='gemini')
   args = parser.parse_args()
 
-  main(args.URL, args.model, args.lang, args.ytdlp_arg)
+  main(args)

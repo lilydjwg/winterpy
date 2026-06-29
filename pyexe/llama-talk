@@ -1,41 +1,26 @@
 #!/usr/bin/python3
 
-import os
+from myopenai import App, set_process_name
 
-import httpx
-
-from myopenai import interact
-
-URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
 DEFAULT_MODEL = 'gemini-3.1-flash-lite'
 # DEFAULT_MODEL = 'gemini-3.5-flash'
 # DEFAULT_MODEL = 'gemma-4-26b-a4b-it'
 
-def main(model):
-  client = httpx.Client(
-    http2=True,
-    headers={
-      'Authorization': f'Bearer {os.environ['GEMINI_API_KEY']}',
-    }
-  )
+def main(args):
+  app = App(args.api, args.model or DEFAULT_MODEL)
   messages = [{
     'role': 'system',
     'content': '请简洁扼要地回复',
   }]
-  interact(client, URL, model, messages)
+  app.interact(messages)
 
 if __name__ == '__main__':
-  try:
-    import setproctitle
-    setproctitle.setproctitle('llama-talk')
-  except ImportError:
-    pass
+  set_process_name('llama-talk')
 
   import argparse
 
   parser = argparse.ArgumentParser()
-  parser.add_argument('-m', '--model', default=DEFAULT_MODEL,
-                      help='model name to use')
+  App.add_common_argument(parser, default_api='gemini')
   args = parser.parse_args()
 
-  main(args.model)
+  main(args)
