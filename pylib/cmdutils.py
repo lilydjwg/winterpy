@@ -7,7 +7,6 @@ import re
 import subprocess
 from functools import lru_cache
 from collections import namedtuple
-from typing import List
 
 @lru_cache(maxsize=20)
 def lookupip(ip, cmd='cip'):
@@ -68,7 +67,7 @@ def get_entropy(input):
   data[0] = int(data[0])
   return {h: d for h, d in zip(header, data)}
 
-def so_depends(sopath: os.PathLike) -> List[str]:
+def so_depends(sopath: os.PathLike) -> list[str]:
   env = os.environ.copy()
   env['LANG'] = env['LC_ALL'] = 'C'
   out = subprocess.check_output(
@@ -93,3 +92,17 @@ def diff_text(a, b):
     bf.write(b)
     bf.flush()
     subprocess.run(['git', 'diff', '--', af.name, bf.name])
+
+def get_interface_ipv6(iface: str) -> list[str]:
+  import json
+  out = subprocess.check_output(
+    ['ip', '-6', '-j', 'a', 's', iface],
+  )
+  j = json.loads(out)
+  addrs = j[0]['addr_info']
+  addrs.sort(key=lambda a: (
+    ['global', 'local', 'link'].index(a['scope']),
+    -a['preferred_life_time'],
+    a.get('deprecated', False),
+  ))
+  return [x['local'] for x in addrs]
