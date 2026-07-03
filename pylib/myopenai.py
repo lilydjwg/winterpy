@@ -8,7 +8,9 @@ import httpx
 
 def print_streaming_response(r: httpx.Response) -> list[str]:
   ret = []
-  if r.headers['Content-Type'] == 'text/event-stream':
+  if r.headers['Content-Type'].split(';', 1)[0] == 'text/event-stream':
+    thinking = False
+
     for line in r.iter_lines():
       if not line:
         continue
@@ -19,7 +21,18 @@ def print_streaming_response(r: httpx.Response) -> list[str]:
 
       data = json.loads(line)
       for m in data['choices']:
-        if (d := m['delta']) and (c := d.get('content', d.get('reasoning_content'))):
+        if d := m['delta']:
+          if c := d.get('content'):
+            if thinking:
+              print('</think>')
+              thinking = False
+          elif c := d.get('reasoning_content'):
+            if not thinking:
+              print('<think>')
+              thinking = True
+          else:
+            continue
+
           print(c, end='', flush=True)
           ret.append(c)
 
@@ -32,7 +45,7 @@ def print_streaming_response(r: httpx.Response) -> list[str]:
 
 PROMPT = "\001\033[95m\002LLM>> \001\033[0m\002"
 
-def interact(client, url, model, messages):
+def interact(client, url, model, messages, extra_args={}):
   import readline
   readline.parse_and_bind('set enable-bracketed-paste on')
   while True:
@@ -50,9 +63,9 @@ def interact(client, url, model, messages):
     j = {
       'model': model,
       'messages': messages,
-      'reasoning_effort': 'minimal',
       'stream': True,
     }
+    j.update(extra_args)
     with client.stream('POST', url, json=j, timeout=120) as r:
       res = print_streaming_response(r)
       messages.append({
@@ -60,11 +73,12 @@ def interact(client, url, model, messages):
         'content': ''.join(res),
       })
 
-API_TYPE = Literal['local', 'gemini']
+API_TYPE = Literal['local', 'gemini', 'opencode']
 API_CHOICES = get_args(API_TYPE)
-API_ENDPOINTS = {
+API_ENDPOINTS: dict[API_TYPE, str] = {
   'local': 'http://127.0.0.1:8080/v1/chat/completions',
   'gemini': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+  'opencode': 'https://opencode.ai/zen/go/v1/chat/completions',
 }
 Messages = list[dict[str, Any]]
 
@@ -77,6 +91,10 @@ class Client:
     if api == 'gemini':
       headers = {
         'Authorization': f'Bearer {os.environ['GEMINI_API_KEY']}',
+      }
+    elif api == 'opencode':
+      headers = {
+        'Authorization': f'Bearer {os.environ['OPENCODE_API_KEY']}',
       }
     else:
       headers = {}
@@ -127,18 +145,28 @@ class Client:
     }
 
     if disable_thinking:
-      if self.api == 'local':
-        j['chat_template_kwargs'] = {'enable_thinking': False}
-      elif self.api == 'gemini':
-        j['reasoning_effort'] = 'minimal'
+      j.update(self._disable_thinking_args())
 
     if extra:
       j.update(extra)
 
     return j
 
+  def _disable_thinking_args(self) -> dict[str, Any]:
+    j: dict[str, Any] = {}
+    if self.api == 'local':
+      j['chat_template_kwargs'] = {'enable_thinking': False}
+    elif self.api == 'gemini':
+      j['reasoning_effort'] = 'minimal'
+    elif self.api == 'opencode':
+      j['enable_thinking'] = False # glm-5.2
+      j['thinking'] = {'type': 'disabled'} # deepseek-v4-flash
+
+    return j
+
   def interact(self, messages: Messages) -> None:
-    interact(self.client, self.url, self.model, messages)
+    extra = self._disable_thinking_args()
+    interact(self.client, self.url, self.model, messages, extra)
 
   @staticmethod
   def add_common_argument(
