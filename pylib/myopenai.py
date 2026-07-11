@@ -24,7 +24,7 @@ def print_streaming_response(r: httpx.Response) -> list[str]:
         if d := m['delta']:
           if c := d.get('content'):
             if thinking:
-              print('</think>')
+              print('\n</think>')
               thinking = False
           elif c := d.get('reasoning_content'):
             if not thinking:
