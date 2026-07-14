@@ -38,6 +38,9 @@ def detect_language(app: Client, text: str) -> str:
   }
 
   r = app.request(messages, extra=extra)
+  j = r.json()
+  if 'error' in j or (isinstance(j, list) and 'error' in j[0]):
+    raise Exception(j)
   r = r.json()['choices'][0]['message']['content']
   r = json.loads(r)
   return r['language']
