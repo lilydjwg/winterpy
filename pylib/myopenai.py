@@ -79,13 +79,14 @@ def interact(client, url, model, messages, extra_args={}):
         'content': ''.join(res),
       })
 
-API_TYPE = Literal['local', 'gemini', 'opencode', 'opencode-free']
+API_TYPE = Literal['local', 'gemini', 'opencode', 'opencode-free', 'stepfun']
 API_CHOICES = get_args(API_TYPE)
 API_ENDPOINTS: dict[API_TYPE, str] = {
   'local': 'http://127.0.0.1:8080/v1/chat/completions',
   'gemini': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
   'opencode': 'https://opencode.ai/zen/go/v1/chat/completions',
   'opencode-free': 'https://opencode.ai/zen/v1/chat/completions',
+  'stepfun': 'https://api.stepfun.com/step_plan/v1/chat/completions',
 }
 Messages = list[dict[str, Any]]
 
@@ -102,6 +103,10 @@ class Client:
     elif api == 'opencode':
       headers = {
         'Authorization': f'Bearer {os.environ['OPENCODE_API_KEY']}',
+      }
+    elif api == 'stepfun':
+      headers = {
+        'Authorization': f'Bearer {os.environ['STEPFUN_API_KEY']}',
       }
     else:
       headers = {}
@@ -165,6 +170,8 @@ class Client:
       j['chat_template_kwargs'] = {'enable_thinking': False}
     elif self.api == 'gemini':
       j['reasoning_effort'] = 'minimal'
+    elif self.api == 'stepfun':
+      j['reasoning_effort'] = 'low'
     elif self.api in ['opencode', 'opencode-free']:
       j['enable_thinking'] = False # glm-5.2
       j['thinking'] = {'type': 'disabled'} # deepseek-v4-flash
