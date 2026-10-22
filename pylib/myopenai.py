@@ -1,10 +1,11 @@
 import argparse
-import os
 import json
 from contextlib import AbstractContextManager
 from typing import Literal, Any, get_args
+import tomllib
 
 import httpx
+import xdg.BaseDirectory
 
 def print_streaming_response(r: httpx.Response) -> list[str]:
   ret = []
@@ -95,18 +96,24 @@ class Client:
     self.url = API_ENDPOINTS[api]
     self.model = model
     self.api = api
+    configfile = xdg.BaseDirectory.load_first_config('llm.toml')
+    if configfile:
+      with open(configfile, 'rb') as f:
+        config = tomllib.load(f)
+    else:
+      config = {}
 
     if api == 'gemini':
       headers = {
-        'Authorization': f'Bearer {os.environ['GEMINI_API_KEY']}',
+        'Authorization': f'Bearer {config['gemini']['api_key']}',
       }
     elif api == 'opencode':
       headers = {
-        'Authorization': f'Bearer {os.environ['OPENCODE_API_KEY']}',
+        'Authorization': f'Bearer {config['opencode']['api_key']}',
       }
     elif api == 'stepfun':
       headers = {
-        'Authorization': f'Bearer {os.environ['STEPFUN_API_KEY']}',
+        'Authorization': f'Bearer {config['stepfun']['api_key']}',
       }
     else:
       headers = {}
